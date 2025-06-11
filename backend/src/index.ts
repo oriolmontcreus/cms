@@ -1,12 +1,23 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
 import { MongoClient } from 'mongodb'
 
 const app = new Hono()
 
-// Enable CORS
-app.use('/*', cors())
+// Add CORS middleware
+app.use('*', cors({
+    origin: ['http://localhost:5173'], // Your SvelteKit dev server
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
+    maxAge: 600,
+    credentials: true,
+}))
+
+// Add logger middleware
+app.use('*', logger())
 
 // MongoDB connection
 const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://localhost:27017/cms')
@@ -38,6 +49,23 @@ app.get('/api/test', (c) => {
   }
   return c.json(sampleData)
 })
+
+// Auth routes
+app.post('/api/auth/login', async (c) => {
+    // Your login logic here
+    return c.json({
+        user: {
+            _id: '123',
+            email: 'test@example.com',
+            name: 'Test User',
+            role: 'admin',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        },
+        token: 'dummy-token'
+    });
+});
 
 // Start the server
 const port = parseInt(process.env.PORT || '3001')
