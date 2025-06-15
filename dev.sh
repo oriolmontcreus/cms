@@ -17,12 +17,12 @@ if [ ! -d "backend" ]; then
     exit 1
 fi
 
-# Start MongoDB
-echo "Starting MongoDB..."
-docker-compose up -d mongodb || { echo "Failed to start MongoDB"; exit 1; }
+# Start MongoDB and Redis
+echo "Starting MongoDB and Redis..."
+docker-compose up -d mongodb redis || { echo "Failed to start services"; exit 1; }
 
-# Wait for MongoDB to be ready
-echo "Waiting for MongoDB to be ready..."
+# Wait for services to be ready
+echo "Waiting for services to be ready..."
 sleep 5
 
 # Start backend

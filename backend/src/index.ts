@@ -10,10 +10,10 @@ const app = new Hono()
 app.use('*', cors({
     origin: ['http://localhost:5173'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
     maxAge: 600,
-    credentials: true,
+    credentials: true
 }))
 
 // Add logger middleware
@@ -47,7 +47,6 @@ const init = async () => {
       port
     }, (info) => {
       console.log(`Server is running on port ${info.port}`)
-      console.log(`Test the API at: http://localhost:${info.port}/api/test`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)
