@@ -21,9 +21,21 @@ fi
 echo "Starting MongoDB and Redis..."
 docker-compose up -d mongodb redis || { echo "Failed to start services"; exit 1; }
 
-# Wait for services to be ready
-echo "Waiting for services to be ready..."
-sleep 5
+# Wait for MongoDB to be ready
+echo "Waiting for MongoDB to be ready..."
+until docker-compose exec -T mongodb mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; do
+    echo "Waiting for MongoDB to be ready..."
+    sleep 2
+done
+echo "MongoDB is ready!"
+
+# Wait for Redis to be ready
+echo "Waiting for Redis to be ready..."
+until docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; do
+    echo "Waiting for Redis to be ready..."
+    sleep 2
+done
+echo "Redis is ready!"
 
 # Start backend
 echo "Starting backend..."
