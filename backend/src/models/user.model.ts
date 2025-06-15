@@ -1,81 +1,59 @@
-import { Collection, Db, ObjectId } from 'mongodb';
-import * as bcrypt from 'bcrypt';
-import { IUser, UserRole } from '@shared/types/user.js';
+import { Document, Model, model, Schema } from "mongoose";
+import * as bcrypt from "bcrypt";
+import { User } from "@shared/types/user.type.js";
+import { Roles } from "@shared/constants/role.type.js";
 
-export interface IUserWithPassword extends IUser {
-    password: string;
+export type UserWithPassword = User & { password: string };
+
+interface IUserMethods {
+  comparePassword(password: string): Promise<boolean>;
 }
 
-export interface IUserMethods {
-    comparePassword(password: string): Promise<boolean>;
-}
+export type IUserDocument = User & IUserMethods & Document;
+type UserModel = Model<
+  User,
+  Record<string | number | symbol, never>,
+  IUserMethods
+>;
 
-export class UserModel {
-    private collection: Collection<IUserWithPassword>;
+const userSchema = new Schema<UserWithPassword, UserModel, IUserMethods>({
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+    index: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    select: false,
+  },
+  permissions: { type: Number, default: Roles.CLIENT },
+  name: { type: String, default: "" },
+}, {
+  timestamps: true,
+  toJSON: {
+    transform: function (_doc, ret) {
+      delete ret.password;
+      return ret;
+    },
+  },
+});
 
-    constructor(db: Db) {
-        this.collection = db.collection<IUserWithPassword>('users');
-        this.initializeIndexes();
-    }
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  const salt = await bcrypt.genSalt(8);
+  this.password = await bcrypt.hash(this.password, salt);
+});
 
-    private async initializeIndexes() {
-        await this.collection.createIndex({ email: 1 }, { unique: true });
-    }
+userSchema.method(
+  "comparePassword",
+  async function (password: string): Promise<boolean> {
+    return await bcrypt.compare(password, this.password);
+  },
+);
 
-    async create(userData: Omit<IUserWithPassword, '_id'>): Promise<IUserWithPassword> {
-        const salt = await bcrypt.genSalt(8);
-        const hashedPassword = await bcrypt.hash(userData.password, salt);
-
-        const user: IUserWithPassword = {
-            ...userData,
-            _id: new ObjectId(),
-            password: hashedPassword,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-
-        await this.collection.insertOne(user);
-        return user;
-    }
-
-    async findByEmail(email: string): Promise<IUserWithPassword | null> {
-        return this.collection.findOne({ email });
-    }
-
-    async findById(id: string): Promise<IUserWithPassword | null> {
-        return this.collection.findOne({ _id: new ObjectId(id) });
-    }
-
-    async update(id: string, updateData: Partial<IUserWithPassword>): Promise<boolean> {
-        const update: any = { ...updateData, updatedAt: new Date() };
-
-        if (updateData.password) {
-            const salt = await bcrypt.genSalt(8);
-            update.password = await bcrypt.hash(updateData.password, salt);
-        }
-
-        const result = await this.collection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: update }
-        );
-
-        return result.modifiedCount > 0;
-    }
-
-    async delete(id: string): Promise<boolean> {
-        const result = await this.collection.deleteOne({ _id: new ObjectId(id) });
-        return result.deletedCount > 0;
-    }
-
-    async comparePassword(user: IUserWithPassword, password: string): Promise<boolean> {
-        return bcrypt.compare(password, user.password);
-    }
-
-    async list(limit = 10, skip = 0): Promise<IUserWithPassword[]> {
-        return this.collection
-            .find()
-            .skip(skip)
-            .limit(limit)
-            .toArray();
-    }
-} 
+export const UserModel: UserModel = model<UserWithPassword, UserModel>(
+  "User",
+  userSchema,
+);
