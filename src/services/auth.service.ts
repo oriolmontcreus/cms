@@ -1,6 +1,6 @@
 import { loggedUser } from "@/stores/loggedUser";
-import { api } from "@/utils/api";
-import type { User, UserRegisterPayload } from "@shared/types/user";
+import { api } from "@/lib/utils/api";
+import type { User, UserRegisterPayload } from "@shared/types/user.type";
 
 const root = "/auth";
 

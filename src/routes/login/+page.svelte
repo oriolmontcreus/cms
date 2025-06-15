@@ -1,6 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import type { LoginPayload } from '../../../shared/types/auth';
+    import { login } from '@/services/auth.service';
 
     let email = '';
     let password = '';
@@ -8,6 +8,16 @@
     let loading = false;
 
     async function handleSubmit() {
+        try {
+            loading = true;
+            error = '';
+            await login(email, password);
+            goto('/');
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Failed to sign in';
+        } finally {
+            loading = false;
+        }
     }
 </script>
 
