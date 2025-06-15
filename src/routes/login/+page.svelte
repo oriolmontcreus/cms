@@ -1,7 +1,5 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { authService } from '$lib/services/auth';
-    import { authStore } from '$lib/stores/auth';
     import type { LoginPayload } from '../../../shared/types/auth';
 
     let email = '';
@@ -10,19 +8,6 @@
     let loading = false;
 
     async function handleSubmit() {
-        try {
-            loading = true;
-            error = '';
-            const payload: LoginPayload = { email, password };
-            const response = await authService.login(payload);
-            authStore.setUser(response.user);
-            authStore.setToken(response.token);
-            goto('/admin');
-        } catch (e) {
-            error = 'Invalid email or password';
-        } finally {
-            loading = false;
-        }
     }
 </script>
 

@@ -1,4 +1,4 @@
-import type { PublicUser, User } from "@shared/types/user";
+import type { PublicUser, User } from "@shared/types/user.type";
 import { api } from "@/utils/api";
 import { loggedUser } from "@/stores/loggedUser";
 
