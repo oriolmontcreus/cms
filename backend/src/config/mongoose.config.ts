@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 //TODO: what the helly is this URI?
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cms';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/froggy';
 
 export const connectMongoose = async () => {
   try {
