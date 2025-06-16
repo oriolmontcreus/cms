@@ -1,24 +1,10 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
-    import { login } from '@/services/auth.service';
+    import { handleLogin } from '@/services/auth.service';
 
     let email = '';
     let password = '';
     let error = '';
     let loading = false;
-
-    async function handleSubmit() {
-        try {
-            loading = true;
-            error = '';
-            await login(email, password);
-            goto('/');
-        } catch (e) {
-            error = e instanceof Error ? e.message : 'Failed to sign in';
-        } finally {
-            loading = false;
-        }
-    }
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -28,7 +14,7 @@
                 Sign in to your account
             </h2>
         </div>
-        <form class="mt-8 space-y-6" on:submit|preventDefault={handleSubmit}>
+        <form class="mt-8 space-y-6" on:submit|preventDefault={() => handleLogin(email, password, true)}>
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
                     <label for="email" class="sr-only">Email address</label>
