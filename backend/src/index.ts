@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { useRoutes } from '@/src/routes/useRoutes.js'
 import { connectMongoose } from './config/mongoose.config.js'
+import { errorHandler } from '@/lib/errorHandler.js'
 
 const app = new Hono()
 
@@ -18,6 +19,8 @@ app.use('*', cors({
 
 // Add logger middleware
 app.use('*', logger())
+
+app.onError(errorHandler);
 
 useRoutes(app);
 

@@ -2,7 +2,7 @@ import { Context } from "hono";
 import { log } from '@/lib/log.js';
 import ExtendedError from '@/errors/ExtendedError.js';
 import { UNAUTHORIZED } from '@/constants/http.js';
-import { red } from "colors";
+import colors from 'colors';
 import { ContentfulStatusCode } from "hono/utils/http-status";
 
 export const errorHandler = (err: Error, c: Context) => {
@@ -10,7 +10,7 @@ export const errorHandler = (err: Error, c: Context) => {
   let logMessage = `${source} \n${err.message}\n`;
 
   if (err.stack && !(err instanceof ExtendedError)) {
-    logMessage += `\n${red('Not expected error')} at: ${err.stack}`;
+    logMessage += `\n${colors.red('Not expected error')} at: ${err.stack}`;
   }
 
   const logLevel = err instanceof ExtendedError
