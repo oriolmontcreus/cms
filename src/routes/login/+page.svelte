@@ -1,60 +1,29 @@
 <script lang="ts">
-    import { handleLogin } from '@/services/auth.service';
-
-    let email = '';
-    let password = '';
-    let error = '';
-    let loading = false;
+    import GalleryVerticalEndIcon from "@lucide/svelte/icons/gallery-vertical-end";
+    import LoginForm from "@/lib/components/LoginForm.svelte";
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Sign in to your account
-            </h2>
+<div class="grid min-h-svh lg:grid-cols-2 dark:bg-background">
+    <div class="flex flex-col gap-4 p-6 md:p-10">
+        <div class="flex justify-center gap-2 md:justify-start">
+            <a href="/" class="flex items-center gap-2 font-medium dark:text-white">
+                <div class="bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary flex size-6 items-center justify-center rounded-md">
+                    <GalleryVerticalEndIcon class="size-4" />
+                </div>
+                Froggy Inc.
+            </a>
         </div>
-        <form class="mt-8 space-y-6" on:submit|preventDefault={() => handleLogin(email, password, true)}>
-            <div class="rounded-md shadow-sm -space-y-px">
-                <div>
-                    <label for="email" class="sr-only">Email address</label>
-                    <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                        bind:value={email}
-                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                        placeholder="Email address"
-                    />
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Password</label>
-                    <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        bind:value={password}
-                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                        placeholder="Password"
-                    />
-                </div>
+        <div class="flex flex-1 items-center justify-center">
+            <div class="w-full max-w-xs">
+                <LoginForm />
             </div>
-
-            {#if error}
-                <div class="text-red-500 text-sm text-center">{error}</div>
-            {/if}
-
-            <div>
-                <button
-                    type="submit"
-                    disabled={loading}
-                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                >
-                    {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-            </div>
-        </form>
+        </div>
+    </div>
+    <div class="bg-muted relative hidden lg:block">
+        <img
+            src="/placeholder.svg"
+            alt="placeholder"
+            class="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        />
     </div>
 </div> 
