@@ -27,6 +27,7 @@
 		"tailwindcss": "^4.1.9"
 	},
 	"devDependencies": {
+		"@internationalized/date": "^3.8.2",
 		"@lucide/svelte": "^0.515.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/kit": "^2.16.0",
@@ -35,6 +36,7 @@
 		"@types/axios": "^0.14.0",
 		"@types/bcrypt": "^5.0.2",
 		"@types/node": "^20.11.0",
+		"bits-ui": "^2.8.0",
 		"clsx": "^2.1.1",
 		"postcss": "^8.5.5",
 		"svelte": "^5.0.0",
