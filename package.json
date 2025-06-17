@@ -20,6 +20,7 @@
 		"axios": "^1.10.0",
 		"bcrypt": "^5.1.1",
 		"jose": "^6.0.11",
+		"mode-watcher": "^1.0.8",
 		"mongodb": "^6.3.0",
 		"mongoose": "^8.15.2",
 		"redis": "^5.5.6",
