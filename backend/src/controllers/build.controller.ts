@@ -12,8 +12,11 @@ export class BuildController {
         try {
             const page = await c.req.json<Page>();
             
+            // Get the root project directory (where cms, astro-site, and shared folders are)
+            const projectRoot = path.join(process.cwd(), '../../');
+            
             // Path to store our pages data
-            const pagesDir = path.join(process.cwd(), '../astro-site/src/data');
+            const pagesDir = path.join(projectRoot, 'astro-site/src/data');
             const pagesFile = path.join(pagesDir, 'pages.json');
             
             // Ensure the data directory exists
@@ -40,8 +43,15 @@ export class BuildController {
             await fs.writeFile(pagesFile, JSON.stringify(pages, null, 2), 'utf-8');
 
             // Run the Astro build
+            const astroPath = path.join(projectRoot, 'astro-site');
+            console.log('Running build in:', astroPath);
+            
             const { stdout, stderr } = await execAsync('npm run build', {
-                cwd: path.join(process.cwd(), '../astro-site')
+                cwd: astroPath,
+                env: {
+                    ...process.env,
+                    NODE_ENV: 'production'
+                }
             });
 
             console.log('Build output:', stdout);
