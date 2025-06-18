@@ -3,6 +3,7 @@ import { Document, Model, model, Schema, Types } from "mongoose";
 export interface IPage {
   title: string;
   slug: string;
+  content?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,10 @@ const pageSchema = new Schema<IPageDocument>({
     required: true,
     unique: true,
     index: true,
+  },
+  content: {
+    type: String,
+    default: "",
   }
 }, {
   timestamps: true,

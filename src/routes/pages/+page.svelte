@@ -89,7 +89,10 @@
                         {:else}
                             <div class="grid gap-4">
                                 {#each pages as page}
-                                    <div class="flex items-center justify-between p-4 border rounded-lg bg-card">
+                                    <a 
+                                        href="/pages/{page.slug}" 
+                                        class="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted transition-colors"
+                                    >
                                         <div>
                                             <h3 class="font-medium">{page.title}</h3>
                                             <p class="text-sm text-muted-foreground">/{page.slug}</p>
@@ -97,7 +100,7 @@
                                         <div class="text-sm text-muted-foreground">
                                             Created {new Date(page.createdAt).toLocaleDateString()}
                                         </div>
-                                    </div>
+                                    </a>
                                 {/each}
                             </div>
                         {/if}

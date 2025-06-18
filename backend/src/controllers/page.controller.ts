@@ -22,4 +22,19 @@ export class PageController {
       const pages = await PageService.getPages();
       return c.json(pages);
   }
+
+  static async updatePage(c: Context) {
+      const slug = c.req.param("slug");
+      const body = await c.req.json();
+      
+      if (!body.content) {
+        throw new BadRequest("Content is required");
+      }
+
+      const page = await PageService.updatePage(slug, {
+        content: body.content
+      });
+
+      return c.json(page);
+  }
 } 

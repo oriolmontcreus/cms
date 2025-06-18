@@ -15,6 +15,11 @@ export async function getPages(): Promise<Page[]> {
     const { data } = await api.get<Page[]>(root);
     return data;
 }
+
+export async function updatePage(slug: string, content: string): Promise<Page> {
+    const { data } = await api.put<Page>(`${root}/${slug}`, { content });
+    return data;
+}
 //endregion
 
 //region handlers
@@ -31,5 +36,14 @@ export async function handleGetPages(): Promise<Page[]> {
     const [data, err] = await safeFetch(getPages());
     if (err) errorToast('Error loading pages.');
     return data || [];
+}
+
+export async function handleUpdatePage(slug: string, content: string): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(updatePage(slug, content), {
+        loading: 'Updating page...',
+        success: () => `Page updated successfully.`,
+        error: 'Error updating page. Please try again.'
+    });
+    return err ? null : data;
 }
 //endregion 
