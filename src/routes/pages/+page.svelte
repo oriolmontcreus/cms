@@ -7,19 +7,33 @@
     import AppSidebar from "$lib/components/app-sidebar.svelte";
     import SiteHeader from "$lib/components/site-header.svelte";
     import PlusIcon from "@tabler/icons-svelte/icons/plus";
+    import { handleCreatePage, handleGetPages } from "@/services/page.service";
+    import { onMount } from "svelte";
+    import type { Page } from "@shared/types/pages";
 
     let open = false;
     let title = "";
     let slug = "";
+    let pages: Page[] = [];
 
-    function handleSubmit() {
-        console.log({ title, slug });
-        open = false;
-        title = "";
-        slug = "";
+    async function handleSubmit() {
+        const page = await handleCreatePage(title, slug);
+        if (page) {
+            open = false;
+            title = "";
+            slug = "";
+            // Refresh the pages list
+            pages = await handleGetPages();
+        }
     }
 
-    $: if (title) slug = title.toLowerCase().replace(/\s+/g, '-');
+    onMount(async () => {
+        pages = await handleGetPages();
+    });
+
+    $: if (title) {
+        slug = title.toLowerCase().replace(/\s+/g, '-');
+    }
 </script>
 
 <Sidebar.Provider
@@ -31,7 +45,10 @@
         <div class="flex flex-1 flex-col">
             <div class="@container/main flex flex-1 flex-col gap-2">
                 <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                    <div class="flex justify-end px-4">
+                    <div class="flex justify-between items-center px-4">
+                        <div class="text-sm text-muted-foreground">
+                            {pages.length} page{pages.length === 1 ? '' : 's'} total
+                        </div>
                         <Sheet.Root bind:open>
                             <Sheet.Trigger>
                                 <Button>
@@ -61,6 +78,29 @@
                                 </Sheet.Footer>
                             </Sheet.Content>
                         </Sheet.Root>
+                    </div>
+
+                    <!-- Pages List -->
+                    <div class="px-4">
+                        {#if pages.length === 0}
+                            <div class="text-center text-muted-foreground py-8">
+                                No pages created yet. Click the "New Page" button to create one.
+                            </div>
+                        {:else}
+                            <div class="grid gap-4">
+                                {#each pages as page}
+                                    <div class="flex items-center justify-between p-4 border rounded-lg bg-card">
+                                        <div>
+                                            <h3 class="font-medium">{page.title}</h3>
+                                            <p class="text-sm text-muted-foreground">/{page.slug}</p>
+                                        </div>
+                                        <div class="text-sm text-muted-foreground">
+                                            Created {new Date(page.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
                     </div>
                 </div>
             </div>
