@@ -4,7 +4,7 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { Icon } from "@tabler/icons-svelte";
-
+	import { goto } from "$app/navigation";
 	let { items }: { items: { title: string; url: string; icon?: Icon }[] } = $props();
 </script>
 
@@ -32,7 +32,9 @@
 		<Sidebar.Menu>
 			{#each items as item (item.title)}
 				<Sidebar.MenuItem>
-					<Sidebar.MenuButton tooltipContent={item.title}>
+					<Sidebar.MenuButton tooltipContent={item.title} onclick={() => {
+						goto(item.url);
+					}}>
 						{#if item.icon}
 							<item.icon />
 						{/if}

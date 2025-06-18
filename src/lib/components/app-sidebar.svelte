@@ -17,12 +17,12 @@
 		navMain: [
 			{
 				title: "Dashboard",
-				url: "#",
+				url: "/",
 				icon: DashboardIcon,
 			},
 			{
 				title: "Pages",
-				url: "#",
+				url: "/pages",
 				icon: FolderIcon,
 			},
 			{
