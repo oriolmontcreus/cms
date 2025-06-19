@@ -5,14 +5,41 @@
     import { Input } from '@components/ui/input';
     import { Label } from '@components/ui/label';
     import { Textarea } from '@components/ui/textarea';
+    import { handleSaveFormData } from '@/services/page.service';
+    import { onMount } from 'svelte';
 
     export let config: PageConfig;
-    export let onSubmit: (data: FormData) => void;
+    export let slug: string;
+    export let initialData: Record<string, any> | undefined = undefined;
 
     let formData: FormData = {};
+    let isSubmitting = false;
 
-    function handleSubmit() {
-        onSubmit(formData);
+    onMount(() => {
+        // Initialize form with existing data if available
+        if (initialData) {
+            formData = { ...initialData };
+        }
+    });
+
+    async function handleSubmit() {
+        try {
+            isSubmitting = true;
+            const result = await handleSaveFormData(slug, formData);
+            
+            if (result) {
+                console.log('Form data saved:', result);
+            }
+        } catch (error) {
+            console.error('Error saving form data:', error);
+        } finally {
+            isSubmitting = false;
+        }
+    }
+
+    function getSelectValue(value: string | number | Date | null): string {
+        if (value === null || value === undefined) return '';
+        return String(value);
     }
 </script>
 
@@ -57,11 +84,24 @@
                         bind:value={formData[field.name]}
                     />
                 {:else if field.type === 'select' && field.options}
-
+                    <select
+                        id={field.name}
+                        name={field.name}
+                        class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required={field.required}
+                        bind:value={formData[field.name]}
+                    >
+                        <option value="">{field.placeholder || `Select ${field.label}`}</option>
+                        {#each field.options as option}
+                            <option value={option}>{option}</option>
+                        {/each}
+                    </select>
                 {/if}
             </div>
         {/each}
     </div>
 
-    <Button type="submit">Save Changes</Button>
+    <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Saving...' : 'Save Changes'}
+    </Button>
 </form> 

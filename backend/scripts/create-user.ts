@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import { UserModel } from "../src/models/user.model";
-import { Roles } from "../../shared/constants/role.type";
+
+enum Roles {
+  CLIENT = 1 << 0,                        // 1
+  DEVELOPER = CLIENT | (1 << 1),          // 3
+  SUPER_ADMIN = DEVELOPER | (1 << 2)      // 7
+}
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/froggy";
 

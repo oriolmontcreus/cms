@@ -1,6 +1,7 @@
 import { Context } from "hono";
 import { PageService } from "@/src/services/page.service.js";
 import BadRequest from "@/errors/BadRequest.js";
+import NotFound from "@/errors/NotFound.js";
 
 export class PageController {
   static async createPage(c: Context) {
@@ -13,6 +14,7 @@ export class PageController {
       const page = await PageService.createPage({
         title: body.title,
         slug: body.slug,
+        config: body.config,
       });
 
       return c.json(page, 201);
@@ -23,18 +25,34 @@ export class PageController {
       return c.json(pages);
   }
 
+  static async getPageBySlug(c: Context) {
+      const slug = c.req.param("slug");
+      const page = await PageService.getPageBySlug(slug);
+      
+      if (!page) {
+        throw new NotFound("Page not found");
+      }
+
+      return c.json(page);
+  }
+
   static async updatePage(c: Context) {
       const slug = c.req.param("slug");
       const body = await c.req.json();
       
-      if (!body.content) {
-        throw new BadRequest("Content is required");
+      const page = await PageService.updatePage(slug, body);
+      return c.json(page);
+  }
+
+  static async saveFormData(c: Context) {
+      const slug = c.req.param("slug");
+      const body = await c.req.json();
+      
+      if (!body.formData) {
+        throw new BadRequest("Form data is required");
       }
 
-      const page = await PageService.updatePage(slug, {
-        content: body.content
-      });
-
+      const page = await PageService.saveFormData(slug, body.formData);
       return c.json(page);
   }
 } 

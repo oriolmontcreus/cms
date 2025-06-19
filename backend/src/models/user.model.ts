@@ -1,7 +1,7 @@
 import { Document, Model, model, Schema } from "mongoose";
 import * as bcrypt from "bcrypt";
-import { User } from "@shared/types/user.type.js";
-import { Roles } from "@shared/constants/role.type.js";
+import { User } from "@shared/types/user.type.ts";
+import { Roles } from "@shared/constants/role.type.ts";
 
 export type UserWithPassword = User & { password: string };
 

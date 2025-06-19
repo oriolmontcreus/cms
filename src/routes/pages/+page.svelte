@@ -3,26 +3,22 @@
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
     import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
-    import type { PageConfig } from '$lib/components/form-builder/types';
+    import { handleGetPages } from '@/services/page.service';
+    import type { Page } from '@shared/types/pages';
 
-    let pages: Array<Pick<PageConfig, 'title' | 'slug'>> = [];
+    let pages: Page[] = [];
+    let loading = true;
     let error: string | null = null;
 
     onMount(async () => {
         try {
-            // Use Vite's glob import with TypeScript files
-            const modules = import.meta.glob('$lib/components/form-builder/pages/*.ts', { eager: true });
-            
-            pages = Object.entries(modules).map(([path, module]: [string, any]) => {
-                const config = module.config as PageConfig;
-                return {
-                    title: config.title,
-                    slug: config.slug
-                };
-            });
+            loading = true;
+            pages = await handleGetPages();
         } catch (e) {
             error = 'Failed to load pages';
             console.error(e);
+        } finally {
+            loading = false;
         }
     });
 
@@ -37,7 +33,11 @@
         <Button onclick={() => goto('/pages/new')}>Create New Page</Button>
     </div>
 
-    {#if error}
+    {#if loading}
+        <div class="text-center py-8">
+            <div class="text-gray-500">Loading pages...</div>
+        </div>
+    {:else if error}
         <div class="text-red-500">{error}</div>
     {:else if pages.length === 0}
         <Card>
@@ -54,6 +54,9 @@
                     <CardHeader>
                         <CardTitle>{page.title}</CardTitle>
                         <CardDescription>/{page.slug}</CardDescription>
+                        {#if page.formData && Object.keys(page.formData).length > 0}
+                            <div class="text-sm text-green-600">Has form data</div>
+                        {/if}
                     </CardHeader>
                 </Card>
             {/each}

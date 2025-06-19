@@ -6,8 +6,8 @@ import { errorToast } from "@/services/toast.service";
 const root = "/pages";
 
 //region routes
-export async function createPage(title: string, slug: string): Promise<Page> {
-    const { data } = await api.post<Page>(root, { title, slug });
+export async function createPage(title: string, slug: string, config?: Record<string, any>): Promise<Page> {
+    const { data } = await api.post<Page>(root, { title, slug, config });
     return data;
 }
 
@@ -16,15 +16,25 @@ export async function getPages(): Promise<Page[]> {
     return data;
 }
 
+export async function getPageBySlug(slug: string): Promise<Page> {
+    const { data } = await api.get<Page>(`${root}/${slug}`);
+    return data;
+}
+
 export async function updatePage(slug: string, content: string): Promise<Page> {
     const { data } = await api.put<Page>(`${root}/${slug}`, { content });
+    return data;
+}
+
+export async function saveFormData(slug: string, formData: Record<string, any>): Promise<Page> {
+    const { data } = await api.post<Page>(`${root}/${slug}/form-data`, { formData });
     return data;
 }
 //endregion
 
 //region handlers
-export async function handleCreatePage(title: string, slug: string): Promise<Page | null> {
-    const [data, err] = await fetchWithToast(createPage(title, slug), {
+export async function handleCreatePage(title: string, slug: string, config?: Record<string, any>): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(createPage(title, slug, config), {
         loading: 'Creating page...',
         success: () => `Page created successfully.`,
         error: 'Error creating page. Please try again.'
@@ -38,11 +48,26 @@ export async function handleGetPages(): Promise<Page[]> {
     return data || [];
 }
 
+export async function handleGetPageBySlug(slug: string): Promise<Page | null> {
+    const [data, err] = await safeFetch(getPageBySlug(slug));
+    if (err) errorToast('Error loading page.');
+    return data || null;
+}
+
 export async function handleUpdatePage(slug: string, content: string): Promise<Page | null> {
     const [data, err] = await fetchWithToast(updatePage(slug, content), {
         loading: 'Updating page...',
         success: () => `Page updated successfully.`,
         error: 'Error updating page. Please try again.'
+    });
+    return err ? null : data;
+}
+
+export async function handleSaveFormData(slug: string, formData: Record<string, any>): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(saveFormData(slug, formData), {
+        loading: 'Saving form data...',
+        success: () => `Form data saved successfully.`,
+        error: 'Error saving form data. Please try again.'
     });
     return err ? null : data;
 }
