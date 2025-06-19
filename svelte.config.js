@@ -14,7 +14,7 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			"@/*": "./src/*",
-			"@shared/*": "./shared/*"
+			"@shared/*": "../shared/*"
 		},
 	}
 };
