@@ -1,112 +1,62 @@
 <script lang="ts">
-    import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-    import * as Sheet from "$lib/components/ui/sheet/index.js";
-    import { Button } from "$lib/components/ui/button/index.js";
-    import { Input } from "$lib/components/ui/input/index.js";
-    import { Label } from "$lib/components/ui/label/index.js";
-    import AppSidebar from "$lib/components/app-sidebar.svelte";
-    import SiteHeader from "$lib/components/site-header.svelte";
-    import PlusIcon from "@tabler/icons-svelte/icons/plus";
-    import { handleCreatePage, handleGetPages } from "@/services/page.service";
-    import { onMount } from "svelte";
-    import type { Page } from "@shared/types/pages";
+    import { onMount } from 'svelte';
+    import { goto } from '$app/navigation';
+    import { Button } from '$lib/components/ui/button';
+    import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+    import type { PageConfig } from '$lib/components/form-builder/types';
 
-    let open = false;
-    let title = "";
-    let slug = "";
-    let pages: Page[] = [];
-
-    async function handleSubmit() {
-        const page = await handleCreatePage(title, slug);
-        if (page) {
-            open = false;
-            title = "";
-            slug = "";
-            // Refresh the pages list
-            pages = await handleGetPages();
-        }
-    }
+    let pages: Array<Pick<PageConfig, 'title' | 'slug'>> = [];
+    let error: string | null = null;
 
     onMount(async () => {
-        pages = await handleGetPages();
+        try {
+            // Use Vite's glob import with TypeScript files
+            const modules = import.meta.glob('$lib/components/form-builder/pages/*.ts', { eager: true });
+            
+            pages = Object.entries(modules).map(([path, module]: [string, any]) => {
+                const config = module.config as PageConfig;
+                return {
+                    title: config.title,
+                    slug: config.slug
+                };
+            });
+        } catch (e) {
+            error = 'Failed to load pages';
+            console.error(e);
+        }
     });
 
-    $: if (title) {
-        slug = title.toLowerCase().replace(/\s+/g, '-');
+    function handlePageClick(slug: string) {
+        goto(`/pages/${slug}`);
     }
 </script>
 
-<Sidebar.Provider
-    style="--sidebar-width: calc(var(--spacing) * 72); --header-height: calc(var(--spacing) * 12);"
->
-    <AppSidebar variant="inset" />
-    <Sidebar.Inset>
-        <SiteHeader title="Pages" />
-        <div class="flex flex-1 flex-col">
-            <div class="@container/main flex flex-1 flex-col gap-2">
-                <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                    <div class="flex justify-between items-center px-4">
-                        <div class="text-sm text-muted-foreground">
-                            {pages.length} page{pages.length === 1 ? '' : 's'} total
-                        </div>
-                        <Sheet.Root bind:open>
-                            <Sheet.Trigger>
-                                <Button>
-                                    <PlusIcon />
-                                    New Page
-                                </Button>
-                            </Sheet.Trigger>
-                            <Sheet.Content>
-                                <Sheet.Header>
-                                    <Sheet.Title>Create New Page</Sheet.Title>
-                                    <Sheet.Description>
-                                        Add a new page to your CMS. The URL slug will be automatically generated from the title.
-                                    </Sheet.Description>
-                                </Sheet.Header>
-                                <div class="grid gap-4 py-4 px-4">
-                                    <div class="grid gap-2">
-                                        <Label for="title">Title</Label>
-                                        <Input id="title" bind:value={title} placeholder="Enter page title" />
-                                    </div>
-                                    <div class="grid gap-2">
-                                        <Label for="slug">URL Slug</Label>
-                                        <Input id="slug" bind:value={slug} placeholder="url-slug" />
-                                    </div>
-                                </div>
-                                <Sheet.Footer>
-                                    <Button onclick={handleSubmit}>Create Page</Button>
-                                </Sheet.Footer>
-                            </Sheet.Content>
-                        </Sheet.Root>
-                    </div>
+<div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Pages</h1>
+        <Button onclick={() => goto('/pages/new')}>Create New Page</Button>
+    </div>
 
-                    <!-- Pages List -->
-                    <div class="px-4">
-                        {#if pages.length === 0}
-                            <div class="text-center text-muted-foreground py-8">
-                                No pages created yet. Click the "New Page" button to create one.
-                            </div>
-                        {:else}
-                            <div class="grid gap-4">
-                                {#each pages as page}
-                                    <a 
-                                        href="/pages/{page.slug}" 
-                                        class="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted transition-colors"
-                                    >
-                                        <div>
-                                            <h3 class="font-medium">{page.title}</h3>
-                                            <p class="text-sm text-muted-foreground">/{page.slug}</p>
-                                        </div>
-                                        <div class="text-sm text-muted-foreground">
-                                            Created {new Date(page.createdAt).toLocaleDateString()}
-                                        </div>
-                                    </a>
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
+    {#if error}
+        <div class="text-red-500">{error}</div>
+    {:else if pages.length === 0}
+        <Card>
+            <CardContent class="py-8">
+                <div class="text-center text-gray-500">
+                    No pages found. Create your first page to get started.
                 </div>
-            </div>
+            </CardContent>
+        </Card>
+    {:else}
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {#each pages as page}
+                <Card class="cursor-pointer hover:bg-gray-50" onclick={() => handlePageClick(page.slug)}>
+                    <CardHeader>
+                        <CardTitle>{page.title}</CardTitle>
+                        <CardDescription>/{page.slug}</CardDescription>
+                    </CardHeader>
+                </Card>
+            {/each}
         </div>
-    </Sidebar.Inset>
-</Sidebar.Provider>
+    {/if}
+</div>

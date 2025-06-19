@@ -1,0 +1,16 @@
+{
+  "name": "cms-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "create-page": "tsx create-page.ts"
+  },
+  "dependencies": {
+    "enquirer": "^2.4.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1",
+    "@types/node": "^20.11.24"
+  }
+} 
