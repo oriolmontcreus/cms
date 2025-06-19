@@ -6,7 +6,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "create-user": "tsx scripts/create-user.ts"
+    "create-user": "tsx scripts/create-user.ts",
+    "create-page": "tsx scripts/create-page.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.8.2",

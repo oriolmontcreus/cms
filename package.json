@@ -12,8 +12,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"create-user": "ts-node --project backend/scripts/tsconfig.json backend/scripts/create-user.ts",
-		"create-page": "tsx scripts/create-page.ts"
+		"create-user": "tsx backend/scripts/create-user.ts",
+		"create-page": "tsx backend/scripts/create-page.ts"
 	},
 	"dependencies": {
 		"@tailwindcss/postcss": "^4.1.9",

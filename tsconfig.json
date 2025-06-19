@@ -16,6 +16,7 @@
 			"@/*": ["./src/*"],
 			"@lib/*": ["./src/lib/*"],
 			"@components/*": ["./src/lib/components/*"],
+			"@shared/*": ["../shared/*"],
 			"$lib/*": ["./src/lib/*"]
 		},
 		"types": ["vite/client"]

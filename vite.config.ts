@@ -18,6 +18,7 @@ export default defineConfig({
 			'@': resolve(__dirname, './src'),
 			'@lib': resolve(__dirname, './src/lib'),
 			'@components': resolve(__dirname, './src/lib/components'),
+			'@shared': resolve(__dirname, '../shared'),
 			'$lib': resolve(__dirname, './src/lib')
 		}
 	},
