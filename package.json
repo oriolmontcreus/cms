@@ -12,13 +12,15 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"create-user": "ts-node --project backend/scripts/tsconfig.json backend/scripts/create-user.ts"
+		"create-user": "ts-node --project backend/scripts/tsconfig.json backend/scripts/create-user.ts",
+		"create-page": "tsx scripts/create-page.ts"
 	},
 	"dependencies": {
 		"@tailwindcss/postcss": "^4.1.9",
 		"@tailwindcss/vite": "^4.1.9",
 		"axios": "^1.10.0",
 		"bcrypt": "^5.1.1",
+		"enquirer": "^2.4.1",
 		"jose": "^6.0.11",
 		"mode-watcher": "^1.0.8",
 		"mongodb": "^6.3.0",
@@ -56,6 +58,7 @@
 		"tailwind-merge": "^3.3.1",
 		"tailwind-variants": "^1.0.0",
 		"ts-node": "^10.9.2",
+		"tsx": "^4.7.1",
 		"tw-animate-css": "^1.3.4",
 		"typescript": "^5.0.0",
 		"vaul-svelte": "^1.0.0-next.7",
