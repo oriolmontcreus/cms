@@ -161,7 +161,7 @@ async function createPage() {
         }
 
         // Create the pages directory if it doesn't exist
-        const pagesDir = join(process.cwd(), '..', 'src', 'lib', 'components', 'form-builder', 'pages');
+        const pagesDir = join(process.cwd(), '..', 'cms', 'src', 'pages');
         await mkdir(pagesDir, { recursive: true });
 
         // Create the page configuration file
