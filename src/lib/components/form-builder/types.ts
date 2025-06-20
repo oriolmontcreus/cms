@@ -15,12 +15,27 @@ export interface FormField {
     helperText?: string; // Additional help text
 }
 
+export interface Component {
+    name: string;
+    fields: FormField[];
+    validate?: (data: Record<string, any>) => string[];
+    transform?: (data: Record<string, any>) => Record<string, any>;
+}
+
+export interface ComponentInstance {
+    component: Component;
+    id: string; // Unique identifier for this instance
+    displayName?: string; // Optional custom display name for this instance
+}
+
 export interface PageConfig {
     title: string;
     slug: string;
-    fields: FormField[];
+    components: ComponentInstance[];
 }
 
 export interface FormData {
-    [key: string]: string | number | Date | null;
+    [componentId: string]: {
+        [fieldName: string]: any;
+    };
 } 

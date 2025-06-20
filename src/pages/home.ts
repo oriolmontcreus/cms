@@ -1,8 +1,19 @@
 import type { PageConfig } from '../lib/components/form-builder/types';
-import { HeroFields } from '../components/Hero';
+import { HeroComponent } from '../components/Hero';
 
 export const config: PageConfig = {
     title: "Home",
     slug: "home",
-    fields: HeroFields
+    components: [
+        {
+            component: HeroComponent,
+            id: "hero-main",
+            displayName: "Main Hero Section"
+        },
+        {
+            component: HeroComponent,
+            id: "hero-secondary",
+            displayName: "Secondary Hero Section"
+        }
+    ]
 };
