@@ -1,5 +1,7 @@
 import { api } from "@/lib/utils/api";
 import type { Page } from "@shared/types/pages";
+import type { PageConfig } from "@/lib/components/form-builder/types";
+import { getPageConfig } from "@/lib/page-registry";
 import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "@/services/toast.service";
 
@@ -18,6 +20,13 @@ export async function getPages(): Promise<Page[]> {
 
 export async function getPageBySlug(slug: string): Promise<Page> {
     const { data } = await api.get<Page>(`${root}/${slug}`);
+    
+    // Load TypeScript configuration and merge with database data
+    const tsConfig = getPageConfig(slug);
+    if (tsConfig) {
+        data.config = tsConfig;
+    }
+    
     return data;
 }
 

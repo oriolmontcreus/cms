@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "create-user": "tsx scripts/create-user.ts",
-    "create-page": "tsx scripts/create-page.ts"
+    "create-page": "tsx scripts/create-page.ts",
+    "create-component": "tsx scripts/create-component.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.8.2",
