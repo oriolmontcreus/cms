@@ -1,28 +1,25 @@
-import type { FormField } from '../lib/components/form-builder/types';
+import { TextInput, Textarea, Select, buildFields } from '../lib/components/form-builder/fields';
 
-export const UserProfileFields: FormField[] = [
-    {
-        type: 'text',
-        label: 'Full Name',
-        name: 'fullName',
-        required: true,
-        placeholder: 'Enter your full name'
-    },
-    {
-        type: 'textarea',
-        label: 'Bio',
-        name: 'bio',
-        required: false,
-        placeholder: 'Tell us about yourself'
-    },
-    {
-        type: 'select',
-        label: 'Role',
-        name: 'role',
-        required: true,
-        options: ['Admin', 'Editor', 'Viewer']
-    }
-];
+export const UserProfileFields = buildFields(
+    TextInput('fullName')
+        .label('Full Name')
+        .required()
+        .min(2)
+        .max(50)
+        .placeholder('Enter your full name'),
+    
+    Textarea('bio')
+        .label('Bio')
+        .max(500)
+        .placeholder('Tell us about yourself')
+        .helperText('Optional: Share a brief description about yourself'),
+    
+    Select('role')
+        .label('Role')
+        .required()
+        .options(['Admin', 'Editor', 'Viewer'])
+        .placeholder('Select your role')
+);
 
 export const UserProfileComponent = {
     name: 'UserProfile',

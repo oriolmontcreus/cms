@@ -1,21 +1,29 @@
-import type { FormField } from '../lib/components/form-builder/types';
+import { TextInput, Textarea, buildFields } from '../lib/components/form-builder/fields';
 
-export const HeroFields: FormField[] = [
-    {
-        'type': 'text',
-        'name': 'title',
-        'label': 'Title',
-        'required': true,
-        'placeholder': ''
-    },
-    {
-        'type': 'textarea',
-        'name': 'description',
-        'label': 'Description',
-        'required': true,
-        'placeholder': ''
-    }
-];
+export const HeroFields = buildFields(
+    TextInput('title')
+        .label('Title')
+        .required()
+        .min(3)
+        .max(100)
+        .placeholder('Enter the hero title'),
+    
+    Textarea('description')
+        .label('Description')
+        .required()
+        .min(10)
+        .max(500)
+        .placeholder('Enter the hero description')
+        .helperText('This will be displayed as the main description on your page'),
+
+    TextInput('input2')
+        .label('Input 2')
+        .required()
+        .min(3)
+        .max(100)
+        .placeholder('Enter the input 2')
+        .helperText('This is the second input')
+);
 
 export const HeroComponent = {
     name: 'Hero',

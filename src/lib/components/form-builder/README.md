@@ -1,0 +1,172 @@
+# Form Builder - Fluent Interface
+
+This form builder uses a fluent interface pattern similar to Filament V3, allowing you to create form fields using chainable methods.
+
+## Basic Usage
+
+```typescript
+import { TextInput, Textarea, Number, Select, Date, buildFields } from './fields';
+
+export const MyFormFields = buildFields(
+    TextInput('username')
+        .label('Username')
+        .required()
+        .min(3)
+        .max(20)
+        .placeholder('Enter your username'),
+    
+    Textarea('bio')
+        .label('Biography')
+        .max(500)
+        .placeholder('Tell us about yourself')
+        .helperText('Optional: Share a brief description')
+);
+```
+
+## Field Types
+
+### TextInput
+Creates a text input field with validation options.
+
+```typescript
+TextInput('fieldName')
+    .label('Field Label')
+    .required()                    // Makes field required
+    .min(3)                       // Minimum length
+    .max(50)                      // Maximum length
+    .pattern('^[a-zA-Z]+$')       // Regex pattern validation
+    .placeholder('Enter text...')  // Placeholder text
+    .disabled()                   // Disable the field
+    .readonly()                   // Make field read-only
+    .helperText('Help text')      // Additional help text
+```
+
+### Textarea
+Creates a textarea field for longer text input.
+
+```typescript
+Textarea('description')
+    .label('Description')
+    .required()
+    .min(10)                      // Minimum length
+    .max(1000)                    // Maximum length
+    .placeholder('Enter description...')
+    .helperText('Provide detailed information')
+```
+
+### Number
+Creates a number input field with numeric validation.
+
+```typescript
+Number('age')
+    .label('Age')
+    .required()
+    .min(18)                      // Minimum value
+    .max(120)                     // Maximum value
+    .step(1)                      // Step increment
+    .placeholder('25')
+```
+
+### Date
+Creates a date input field.
+
+```typescript
+Date('birthDate')
+    .label('Birth Date')
+    .required()
+    .helperText('Select your birth date')
+```
+
+### Select
+Creates a select dropdown field.
+
+```typescript
+Select('category')
+    .label('Category')
+    .required()
+    .options(['Option 1', 'Option 2', 'Option 3'])
+    .placeholder('Choose an option')
+    .multiple()                   // Allow multiple selections
+```
+
+## Available Methods
+
+All field types support these common methods:
+
+- `.label(text)` - Set the field label (required)
+- `.required(boolean)` - Make field required (default: true if called without parameter)
+- `.placeholder(text)` - Set placeholder text
+- `.disabled(boolean)` - Disable the field (default: true if called without parameter)
+- `.readonly(boolean)` - Make field read-only (default: true if called without parameter)
+- `.helperText(text)` - Add helper text below the field
+
+### Type-specific Methods
+
+**TextInput & Textarea:**
+- `.min(length)` - Minimum character length
+- `.max(length)` - Maximum character length
+- `.pattern(regex)` - Regex validation pattern (TextInput only)
+
+**Number:**
+- `.min(value)` - Minimum numeric value
+- `.max(value)` - Maximum numeric value
+- `.step(value)` - Step increment for the number input
+
+**Select:**
+- `.options(array)` - Array of options for the select field
+- `.multiple(boolean)` - Allow multiple selections (default: true if called without parameter)
+
+## Building Fields
+
+Use the `buildFields()` function to convert your fluent field definitions into the FormField array:
+
+```typescript
+import { buildFields } from './fields';
+
+export const MyFields = buildFields(
+    TextInput('name').label('Name').required(),
+    Textarea('bio').label('Bio').max(500)
+);
+```
+
+## Complete Example
+
+```typescript
+import { TextInput, Textarea, Number, Select, Date, buildFields } from '../lib/components/form-builder/fields';
+
+export const ContactFormFields = buildFields(
+    TextInput('name')
+        .label('Full Name')
+        .required()
+        .min(2)
+        .max(50)
+        .placeholder('Enter your full name'),
+    
+    TextInput('email')
+        .label('Email Address')
+        .required()
+        .pattern('^[^@]+@[^@]+\\.[^@]+$')
+        .placeholder('your.email@example.com'),
+    
+    Number('age')
+        .label('Age')
+        .min(18)
+        .max(120)
+        .step(1),
+    
+    Select('interests')
+        .label('Areas of Interest')
+        .options(['Web Development', 'Mobile Apps', 'E-commerce'])
+        .multiple()
+        .helperText('Select all that apply'),
+    
+    Textarea('message')
+        .label('Message')
+        .required()
+        .min(20)
+        .max(1000)
+        .placeholder('Tell us about your project...')
+);
+```
+
+This fluent interface makes form field definitions more readable and provides better IDE support with autocomplete and type checking. 

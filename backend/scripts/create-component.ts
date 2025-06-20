@@ -9,6 +9,10 @@ interface FormField {
     required?: boolean;
     placeholder?: string;
     options?: string[]; // For select fields
+    min?: number;
+    max?: number;
+    step?: number;
+    helperText?: string;
 }
 
 async function promptForField(): Promise<FormField | null> {
@@ -27,6 +31,7 @@ async function promptForField(): Promise<FormField | null> {
         label: string;
         required: boolean;
         placeholder?: string;
+        helperText?: string;
     }>([
         {
             type: 'select',
@@ -65,11 +70,54 @@ async function promptForField(): Promise<FormField | null> {
             type: 'input',
             name: 'placeholder',
             message: 'Enter a placeholder text (optional):'
+        },
+        {
+            type: 'input',
+            name: 'helperText',
+            message: 'Enter helper text (optional):'
         }
     ]);
 
-    // If it's a select field, ask for options
-    if (fieldResponse.type === 'select') {
+    let field: FormField = fieldResponse;
+
+    // Add constraints based on field type
+    if (fieldResponse.type === 'text' || fieldResponse.type === 'textarea') {
+        const { min, max } = await enquirer.prompt<{ min?: number; max?: number }>([
+            {
+                type: 'numeral',
+                name: 'min',
+                message: 'Minimum length (optional):'
+            },
+            {
+                type: 'numeral',
+                name: 'max',
+                message: 'Maximum length (optional):'
+            }
+        ]);
+        if (min) field.min = min;
+        if (max) field.max = max;
+    } else if (fieldResponse.type === 'number') {
+        const { min, max, step } = await enquirer.prompt<{ min?: number; max?: number; step?: number }>([
+            {
+                type: 'numeral',
+                name: 'min',
+                message: 'Minimum value (optional):'
+            },
+            {
+                type: 'numeral',
+                name: 'max',
+                message: 'Maximum value (optional):'
+            },
+            {
+                type: 'numeral',
+                name: 'step',
+                message: 'Step value (optional):'
+            }
+        ]);
+        if (min !== undefined) field.min = min;
+        if (max !== undefined) field.max = max;
+        if (step !== undefined) field.step = step;
+    } else if (fieldResponse.type === 'select') {
         const { options } = await enquirer.prompt<{ options: string }>({
             type: 'input',
             name: 'options',
@@ -79,14 +127,10 @@ async function promptForField(): Promise<FormField | null> {
                 return true;
             }
         });
-
-        return {
-            ...fieldResponse,
-            options: options.split(',').map(opt => opt.trim())
-        };
+        field.options = options.split(',').map(opt => opt.trim());
     }
 
-    return fieldResponse;
+    return field;
 }
 
 async function createComponent() {
@@ -129,13 +173,48 @@ async function createComponent() {
 }
 
 function generateComponentContent(componentName: string, fields: FormField[]): string {
-    const fieldsString = fields.length > 0 
-        ? JSON.stringify(fields, null, 4).replace(/"/g, "'")
-        : '[]';
+    // Generate imports based on field types
+    const fieldTypes = [...new Set(fields.map(f => f.type))];
+    const imports = fieldTypes.map(type => {
+        switch (type) {
+            case 'text': return 'TextInput';
+            case 'textarea': return 'Textarea';
+            case 'number': return 'Number';
+            case 'date': return 'Date';
+            case 'select': return 'Select';
+            default: return '';
+        }
+    }).filter(Boolean);
 
-    return `import type { FormField } from '../lib/components/form-builder/types';
+    const importStatement = `import { ${imports.join(', ')}, buildFields } from '../lib/components/form-builder/fields';`;
 
-export const ${componentName}Fields: FormField[] = ${fieldsString};
+    // Generate field definitions using fluent interface
+    const fieldDefinitions = fields.map(field => {
+        const fieldType = field.type === 'text' ? 'TextInput' : 
+                         field.type === 'textarea' ? 'Textarea' :
+                         field.type === 'number' ? 'Number' :
+                         field.type === 'date' ? 'Date' :
+                         field.type === 'select' ? 'Select' : 'TextInput';
+
+        let fieldDef = `    ${fieldType}('${field.name}')`;
+        fieldDef += `\n        .label('${field.label}')`;
+        
+        if (field.required) fieldDef += `\n        .required()`;
+        if (field.placeholder) fieldDef += `\n        .placeholder('${field.placeholder}')`;
+        if (field.min !== undefined) fieldDef += `\n        .min(${field.min})`;
+        if (field.max !== undefined) fieldDef += `\n        .max(${field.max})`;
+        if (field.step !== undefined) fieldDef += `\n        .step(${field.step})`;
+        if (field.helperText) fieldDef += `\n        .helperText('${field.helperText}')`;
+        if (field.options) fieldDef += `\n        .options([${field.options.map(opt => `'${opt}'`).join(', ')}])`;
+
+        return fieldDef;
+    }).join(',\n\n');
+
+    return `${importStatement}
+
+export const ${componentName}Fields = buildFields(
+${fieldDefinitions}
+);
 
 export const ${componentName}Component = {
     name: '${componentName}',

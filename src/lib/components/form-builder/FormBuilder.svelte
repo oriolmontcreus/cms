@@ -56,6 +56,11 @@
                         name={field.name}
                         placeholder={field.placeholder}
                         required={field.required}
+                        disabled={field.disabled}
+                        readonly={field.readonly}
+                        minlength={field.min}
+                        maxlength={field.max}
+                        pattern={field.pattern}
                         bind:value={formData[field.name]}
                     />
                 {:else if field.type === 'textarea'}
@@ -64,6 +69,10 @@
                         name={field.name}
                         placeholder={field.placeholder}
                         required={field.required}
+                        disabled={field.disabled}
+                        readonly={field.readonly}
+                        minlength={field.min}
+                        maxlength={field.max}
                         bind:value={formData[field.name] as string}
                     />
                 {:else if field.type === 'number'}
@@ -73,6 +82,11 @@
                         name={field.name}
                         placeholder={field.placeholder}
                         required={field.required}
+                        disabled={field.disabled}
+                        readonly={field.readonly}
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
                         bind:value={formData[field.name]}
                     />
                 {:else if field.type === 'date'}
@@ -81,21 +95,44 @@
                         id={field.name}
                         name={field.name}
                         required={field.required}
+                        disabled={field.disabled}
+                        readonly={field.readonly}
                         bind:value={formData[field.name]}
                     />
-                {:else if field.type === 'select' && field.options}
-                    <select
-                        id={field.name}
-                        name={field.name}
-                        class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        required={field.required}
-                        bind:value={formData[field.name]}
-                    >
-                        <option value="">{field.placeholder || `Select ${field.label}`}</option>
-                        {#each field.options as option}
-                            <option value={option}>{option}</option>
-                        {/each}
-                    </select>
+                {:else if field.type === 'select'}
+                    {#if field.multiple}
+                        <select
+                            id={field.name}
+                            name={field.name}
+                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            required={field.required}
+                            disabled={field.disabled}
+                            multiple
+                            bind:value={formData[field.name]}
+                        >
+                            {#each field.options || [] as option}
+                                <option value={option}>{option}</option>
+                            {/each}
+                        </select>
+                    {:else}
+                        <select
+                            id={field.name}
+                            name={field.name}
+                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            required={field.required}
+                            disabled={field.disabled}
+                            bind:value={formData[field.name]}
+                        >
+                            <option value="">{field.placeholder || `Select ${field.label}`}</option>
+                            {#each field.options || [] as option}
+                                <option value={option}>{option}</option>
+                            {/each}
+                        </select>
+                    {/if}
+                {/if}
+
+                {#if field.helperText}
+                    <p class="text-sm text-muted-foreground">{field.helperText}</p>
                 {/if}
             </div>
         {/each}
