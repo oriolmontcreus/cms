@@ -1,5 +1,5 @@
 import enquirer from 'enquirer';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 interface PageConfig {
@@ -7,26 +7,33 @@ interface PageConfig {
     slug: string;
 }
 
-async function createPageInDatabase(pageConfig: PageConfig) {
-    const response = await fetch('http://localhost:3001/api/pages', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            title: pageConfig.title,
-            slug: pageConfig.slug,
-            config: pageConfig
-        }),
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to create page in database: ${response.statusText}`);
+//TODO: THIS ISNT WORKING CURRENTLY
+async function updatePageRegistry(slug: string) {
+    const registryPath = join(process.cwd(), '..', 'cms', 'src', 'lib', 'page-registry.ts');
+    
+    try {
+        const registryContent = await readFile(registryPath, 'utf-8');
+        
+        // Add import for the new page
+        const importLine = `import { config as ${slug}Config } from '../pages/${slug}';`;
+        const updatedImports = registryContent.replace(
+            /(\/\/ Import all page configurations\n)/,
+            `$1${importLine}\n`
+        );
+        
+        // Add to page configs object
+        const configEntry = `    '${slug}': ${slug}Config,`;
+        const updatedRegistry = updatedImports.replace(
+            /(const pageConfigs: Record<string, PageConfig> = {\n)/,
+            `$1${configEntry}\n`
+        );
+        
+        await writeFile(registryPath, updatedRegistry);
+        console.log('✅ Updated page registry');
+    } catch (error) {
+        console.error('❌ Error updating page registry:', error);
+        console.log('💡 Please manually add the page to src/lib/page-registry.ts');
     }
-
-    const result = await response.json();
-    console.log('✅ Page created in database:', result);
-    return result;
 }
 
 async function createPage() {
@@ -71,18 +78,19 @@ async function createPage() {
 export const config: PageConfig = {
     title: "${pageConfig.title}",
     slug: "${pageConfig.slug}",
-    fields: []
+    components: []
 };
 `;
 
     await writeFile(pageConfigPath, configContent);
 
-    // Create the page in the database
-    await createPageInDatabase(pageConfig);
+    // Update the page registry
+    await updatePageRegistry(response.slug);
 
     console.log(`✅ Page "${response.title}" created successfully!`);
     console.log(`🔗 Configuration file created at: ${pageConfigPath}`);
     console.log('💡 Use the create-component script to add form components to this page.');
+    console.log('🚀 The page will be automatically available in your CMS after restart.');
 }
 
 createPage().catch(error => {
