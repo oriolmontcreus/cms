@@ -4,8 +4,20 @@
 	import { ModeWatcher } from "mode-watcher";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
+	import { onNavigate } from '$app/navigation';
 	
 	let { children } = $props();
+	
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <svelte:head>
@@ -20,6 +32,8 @@
 >
 	<AppSidebar variant="inset" />
 	<Sidebar.Inset>
-		{@render children()}
+		<div style="view-transition-name: main-content;" class="h-full">
+			{@render children()}
+		</div>
 	</Sidebar.Inset>
 </Sidebar.Provider>
