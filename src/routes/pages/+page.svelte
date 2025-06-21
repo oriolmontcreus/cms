@@ -3,6 +3,7 @@
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
     import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+    import SiteHeader from '$lib/components/site-header.svelte';
     import { handleGetPages } from '@/services/page.service';
     import { handleTriggerBuild } from '@/services/build.service';
     import type { Page } from '@shared/types/pages';
@@ -43,54 +44,61 @@
     }
 </script>
 
-<div class="max-w-4xl mx-auto py-8 px-4">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold">Pages</h1>
-        <div class="flex gap-2">
-            <Button 
-                onclick={handlePublish}
-                disabled={isBuilding}
-                variant="default"
-                class="bg-green-600 hover:bg-green-700"
-            >
-                {#if isBuilding}
-                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Publishing...
+<SiteHeader title="Pages" />
+<div class="flex flex-1 flex-col">
+    <div class="@container/main flex flex-1 flex-col gap-2">
+        <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div class="px-4 lg:px-6">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-3xl font-bold">Pages</h1>
+                    <div class="flex gap-2">
+                        <Button 
+                            onclick={handlePublish}
+                            disabled={isBuilding}
+                            variant="default"
+                            class="bg-green-600 hover:bg-green-700"
+                        >
+                            {#if isBuilding}
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Publishing...
+                            {:else}
+                                🚀 Publish Site
+                            {/if}
+                        </Button>
+                        <Button onclick={() => goto('/pages/new')}>Create New Page</Button>
+                    </div>
+                </div>
+
+                {#if loading}
+                    <div class="text-center py-8">
+                        <div class="text-gray-500">Loading pages...</div>
+                    </div>
+                {:else if error}
+                    <div class="text-red-500">{error}</div>
+                {:else if pages.length === 0}
+                    <Card>
+                        <CardContent class="py-8">
+                            <div class="text-center text-gray-500">
+                                No pages found. Create your first page to get started.
+                            </div>
+                        </CardContent>
+                    </Card>
                 {:else}
-                    🚀 Publish Site
+                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {#each pages as page}
+                            <Card class="cursor-pointer hover:bg-gray-50" onclick={() => handlePageClick(page.slug)}>
+                                <CardHeader>
+                                    <CardTitle>{page.title}</CardTitle>
+                                    <CardDescription>/{page.slug}</CardDescription>
+                                    {#if page.components && page.components.length > 0}
+                                        <div class="text-sm text-blue-600">{page.components.length} component(s)</div>
+                                    {/if}
+                                </CardHeader>
+                            </Card>
+                        {/each}
+                    </div>
                 {/if}
-            </Button>
-            <Button onclick={() => goto('/pages/new')}>Create New Page</Button>
+            </div>
         </div>
     </div>
-
-    {#if loading}
-        <div class="text-center py-8">
-            <div class="text-gray-500">Loading pages...</div>
-        </div>
-    {:else if error}
-        <div class="text-red-500">{error}</div>
-    {:else if pages.length === 0}
-        <Card>
-            <CardContent class="py-8">
-                <div class="text-center text-gray-500">
-                    No pages found. Create your first page to get started.
-                </div>
-            </CardContent>
-        </Card>
-    {:else}
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {#each pages as page}
-                <Card class="cursor-pointer hover:bg-gray-50" onclick={() => handlePageClick(page.slug)}>
-                    <CardHeader>
-                        <CardTitle>{page.title}</CardTitle>
-                        <CardDescription>/{page.slug}</CardDescription>
-                        {#if page.components && page.components.length > 0}
-                            <div class="text-sm text-blue-600">{page.components.length} component(s)</div>
-                        {/if}
-                    </CardHeader>
-                </Card>
-            {/each}
-        </div>
-    {/if}
 </div>
