@@ -44,17 +44,7 @@ export class PageController {
       return c.json(page);
   }
 
-  static async saveFormData(c: Context) {
-      const slug = c.req.param("slug");
-      const body = await c.req.json();
-      
-      if (!body.formData) {
-        throw new BadRequest("Form data is required");
-      }
 
-      const page = await PageService.saveFormData(slug, body.formData);
-      return c.json(page);
-  }
 
   static async updateComponents(c: Context) {
       const slug = c.req.param("slug");

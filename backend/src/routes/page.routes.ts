@@ -6,6 +6,6 @@ export const pageRouter = new Hono()
   .get("/:slug", PageController.getPageBySlug)
   .post("/", PageController.createPage)
   .put("/:slug", PageController.updatePage)
-  .post("/:slug/form-data", PageController.saveFormData)
+
   .put("/:slug/components", PageController.updateComponents)
   .put("/:slug/components/:instanceId", PageController.updateComponentFormData); 

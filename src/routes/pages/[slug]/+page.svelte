@@ -8,7 +8,6 @@
 
     let pageData: Page | null = null;
     let config: PageConfig | null = null;
-    let initialFormData: Record<string, any> = {};
     let loading = true;
     let error: string | null = null;
 
@@ -20,14 +19,6 @@
             
             if (pageData && pageData.config) {
                 config = pageData.config as PageConfig;
-                
-                // Convert components array back to formData format for FormBuilder
-                if (pageData.components && pageData.components.length > 0) {
-                    initialFormData = {};
-                    pageData.components.forEach(component => {
-                        initialFormData[component.instanceId] = component.formData;
-                    });
-                }
             } else {
                 error = 'Page not found or no configuration available';
             }
@@ -67,7 +58,7 @@
         <FormBuilder 
             {config} 
             slug={pageData.slug} 
-            initialData={initialFormData}
+            components={pageData.components}
         />
     </div>
 {:else}

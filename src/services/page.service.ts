@@ -1,5 +1,5 @@
 import { api } from "@/lib/utils/api";
-import type { Page, ComponentInstance } from "@shared/types/pages";
+import type { Page, Component } from "@shared/types/pages";
 import type { PageConfig } from "@/lib/components/form-builder/types";
 import { getPageConfig } from "@/lib/page-registry";
 import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
@@ -35,12 +35,7 @@ export async function updatePage(slug: string, content: string): Promise<Page> {
     return data;
 }
 
-export async function saveFormData(slug: string, formData: Record<string, any>): Promise<Page> {
-    const { data } = await api.post<Page>(`${root}/${slug}/form-data`, { formData });
-    return data;
-}
-
-export async function updateComponents(slug: string, components: ComponentInstance[]): Promise<Page> {
+export async function updateComponents(slug: string, components: Component[]): Promise<Page> {
     const { data } = await api.put<Page>(`${root}/${slug}/components`, { components });
     return data;
 }
@@ -82,16 +77,7 @@ export async function handleUpdatePage(slug: string, content: string): Promise<P
     return err ? null : data;
 }
 
-export async function handleSaveFormData(slug: string, formData: Record<string, any>): Promise<Page | null> {
-    const [data, err] = await fetchWithToast(saveFormData(slug, formData), {
-        loading: 'Saving form data...',
-        success: () => `Form data saved successfully.`,
-        error: 'Error saving form data. Please try again.'
-    });
-    return err ? null : data;
-}
-
-export async function handleUpdateComponents(slug: string, components: ComponentInstance[]): Promise<Page | null> {
+export async function handleUpdateComponents(slug: string, components: Component[]): Promise<Page | null> {
     const [data, err] = await fetchWithToast(updateComponents(slug, components), {
         loading: 'Updating components...',
         success: () => `Components updated successfully.`,

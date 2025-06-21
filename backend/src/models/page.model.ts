@@ -4,12 +4,11 @@ export interface IPage {
   title: string;
   slug: string;
   content?: string;
-  formData?: Record<string, any>; // JSON data from form submissions (for migration)
-  config?: Record<string, any>; // Form configuration
-  components?: Array<{
+  config?: Record<string, any>;
+  components: Array<{
     componentName: string;
     instanceId: string;
-    displayName?: string;
+    displayName: string;
     formData: Record<string, any>;
   }>;
   createdAt: Date;
@@ -37,20 +36,20 @@ const pageSchema = new Schema<IPageDocument>({
     type: String,
     default: "",
   },
-  formData: {
-    type: Schema.Types.Mixed,
-    default: {},
-  },
   config: {
     type: Schema.Types.Mixed,
     default: {},
   },
-  components: [{
-    componentName: { type: String, required: true },
-    instanceId: { type: String, required: true },
-    displayName: String,
-    formData: { type: Schema.Types.Mixed, default: {} }
-  }]
+  components: {
+    type: [{
+      componentName: { type: String, required: true },
+      instanceId: { type: String, required: true },
+      displayName: { type: String, required: true },
+      formData: { type: Schema.Types.Mixed, default: {} },
+      _id: false
+    }],
+    default: []
+  }
 }, {
   timestamps: true,
 });

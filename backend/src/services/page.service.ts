@@ -1,4 +1,4 @@
-import { Page, ComponentInstance } from "@shared/types/pages.js";
+import { Page, Component } from "@shared/types/pages.js";
 import { IPageDocument, PageModel } from "@/src/models/page.model.js";
 import fs from "fs/promises";
 import path from "path";
@@ -7,52 +7,25 @@ export type CreatePagePayload = {
   title: string;
   slug: string;
   config?: Record<string, any>;
-  components?: ComponentInstance[];
+  components?: Component[];
 };
 
 export type UpdatePagePayload = {
   content?: string;
   config?: Record<string, any>;
-  components?: ComponentInstance[];
+  components?: Component[];
 };
 
-const toPageDTO = (doc: IPageDocument): Page => {
-  // Convert formData to components if components array is empty but formData exists
-  let components = doc.components || [];
-  
-  if (components.length === 0 && doc.formData && Object.keys(doc.formData).length > 0) {
-    components = Object.entries(doc.formData).map(([instanceId, formData]) => {
-      // Infer component name from instanceId or formData structure
-      let componentName = 'Hero'; // Default fallback
-      
-      if (instanceId.includes('hero')) {
-        componentName = 'Hero';
-      } else if (instanceId.includes('contact')) {
-        componentName = 'ContactForm';
-      } else if (instanceId.includes('profile')) {
-        componentName = 'UserProfile';
-      }
-      
-      return {
-        componentName,
-        instanceId,
-        displayName: instanceId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        formData: formData as Record<string, any>
-      };
-    });
-  }
-
-  return {
-    _id: doc._id.toString(),
-    title: doc.title,
-    slug: doc.slug,
-    content: doc.content,
-    config: doc.config,
-    components,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString()
-  };
-};
+const toPageDTO = (doc: IPageDocument): Page => ({
+  _id: doc._id.toString(),
+  title: doc.title,
+  slug: doc.slug,
+  content: doc.content,
+  config: doc.config,
+  components: doc.components,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString()
+});
 
 // Helper function to update the JSON file
 const updateJsonFile = async (): Promise<void> => {
@@ -109,22 +82,9 @@ export class PageService {
     return toPageDTO(page);
   }
 
-  static async saveFormData(slug: string, formData: Record<string, any>): Promise<Page> {
-    const page = await PageModel.findOneAndUpdate(
-      { slug },
-      { $set: { formData } },
-      { new: true }
-    );
-    
-    if (!page) {
-      throw new Error("Page not found");
-    }
 
-    await updateJsonFile();
-    return toPageDTO(page);
-  }
 
-  static async updateComponents(slug: string, components: ComponentInstance[]): Promise<Page> {
+  static async updateComponents(slug: string, components: Component[]): Promise<Page> {
     const page = await PageModel.findOneAndUpdate(
       { slug },
       { $set: { components } },

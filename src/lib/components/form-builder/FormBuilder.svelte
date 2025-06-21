@@ -6,35 +6,25 @@
     import { Label } from '@components/ui/label';
     import { Textarea } from '@components/ui/textarea';
     import { handleUpdateComponents } from '@/services/page.service';
-    import type { ComponentInstance } from '@shared/types/pages';
-    import { onMount } from 'svelte';
+    import type { Component } from '@shared/types/pages';
 
     export let config: PageConfig;
     export let slug: string;
-    export let initialData: Record<string, any> | undefined = undefined;
+    export let components: Component[] = [];
 
-    // Initialize form data structure immediately
     let formData: FormData = {};
     
-    // Initialize the structure for each component
     config.components.forEach(componentInstance => {
         formData[componentInstance.id] = {};
+        const existingComponent = components.find(c => c.instanceId === componentInstance.id);
         
-        // Initialize each field with empty values or initial data
         componentInstance.component.fields.forEach(field => {
-            if (initialData?.[componentInstance.id]?.[field.name] !== undefined) {
-                formData[componentInstance.id][field.name] = initialData[componentInstance.id][field.name];
+            const existingValue = existingComponent?.formData[field.name];
+            if (existingValue !== undefined) {
+                formData[componentInstance.id][field.name] = existingValue;
             } else {
-                // Initialize with appropriate empty values based on field type
-                if (field.type === 'number') {
-                    formData[componentInstance.id][field.name] = null;
-                } else if (field.type === 'date') {
-                    formData[componentInstance.id][field.name] = '';
-                } else if (field.type === 'select' && field.multiple) {
-                    formData[componentInstance.id][field.name] = [];
-                } else {
-                    formData[componentInstance.id][field.name] = '';
-                }
+                formData[componentInstance.id][field.name] = field.type === 'number' ? null :
+                    field.type === 'select' && field.multiple ? [] : '';
             }
         });
     });
@@ -45,23 +35,14 @@
         try {
             isSubmitting = true;
             
-            // Convert formData to components format
-            const components: ComponentInstance[] = config.components.map(componentInstance => {
-                const instanceFormData = formData[componentInstance.id] || {};
-                
-                return {
-                    componentName: componentInstance.component.name,
-                    instanceId: componentInstance.id,
-                    displayName: componentInstance.displayName || componentInstance.component.name,
-                    formData: instanceFormData
-                };
-            });
+            const updatedComponents: Component[] = config.components.map(componentInstance => ({
+                componentName: componentInstance.component.name,
+                instanceId: componentInstance.id,
+                displayName: componentInstance.displayName || componentInstance.component.name,
+                formData: formData[componentInstance.id] || {}
+            }));
             
-            const result = await handleUpdateComponents(slug, components);
-            
-            if (result) {
-                console.log('Components saved:', result);
-            }
+            await handleUpdateComponents(slug, updatedComponents);
         } catch (error) {
             console.error('Error saving components:', error);
         } finally {
