@@ -4,6 +4,7 @@
     import { Button } from '$lib/components/ui/button';
     import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
     import SiteHeader from '$lib/components/site-header.svelte';
+    import PageCard from '$lib/components/PageCard.svelte';
     import { handleGetPages } from '@/services/page.service';
     import { handleTriggerBuild } from '@/services/build.service';
     import type { Page } from '@shared/types/pages';
@@ -86,15 +87,7 @@
                 {:else}
                     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {#each pages as page}
-                            <Card class="cursor-pointer hover:bg-gray-50" onclick={() => handlePageClick(page.slug)}>
-                                <CardHeader>
-                                    <CardTitle>{page.title}</CardTitle>
-                                    <CardDescription>/{page.slug}</CardDescription>
-                                    {#if page.components && page.components.length > 0}
-                                        <div class="text-sm text-blue-600">{page.components.length} component(s)</div>
-                                    {/if}
-                                </CardHeader>
-                            </Card>
+                            <PageCard {page} onclick={() => handlePageClick(page.slug)} />
                         {/each}
                     </div>
                 {/if}
