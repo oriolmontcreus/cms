@@ -27,7 +27,7 @@ export async function login(
 
   const payload: DecodedSession = {
     email: user.email,
-    _id: user._id,
+    _id: user._id.toString(),
   };
 
   const userObj = user.toJSON() as unknown as UserWithPassword;
@@ -65,9 +65,9 @@ export async function getCurrentUser(token: string | undefined): Promise<User> {
   }
 
   try {
-    // First try with JWT token (original method)
     const res: JWTPayload = await verifyToken(token);
     if (!isValidObjectId(res._id)) throw new InvalidToken();
+    
     const user = await getUserById(String(res._id));
 
     // Cache the result

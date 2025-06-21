@@ -8,6 +8,7 @@ import {
   setCookie,
   deleteCookie,
 } from 'hono/cookie'
+import { SESSION_COOKIE, ENV, Environment } from "@/constants/env.js";
 
 export class AuthController {
   async login(c: Context) {
@@ -18,14 +19,14 @@ export class AuthController {
 
     const { token, user } = await authService.login(email, password);
 
-    //TODO: IS THIS WELL DONE ENOUGH?
     const cookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: ENV === Environment.PRODUCTION,
       path: "/",
       sameSite: "Lax" as const,
+      maxAge: 24 * 60 * 60, // 24 hours in seconds
     };
-    setCookie(c, "session", token, cookieOptions);
+    setCookie(c, SESSION_COOKIE, token, cookieOptions);
     return c.json(user);
   }
 
@@ -43,13 +44,12 @@ export class AuthController {
   }
 
   async getCurrentUser(c: Context) {
-    const token = getCookie(c, "session");
-    const user = await authService.getCurrentUser(token);
+    const user = c.get("user");
     return c.json(user);
   }
 
   logout(c: Context) {
-    deleteCookie(c, "session");
+    deleteCookie(c, SESSION_COOKIE);
     return c.json(null);
   }
 }

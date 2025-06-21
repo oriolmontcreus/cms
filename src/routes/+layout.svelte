@@ -6,10 +6,18 @@
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
 	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import { autoLogin } from '@/services/auth.service';
 	
 	let { children } = $props();
 	
 	const isLoginPage = $derived($page.route.id === '/login');
+	let authInitialized = $state(false);
+	
+	onMount(async () => {
+		await autoLogin();
+		authInitialized = true;
+	});
 	
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
@@ -30,7 +38,14 @@
 <Toaster richColors />
 <ModeWatcher defaultMode="dark" />
 
-{#if isLoginPage}
+{#if !authInitialized}
+	<div class="flex h-screen items-center justify-center">
+		<div class="text-center">
+			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+			<p class="text-muted-foreground">Loading...</p>
+		</div>
+	</div>
+{:else if isLoginPage}
 	<div style="view-transition-name: main-content;" class="h-full">
 		{@render children()}
 	</div>

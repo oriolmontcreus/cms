@@ -11,7 +11,7 @@ const app = new Hono()
 app.use('*', cors({
     origin: ['http://localhost:5173'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control'],
     exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
     maxAge: 600,
     credentials: true

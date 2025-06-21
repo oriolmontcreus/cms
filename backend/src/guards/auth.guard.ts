@@ -8,10 +8,11 @@ import { Roles } from "@shared/constants/role.type.js";
 
 export function withAuth(
   handler: (c: Context, next?: Next) => any,
-  requiredRolesMask: number = Roles.CLIENT,
+  requiredRolesMask: number = Roles.DEVELOPER,
 ) {
   return async function (c: Context, next?: Next) {
     const sessionCookie = getCookie(c, SESSION_COOKIE);
+    
     if (!sessionCookie) {
       log("WARN", `Auth failed: Missing session cookie at ${c.req.path}`);
       throw new Unauthorized("Missing authentication token. Please log in.");
