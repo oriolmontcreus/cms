@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn, type WithElementRef } from "$lib/utils.js";
 	import type { HTMLAttributes } from "svelte/elements";
-
+	import { ScrollArea } from "$lib/components/ui/scroll-area";
 	let {
 		ref = $bindable(null),
 		class: className,
@@ -20,5 +20,7 @@
 	)}
 	{...restProps}
 >
+<ScrollArea class=" h-[calc(100vh-16px)]">
 	{@render children?.()}
-</main>
+</ScrollArea>
+	</main>
