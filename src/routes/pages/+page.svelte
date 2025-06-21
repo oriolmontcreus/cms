@@ -51,7 +51,6 @@
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-bold">Pages</h1>
                     <div class="flex gap-2">
                         <Button 
                             onclick={handlePublish}

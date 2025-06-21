@@ -44,7 +44,7 @@
 					{#snippet child({ props })}
 						<a href="##" {...props}>
 							<InnerShadowTopIcon class="!size-5" />
-							<span class="text-base font-semibold">Acme Inc.</span>
+							<span class="text-base font-semibold">Froggy</span>
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>

@@ -5,6 +5,7 @@
     import { handleGetPageBySlug } from '@/services/page.service';
     import type { Page } from '@shared/types/pages';
     import { onMount } from 'svelte';
+    import SiteHeader from '$lib/components/site-header.svelte';
 
     let pageData: Page | null = null;
     let config: PageConfig | null = null;
@@ -29,40 +30,35 @@
             loading = false;
         }
     });
-
-    async function handleSubmit(data: FormData) {
-        try {
-            // Here you would typically save the form data
-            console.log('Form data:', data);
-            // You can implement your save logic here
-        } catch (e) {
-            console.error('Failed to save form data:', e);
-        }
-    }
 </script>
 
-{#if loading}
-    <div class="flex items-center justify-center min-h-[200px]">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-    </div>
-{:else if error}
-    <div class="max-w-2xl mx-auto py-8">
-        <div class="text-red-500 text-center">{error}</div>
-    </div>
-{:else if config && pageData}
-    <div class="max-w-2xl mx-auto py-8">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">{config.title}</h1>
+<SiteHeader title={config?.title || 'Page'} />
+<div class="flex flex-1 flex-col">
+    <div class="@container/main flex flex-1 flex-col gap-2">
+        <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+            <div class="px-4 lg:px-6">
+                {#if loading}
+                    <div class="flex items-center justify-center min-h-[200px]">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    </div>
+                {:else if error}
+                    <div class="max-w-2xl mx-auto py-8">
+                        <div class="text-red-500 text-center">{error}</div>
+                    </div>
+                {:else if config && pageData}
+                    <div class="max-w-2xl mx-auto">
+                        <FormBuilder 
+                            {config} 
+                            slug={pageData.slug} 
+                            components={pageData.components}
+                        />
+                    </div>
+                {:else}
+                    <div class="max-w-2xl mx-auto py-8">
+                        <div class="text-center text-gray-500">Page not found</div>
+                    </div>
+                {/if}
+            </div>
         </div>
-        
-        <FormBuilder 
-            {config} 
-            slug={pageData.slug} 
-            components={pageData.components}
-        />
     </div>
-{:else}
-    <div class="max-w-2xl mx-auto py-8">
-        <div class="text-center text-gray-500">Page not found</div>
-    </div>
-{/if} 
+</div> 
