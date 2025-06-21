@@ -8,6 +8,8 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { autoLogin } from '@/services/auth.service';
+	import PageLoading from '$lib/components/PageLoading.svelte';
+	import { fade } from 'svelte/transition';
 	
 	let { children } = $props();
 	
@@ -35,29 +37,28 @@
     <title>Froggy</title>
 </svelte:head>
 
-<Toaster richColors />
-<ModeWatcher defaultMode="dark" />
-
-{#if !authInitialized}
-	<div class="flex h-screen items-center justify-center">
-		<div class="text-center">
-			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-			<p class="text-muted-foreground">Loading...</p>
-		</div>
-	</div>
-{:else if isLoginPage}
-	<div style="view-transition-name: main-content;" class="h-full">
-		{@render children()}
-	</div>
-{:else}
-	<Sidebar.Provider
-		style="--sidebar-width: calc(var(--spacing) * 72); --header-height: calc(var(--spacing) * 12);"
-	>
-		<AppSidebar variant="inset" />
-		<Sidebar.Inset>
+{#if authInitialized}
+	<main in:fade={{ duration: 400 }}>
+		{#if isLoginPage}
 			<div style="view-transition-name: main-content;" class="h-full">
 				{@render children()}
 			</div>
-		</Sidebar.Inset>
-	</Sidebar.Provider>
+		{:else}
+			<Sidebar.Provider
+				style="--sidebar-width: calc(var(--spacing) * 72); --header-height: calc(var(--spacing) * 12);"
+			>
+				<AppSidebar variant="inset" />
+				<Sidebar.Inset>
+					<div style="view-transition-name: main-content;" class="h-full">
+						{@render children()}
+					</div>
+				</Sidebar.Inset>
+			</Sidebar.Provider>
+		{/if}
+	</main>
+{:else}
+	<PageLoading />
 {/if}
+
+<Toaster richColors />
+<ModeWatcher defaultMode="dark" />
