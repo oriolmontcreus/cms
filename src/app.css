@@ -2,6 +2,17 @@
 
 @import "tw-animate-css";
 
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+::-moz-selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
