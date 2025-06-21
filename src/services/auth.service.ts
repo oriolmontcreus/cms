@@ -3,6 +3,7 @@ import { api } from "@/lib/utils/api";
 import type { User } from "@shared/types/user.type";
 import { fetchWithToast } from "@/lib/utils/safeFetch";
 import { goto } from "$app/navigation";
+import { get } from "svelte/store";
 
 const root = "/auth";
 
@@ -33,6 +34,7 @@ export async function autoLogin(): Promise<User | null> {
         loggedUser.set(null);
         return null;
     } finally {
+        if (get(loggedUser) === null) goto('/login');
         clearTimeout(timeoutId);
     }
 }
