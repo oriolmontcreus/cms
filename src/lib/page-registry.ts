@@ -16,4 +16,8 @@ export function getAllPageSlugs(): string[] {
     return Object.keys(pageConfigs);
 }
 
+export function getAllPagesWithData(): Record<string, PageConfig> {
+    return pageConfigs;
+}
+
 export default pageConfigs; 
