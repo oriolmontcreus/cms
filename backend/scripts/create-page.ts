@@ -7,32 +7,75 @@ interface PageConfig {
     slug: string;
 }
 
-//TODO: THIS ISNT WORKING CURRENTLY
 async function updatePageRegistry(slug: string) {
     const registryPath = join(process.cwd(), '..', 'cms', 'src', 'lib', 'page-registry.ts');
     
     try {
         const registryContent = await readFile(registryPath, 'utf-8');
         
-        // Add import for the new page
-        const importLine = `import { config as ${slug}Config } from '../pages/${slug}';`;
-        const updatedImports = registryContent.replace(
-            /(\/\/ Import all page configurations\n)/,
-            `$1${importLine}\n`
-        );
+        // Convert slug to camelCase for the config variable name
+        const configVarName = slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
         
-        // Add to page configs object
-        const configEntry = `    '${slug}': ${slug}Config,`;
-        const updatedRegistry = updatedImports.replace(
-            /(const pageConfigs: Record<string, PageConfig> = {\n)/,
-            `$1${configEntry}\n`
-        );
+        const lines = registryContent.split('\n');
+        let updatedLines = [...lines];
         
-        await writeFile(registryPath, updatedRegistry);
+        // Find where to add the import (after the last import statement)
+        const importLine = `import { config as ${configVarName} } from '../pages/${slug}';`;
+        let lastImportIndex = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith('import { config as ') && lines[i].includes('Config }')) {
+                lastImportIndex = i;
+            }
+        }
+        
+        if (lastImportIndex !== -1) {
+            updatedLines.splice(lastImportIndex + 1, 0, importLine);
+        } else {
+            // Fallback: add after the comment line
+            const commentIndex = lines.findIndex(line => line.includes('// Import all page configurations'));
+            if (commentIndex !== -1) {
+                updatedLines.splice(commentIndex + 1, 0, importLine);
+            }
+        }
+        
+        // Find where to add the config entry 
+        const configEntry = `    [${configVarName}.slug]: ${configVarName},`;
+        let configObjectEndIndex = -1;
+        let lastConfigLineIndex = -1;
+        
+        // First, find the pageConfigs object and locate existing entries
+        for (let i = 0; i < updatedLines.length; i++) {
+            const line = updatedLines[i].trim();
+            
+            // Look for lines that contain config entries (format: 'key': configVar or [config.slug]: configVar)
+            if ((line.includes("': ") || line.includes("]: ")) && line.includes("Config")) {
+                lastConfigLineIndex = i;
+                // Add comma if this line doesn't already have one
+                if (!line.endsWith(',')) {
+                    updatedLines[i] = updatedLines[i] + ',';
+                }
+            }
+            
+            // Find the closing brace of the pageConfigs object
+            if (line === '};' && lastConfigLineIndex !== -1 && i > lastConfigLineIndex) {
+                configObjectEndIndex = i;
+                break;
+            }
+        }
+        
+        if (configObjectEndIndex !== -1) {
+            updatedLines.splice(configObjectEndIndex, 0, configEntry);
+        }
+        
+        const updatedContent = updatedLines.join('\n');
+        await writeFile(registryPath, updatedContent);
         console.log('✅ Updated page registry');
     } catch (error) {
         console.error('❌ Error updating page registry:', error);
-        console.log('💡 Please manually add the page to src/lib/page-registry.ts');
+        console.log('💡 Please manually add the following to src/lib/page-registry.ts:');
+        console.log(`   Import: import { config as ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config } from '../pages/${slug}';`);
+        console.log(`   Config: '${slug}': ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config,`);
     }
 }
 
@@ -83,12 +126,12 @@ export const config: PageConfig = {
 `;
 
     await writeFile(pageConfigPath, configContent);
+    console.log(`✅ Page configuration file created at: ${pageConfigPath}`);
 
-    // Update the page registry
+    // Update the page registry AFTER creating the page file
     await updatePageRegistry(response.slug);
 
     console.log(`✅ Page "${response.title}" created successfully!`);
-    console.log(`🔗 Configuration file created at: ${pageConfigPath}`);
     console.log('💡 Use the create-component script to add form components to this page.');
     console.log('🚀 The page will be automatically available in your CMS after restart.');
 }
