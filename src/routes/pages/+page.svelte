@@ -8,6 +8,7 @@
     import { handleGetPages } from '@/services/page.service';
     import { handleTriggerBuild } from '@/services/build.service';
     import type { Page } from '@shared/types/pages';
+    import { ScrollArea } from '$lib/components/ui/scroll-area';
 
     let pages: Page[] = [];
     let loading = true;
@@ -47,7 +48,7 @@
 
 <SiteHeader title="Pages" />
 <div class="flex flex-1 flex-col">
-    <div class="@container/main flex flex-1 flex-col gap-2">
+    <ScrollArea class="@container/main flex flex-col gap-2 max-h-[calc(100dvh-64px)]">
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
                 <div class="flex justify-between items-center mb-8">
@@ -92,5 +93,5 @@
                 {/if}
             </div>
         </div>
-    </div>
+    </ScrollArea>
 </div>
