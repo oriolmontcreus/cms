@@ -51,9 +51,13 @@ async function updatePageRegistry(slug: string) {
             // Look for lines that contain config entries (format: 'key': configVar or [config.slug]: configVar)
             if ((line.includes("': ") || line.includes("]: ")) && line.includes("Config")) {
                 lastConfigLineIndex = i;
-                // Add comma if this line doesn't already have one
-                if (!line.endsWith(',')) {
+                // Add comma if this line doesn't already have one and doesn't have a trailing comma on next line
+                if (!line.endsWith(',') && i + 1 < updatedLines.length && updatedLines[i + 1].trim() !== ',') {
                     updatedLines[i] = updatedLines[i] + ',';
+                }
+                // Remove standalone comma on next line if it exists
+                if (i + 1 < updatedLines.length && updatedLines[i + 1].trim() === ',') {
+                    updatedLines.splice(i + 1, 1);
                 }
             }
             
