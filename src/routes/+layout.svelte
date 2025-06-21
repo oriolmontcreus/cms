@@ -5,8 +5,11 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
 	import { onNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
 	
 	let { children } = $props();
+	
+	const isLoginPage = $derived($page.route.id === '/login');
 	
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
@@ -27,13 +30,19 @@
 <Toaster richColors />
 <ModeWatcher defaultMode="dark" />
 
-<Sidebar.Provider
-	style="--sidebar-width: calc(var(--spacing) * 72); --header-height: calc(var(--spacing) * 12);"
->
-	<AppSidebar variant="inset" />
-	<Sidebar.Inset>
-		<div style="view-transition-name: main-content;" class="h-full">
-			{@render children()}
-		</div>
-	</Sidebar.Inset>
-</Sidebar.Provider>
+{#if isLoginPage}
+	<div style="view-transition-name: main-content;" class="h-full">
+		{@render children()}
+	</div>
+{:else}
+	<Sidebar.Provider
+		style="--sidebar-width: calc(var(--spacing) * 72); --header-height: calc(var(--spacing) * 12);"
+	>
+		<AppSidebar variant="inset" />
+		<Sidebar.Inset>
+			<div style="view-transition-name: main-content;" class="h-full">
+				{@render children()}
+			</div>
+		</Sidebar.Inset>
+	</Sidebar.Provider>
+{/if}
