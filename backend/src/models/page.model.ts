@@ -4,8 +4,14 @@ export interface IPage {
   title: string;
   slug: string;
   content?: string;
-  formData?: Record<string, any>; // JSON data from form submissions
+  formData?: Record<string, any>; // JSON data from form submissions (for migration)
   config?: Record<string, any>; // Form configuration
+  components?: Array<{
+    componentName: string;
+    instanceId: string;
+    displayName?: string;
+    formData: Record<string, any>;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,7 +44,13 @@ const pageSchema = new Schema<IPageDocument>({
   config: {
     type: Schema.Types.Mixed,
     default: {},
-  }
+  },
+  components: [{
+    componentName: { type: String, required: true },
+    instanceId: { type: String, required: true },
+    displayName: String,
+    formData: { type: Schema.Types.Mixed, default: {} }
+  }]
 }, {
   timestamps: true,
 });

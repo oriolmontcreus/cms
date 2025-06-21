@@ -1,5 +1,5 @@
 import { api } from "@/lib/utils/api";
-import type { Page } from "@shared/types/pages";
+import type { Page, ComponentInstance } from "@shared/types/pages";
 import type { PageConfig } from "@/lib/components/form-builder/types";
 import { getPageConfig } from "@/lib/page-registry";
 import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
@@ -37,6 +37,16 @@ export async function updatePage(slug: string, content: string): Promise<Page> {
 
 export async function saveFormData(slug: string, formData: Record<string, any>): Promise<Page> {
     const { data } = await api.post<Page>(`${root}/${slug}/form-data`, { formData });
+    return data;
+}
+
+export async function updateComponentInstances(slug: string, componentInstances: ComponentInstance[]): Promise<Page> {
+    const { data } = await api.put<Page>(`${root}/${slug}/components`, { componentInstances });
+    return data;
+}
+
+export async function updateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page> {
+    const { data } = await api.put<Page>(`${root}/${slug}/components/${instanceId}`, { formData });
     return data;
 }
 //endregion
@@ -77,6 +87,24 @@ export async function handleSaveFormData(slug: string, formData: Record<string, 
         loading: 'Saving form data...',
         success: () => `Form data saved successfully.`,
         error: 'Error saving form data. Please try again.'
+    });
+    return err ? null : data;
+}
+
+export async function handleUpdateComponentInstances(slug: string, componentInstances: ComponentInstance[]): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(updateComponentInstances(slug, componentInstances), {
+        loading: 'Updating components...',
+        success: () => `Components updated successfully.`,
+        error: 'Error updating components. Please try again.'
+    });
+    return err ? null : data;
+}
+
+export async function handleUpdateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(updateComponentFormData(slug, instanceId, formData), {
+        loading: 'Updating component data...',
+        success: () => `Component data updated successfully.`,
+        error: 'Error updating component data. Please try again.'
     });
     return err ? null : data;
 }

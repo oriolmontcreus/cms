@@ -51,7 +51,10 @@
     </div>
 {:else if config && pageData}
     <div class="max-w-2xl mx-auto py-8">
-        <h1 class="text-2xl font-bold mb-6">{config.title}</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">{config.title}</h1>
+        </div>
+        
         <FormBuilder 
             {config} 
             slug={pageData.slug} 

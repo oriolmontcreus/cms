@@ -4,11 +4,13 @@
     import { Button } from '$lib/components/ui/button';
     import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
     import { handleGetPages } from '@/services/page.service';
+    import { handleTriggerBuild } from '@/services/build.service';
     import type { Page } from '@shared/types/pages';
 
     let pages: Page[] = [];
     let loading = true;
     let error: string | null = null;
+    let isBuilding = false;
 
     onMount(async () => {
         try {
@@ -25,12 +27,41 @@
     function handlePageClick(slug: string) {
         goto(`/pages/${slug}`);
     }
+
+    async function handlePublish() {
+        try {
+            isBuilding = true;
+            const result = await handleTriggerBuild();
+            if (result) {
+                console.log('Build completed:', result);
+            }
+        } catch (e) {
+            console.error('Failed to publish:', e);
+        } finally {
+            isBuilding = false;
+        }
+    }
 </script>
 
 <div class="max-w-4xl mx-auto py-8 px-4">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold">Pages</h1>
-        <Button onclick={() => goto('/pages/new')}>Create New Page</Button>
+        <div class="flex gap-2">
+            <Button 
+                onclick={handlePublish}
+                disabled={isBuilding}
+                variant="default"
+                class="bg-green-600 hover:bg-green-700"
+            >
+                {#if isBuilding}
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Publishing...
+                {:else}
+                    🚀 Publish Site
+                {/if}
+            </Button>
+            <Button onclick={() => goto('/pages/new')}>Create New Page</Button>
+        </div>
     </div>
 
     {#if loading}
@@ -54,8 +85,8 @@
                     <CardHeader>
                         <CardTitle>{page.title}</CardTitle>
                         <CardDescription>/{page.slug}</CardDescription>
-                        {#if page.formData && Object.keys(page.formData).length > 0}
-                            <div class="text-sm text-green-600">Has form data</div>
+                        {#if page.components && page.components.length > 0}
+                            <div class="text-sm text-blue-600">{page.components.length} component(s)</div>
                         {/if}
                     </CardHeader>
                 </Card>

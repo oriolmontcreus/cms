@@ -10,19 +10,10 @@ export const HeroFields = buildFields(
     
     Textarea('description')
         .label('Description')
-        .required()
         .min(10)
         .max(500)
         .placeholder('Enter the hero description')
         .helperText('This will be displayed as the main description on your page'),
-
-    TextInput('input2')
-        .label('Input 2')
-        .required()
-        .min(3)
-        .max(100)
-        .placeholder('Enter the input 2')
-        .helperText('This is the second input')
 );
 
 export const HeroComponent = {

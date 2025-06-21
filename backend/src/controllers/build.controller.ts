@@ -2,65 +2,46 @@ import { Context } from "hono";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
-import fs from "fs/promises";
-import type { Page } from "@shared/types/pages.js";
+import { PageService } from "@/src/services/page.service.js";
 
 const execAsync = promisify(exec);
 
+
 export class BuildController {
     static async triggerBuild(c: Context) {
-        try {
-            const page = await c.req.json<Page>();
-            
-            // Get the root project directory (where cms, astro-site, and shared folders are)
-            const projectRoot = path.join(process.cwd(), '../../');
-            
-            // Path to store our pages data
-            const pagesDir = path.join(projectRoot, 'astro-site/src/data');
-            const pagesFile = path.join(pagesDir, 'pages.json');
-            
-            // Ensure the data directory exists
-            await fs.mkdir(pagesDir, { recursive: true });
-            
-            // Read existing pages or create empty array
-            let pages: Page[] = [];
-            try {
-                const existing = await fs.readFile(pagesFile, 'utf-8');
-                pages = JSON.parse(existing);
-            } catch (error) {
-                // File doesn't exist or is invalid, start with empty array
+        const projectRoot = path.join(process.cwd(), '../../');
+        const astroPath = path.join(projectRoot, 'astro-site');
+        
+        console.log('🚀 Starting production build...');
+        console.log('Building in:', astroPath);
+        
+        // Get pages count for logging
+        const pages = await PageService.getPages();
+        console.log(`📝 Building ${pages.length} pages`);
+        
+        // Run the Astro build (JSON file is already up to date)
+        const { stdout, stderr } = await execAsync('npm run build', {
+            cwd: astroPath,
+            env: {
+                ...process.env,
+                NODE_ENV: 'production'
             }
+        });
 
-            // Update or add the new page
-            const pageIndex = pages.findIndex(p => p.slug === page.slug);
-            if (pageIndex >= 0) {
-                pages[pageIndex] = page;
-            } else {
-                pages.push(page);
-            }
+        console.log('Build output:', stdout);
+        if (stderr) console.error('Build errors:', stderr);
 
-            // Save the updated pages data
-            await fs.writeFile(pagesFile, JSON.stringify(pages, null, 2), 'utf-8');
+        return c.json({ 
+            message: 'Production build completed successfully',
+            pagesBuilt: pages.length
+        });
+    }
 
-            // Run the Astro build
-            const astroPath = path.join(projectRoot, 'astro-site');
-            console.log('Running build in:', astroPath);
-            
-            const { stdout, stderr } = await execAsync('npm run build', {
-                cwd: astroPath,
-                env: {
-                    ...process.env,
-                    NODE_ENV: 'production'
-                }
-            });
-
-            console.log('Build output:', stdout);
-            if (stderr) console.error('Build errors:', stderr);
-
-            return c.json({ message: 'Build completed successfully' });
-        } catch (error) {
-            console.error('Build error:', error);
-            throw error;
-        }
+    static async triggerSinglePageBuild(c: Context) {
+        const { slug } = c.req.param();
+        
+        // This could be used for incremental builds in the future
+        // For now, we'll rebuild everything
+        return await BuildController.triggerBuild(c);
     }
 } 
