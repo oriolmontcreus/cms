@@ -5,7 +5,14 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { Icon } from "@tabler/icons-svelte";
 	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
+	
 	let { items }: { items: { title: string; url: string; icon?: Icon }[] } = $props();
+	
+	function isActive(url: string): boolean {
+		if (url === "/") return $page.url.pathname === "/";
+		return $page.url.pathname.startsWith(url);
+	}
 </script>
 
 <Sidebar.Group>
@@ -32,9 +39,11 @@
 		<Sidebar.Menu>
 			{#each items as item (item.title)}
 				<Sidebar.MenuItem>
-					<Sidebar.MenuButton tooltipContent={item.title} onclick={() => {
-						goto(item.url);
-					}}>
+					<Sidebar.MenuButton 
+						tooltipContent={item.title} 
+						onclick={() => goto(item.url)}
+						class={isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""}
+					>
 						{#if item.icon}
 							<item.icon />
 						{/if}
