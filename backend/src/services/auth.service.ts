@@ -57,14 +57,10 @@ export async function register(r: UserRegisterPayload): Promise<User> {
 export async function getCurrentUser(token: string | undefined): Promise<User> {
   if (!token) throw new InvalidToken();
 
-  // Check cache first
   const cacheKey = token;
   const cached = userCache.get(cacheKey);
-  if (cached && cached.expiry > Date.now()) {
-    return cached.user;
-  }
+  if (cached && cached.expiry > Date.now()) return cached.user;
 
-  try {
     const res: JWTPayload = await verifyToken(token);
     if (!isValidObjectId(res._id)) throw new InvalidToken();
     
@@ -77,7 +73,16 @@ export async function getCurrentUser(token: string | undefined): Promise<User> {
     });
 
     return user;
-  } catch (error) {
-    throw new InvalidToken();
+}
+
+/**
+ * Invalidate cached user data for a specific user ID
+ * Should be called whenever user data is updated
+ */
+export function invalidateUserCache(userId: string): void {
+  for (const [token, cached] of userCache.entries()) {
+    if (cached.user && cached.user._id === userId) {
+      userCache.delete(token);
+    }
   }
 }

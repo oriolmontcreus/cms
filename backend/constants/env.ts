@@ -5,7 +5,7 @@ export enum Environment {
 }
 export const ENV = process.env.NODE_ENV || Environment.DEVELOPMENT;
 
-export const USER_DATA_CACHE_TTL = 5000; // 5 seconds
+export const USER_DATA_CACHE_TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 //PERMANENT SECRET
 const JWT_PERMANENT_SECRET = process.env.JWT_PERMANENT_SECRET ??
