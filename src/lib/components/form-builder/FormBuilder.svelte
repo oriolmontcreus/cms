@@ -5,7 +5,8 @@
     import { Input } from '@components/ui/input';
     import { Label } from '@components/ui/label';
     import { Textarea } from '@components/ui/textarea';
-    import { handleSaveFormData } from '@/services/page.service';
+    import { handleUpdateComponents } from '@/services/page.service';
+    import type { ComponentInstance } from '@shared/types/pages';
     import { onMount } from 'svelte';
 
     export let config: PageConfig;
@@ -43,13 +44,26 @@
     async function handleSubmit() {
         try {
             isSubmitting = true;
-            const result = await handleSaveFormData(slug, formData);
+            
+            // Convert formData to components format
+            const components: ComponentInstance[] = config.components.map(componentInstance => {
+                const instanceFormData = formData[componentInstance.id] || {};
+                
+                return {
+                    componentName: componentInstance.component.name,
+                    instanceId: componentInstance.id,
+                    displayName: componentInstance.displayName || componentInstance.component.name,
+                    formData: instanceFormData
+                };
+            });
+            
+            const result = await handleUpdateComponents(slug, components);
             
             if (result) {
-                console.log('Form data saved:', result);
+                console.log('Components saved:', result);
             }
         } catch (error) {
-            console.error('Error saving form data:', error);
+            console.error('Error saving components:', error);
         } finally {
             isSubmitting = false;
         }

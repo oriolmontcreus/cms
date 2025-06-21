@@ -40,8 +40,8 @@ export async function saveFormData(slug: string, formData: Record<string, any>):
     return data;
 }
 
-export async function updateComponentInstances(slug: string, componentInstances: ComponentInstance[]): Promise<Page> {
-    const { data } = await api.put<Page>(`${root}/${slug}/components`, { componentInstances });
+export async function updateComponents(slug: string, components: ComponentInstance[]): Promise<Page> {
+    const { data } = await api.put<Page>(`${root}/${slug}/components`, { components });
     return data;
 }
 
@@ -91,8 +91,8 @@ export async function handleSaveFormData(slug: string, formData: Record<string, 
     return err ? null : data;
 }
 
-export async function handleUpdateComponentInstances(slug: string, componentInstances: ComponentInstance[]): Promise<Page | null> {
-    const [data, err] = await fetchWithToast(updateComponentInstances(slug, componentInstances), {
+export async function handleUpdateComponents(slug: string, components: ComponentInstance[]): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(updateComponents(slug, components), {
         loading: 'Updating components...',
         success: () => `Components updated successfully.`,
         error: 'Error updating components. Please try again.'
