@@ -2,6 +2,7 @@ import { Page, Component } from "@shared/types/pages.js";
 import { IPageDocument, PageModel } from "@/src/models/page.model.js";
 import fs from "fs/promises";
 import path from "path";
+import { SITE_DIRECTORY_NAME } from "@shared/env.js";
 
 export type CreatePagePayload = {
   title: string;
@@ -31,7 +32,7 @@ const toPageDTO = (doc: IPageDocument): Page => ({
 const updateJsonFile = async (): Promise<void> => {
   try {
     const projectRoot = path.join(process.cwd(), '../../');
-    const pagesDir = path.join(projectRoot, 'astro-site/src/data');
+    const pagesDir = path.join(projectRoot, SITE_DIRECTORY_NAME, 'src/data');
     const pagesFile = path.join(pagesDir, 'pages.json');
     
     // Ensure the data directory exists

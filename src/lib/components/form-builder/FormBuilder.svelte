@@ -1,4 +1,3 @@
-<!-- FormBuilder.svelte -->
 <script lang="ts">
     import type { PageConfig, FormData } from './types';
     import { Button } from '@components/ui/button';
@@ -48,11 +47,6 @@
         } finally {
             isSubmitting = false;
         }
-    }
-
-    function getSelectValue(value: string | number | Date | null): string {
-        if (value === null || value === undefined) return '';
-        return String(value);
     }
 </script>
 
