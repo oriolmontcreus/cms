@@ -105,6 +105,7 @@
                 minValue={minDateValue}
                 maxValue={maxDateValue}
                 isDateUnavailable={isDateUnavailable}
+                fixedWeeks={true}
             />
         </Popover.Content>
     </Popover.Root>
