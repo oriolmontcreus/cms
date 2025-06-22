@@ -9,11 +9,6 @@ export const config: PageConfig = {
             component: HeroComponent,
             id: "hero-main",
             displayName: "Main Hero Section"
-        },
-        {
-            component: HeroComponent,
-            id: "hero-secondary",
-            displayName: "Secondary Hero Section"
         }
     ]
 };

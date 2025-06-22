@@ -58,6 +58,11 @@ class FieldBuilder {
         return this;
     }
 
+    url(): this {
+        this.field.pattern = '^https?://.+';
+        return this;
+    }
+
     options(optionsList: string[]): this {
         this.field.options = optionsList;
         return this;

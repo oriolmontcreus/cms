@@ -1,39 +1,90 @@
 <script lang="ts">
     import type { FormField } from '../types';
+    import * as Select from "$lib/components/ui/select/index.js";
 
-    export let field: FormField;
-    export let fieldId: string;
-    export let value: string | string[];
+    let { field, fieldId, value = $bindable() }: {
+        field: FormField;
+        fieldId: string;
+        value: string | string[];
+    } = $props();
 
-    const selectClasses = "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+    // Transform options to the format expected by shadcn-svelte
+    const options = $derived((field.options || []).map(option => ({
+        value: option,
+        label: option
+    })));
+
+    // Separate values for single and multiple modes with proper typing
+    let singleValue = $derived.by(() => {
+        if (field.multiple) return "";
+        return Array.isArray(value) ? "" : (value || "");
+    });
+
+    let multipleValue = $derived.by(() => {
+        if (!field.multiple) return [];
+        return Array.isArray(value) ? value : [];
+    });
+
+    // Update the main value when single or multiple values change
+    $effect(() => {
+        if (field.multiple) {
+            value = multipleValue;
+        } else {
+            value = singleValue;
+        }
+    });
+
+    // Derive trigger content
+    const triggerContent = $derived(() => {
+        if (field.multiple) {
+            const selectedCount = multipleValue.length;
+            return selectedCount > 0 
+                ? `${selectedCount} selected`
+                : field.placeholder || `Select ${field.label}`;
+        } else {
+            return options.find(opt => opt.value === singleValue)?.label 
+                || field.placeholder 
+                || `Select ${field.label}`;
+        }
+    });
 </script>
 
 {#if field.multiple}
-    <select
-        id={fieldId}
-        name={fieldId}
-        class={selectClasses}
-        required={field.required}
-        disabled={field.disabled}
-        multiple
-        bind:value={value as string[]}
-    >
-        {#each field.options || [] as option}
-            <option value={option}>{option}</option>
-        {/each}
-    </select>
+    <Select.Root type="multiple" name={fieldId} bind:value={multipleValue}>
+        <Select.Trigger class="w-full" disabled={field.disabled}>
+            {triggerContent()}
+        </Select.Trigger>
+        <Select.Content>
+            <Select.Group>
+                <Select.Label>{field.label}</Select.Label>
+                {#each options as option (option.value)}
+                    <Select.Item
+                        value={option.value}
+                        label={option.label}
+                    >
+                        {option.label}
+                    </Select.Item>
+                {/each}
+            </Select.Group>
+        </Select.Content>
+    </Select.Root>
 {:else}
-    <select
-        id={fieldId}
-        name={fieldId}
-        class={selectClasses}
-        required={field.required}
-        disabled={field.disabled}
-        bind:value={value as string}
-    >
-        <option value="">{field.placeholder || `Select ${field.label}`}</option>
-        {#each field.options || [] as option}
-            <option value={option}>{option}</option>
-        {/each}
-    </select>
+    <Select.Root type="single" name={fieldId} bind:value={singleValue}>
+        <Select.Trigger class="w-full" disabled={field.disabled}>
+            {triggerContent()}
+        </Select.Trigger>
+        <Select.Content>
+            <Select.Group>
+                <Select.Label>{field.label}</Select.Label>
+                {#each options as option (option.value)}
+                    <Select.Item
+                        value={option.value}
+                        label={option.label}
+                    >
+                        {option.label}
+                    </Select.Item>
+                {/each}
+            </Select.Group>
+        </Select.Content>
+    </Select.Root>
 {/if} 

@@ -1,4 +1,4 @@
-import { TextInput, Textarea, buildFields } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, Date, Email, Select, buildFields } from '../lib/components/form-builder/fields';
 
 export const HeroFields = buildFields(
     TextInput('title')
@@ -14,6 +14,79 @@ export const HeroFields = buildFields(
         .max(500)
         .placeholder('Enter the hero description')
         .helperText('This will be displayed as the main description on your page'),
+    
+    TextInput('subtitle')
+        .label('Subtitle')
+        .placeholder('Enter a subtitle (optional)')
+        .helperText('An optional subtitle that appears below the main title'),
+    
+    TextInput('cta_text')
+        .label('Call to Action Text')
+        .placeholder('Get Started')
+        .max(50)
+        .helperText('Text for the main action button'),
+    
+    TextInput('cta_url')
+        .label('Call to Action URL')
+        .placeholder('https://example.com')
+        .url()
+        .helperText('URL where the CTA button should link to'),
+    
+    Email('contact_email')
+        .label('Contact Email')
+        .placeholder('contact@example.com')
+        .helperText('Email address for contact purposes'),
+    
+    Number('display_order')
+        .label('Display Order')
+        .placeholder('1')
+        .min(1)
+        .max(100)
+        .step(1)
+        .helperText('Order in which this hero should appear'),
+    
+    Number('animation_delay')
+        .label('Animation Delay (seconds)')
+        .placeholder('0.5')
+        .min(0)
+        .max(10)
+        .step(0.1)
+        .helperText('Delay before animations start'),
+    
+    Date('publish_date')
+        .label('Publish Date')
+        .helperText('When this hero should go live'),
+    
+    Date('expiry_date')
+        .label('Expiry Date')
+        .helperText('Optional expiry date for time-sensitive content'),
+    
+    Select('theme')
+        .label('Theme')
+        .options(['light', 'dark', 'gradient', 'minimal'])
+        .required()
+        .helperText('Visual theme for the hero section'),
+    
+    Select('size')
+        .label('Size')
+        .options(['small', 'medium', 'large', 'full-screen'])
+        .helperText('Size variant for the hero section'),
+    
+    Select('alignment')
+        .label('Text Alignment')
+        .options(['left', 'center', 'right'])
+        .helperText('How to align the hero text content'),
+    
+    Select('background_type')
+        .label('Background Type')
+        .options(['solid', 'gradient', 'image', 'video'])
+        .helperText('Type of background for the hero'),
+    
+    Select('tags')
+        .label('Tags')
+        .options(['featured', 'promotional', 'seasonal', 'announcement', 'product-launch'])
+        .multiple()
+        .helperText('Select multiple tags to categorize this hero')
 );
 
 export const HeroComponent = {
