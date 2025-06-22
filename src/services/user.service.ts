@@ -1,5 +1,4 @@
-import type { PublicUser, User } from "@shared/types/user.type";
-import { api } from "@/utils/api";
+import { api } from "@/lib/utils/api";
 import { loggedUser } from "@/stores/loggedUser";
 
 const root = "/user";

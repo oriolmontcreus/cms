@@ -6,11 +6,6 @@ import { errorToast } from "@/services/toast.service";
 const root = "/pages";
 
 //region routes
-export async function createPage(title: string, slug: string, config?: Record<string, any>): Promise<Page> {
-    const { data } = await api.post<Page>(root, { title, slug, config });
-    return data;
-}
-
 export async function getPages(): Promise<Page[]> {
     const { data } = await api.get<Page[]>(root);
     return data;
@@ -18,11 +13,6 @@ export async function getPages(): Promise<Page[]> {
 
 export async function getPageBySlug(slug: string): Promise<Page> {
     const { data } = await api.get<Page>(`${root}/${slug}`);
-    return data;
-}
-
-export async function updatePage(slug: string, content: string): Promise<Page> {
-    const { data } = await api.put<Page>(`${root}/${slug}`, { content });
     return data;
 }
 
