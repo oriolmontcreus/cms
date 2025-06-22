@@ -129,6 +129,8 @@
         >
             <div class="p-2">
                 <Input
+                    id={`${fieldId}-search`}
+                    name={`${fieldId}-search`}
                     placeholder={`Search ${field.label.toLowerCase()}...`}
                     bind:value={searchQuery}
                     class="mb-2"
