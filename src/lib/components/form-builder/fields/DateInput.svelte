@@ -11,6 +11,7 @@
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { Calendar } from "$lib/components/ui/calendar/index.js";
     import * as Popover from "$lib/components/ui/popover/index.js";
+    import { CMS_LOCALE } from "@shared/env";
 
     interface Props {
         field: FormField;
@@ -20,8 +21,8 @@
 
     let { field, fieldId, value = $bindable() }: Props = $props();
 
-    const df = new DateFormatter("en-US", {
-        dateStyle: "long"
+    const df = new DateFormatter(field.locale || CMS_LOCALE, {
+        dateStyle: field.dateStyle || "long"
     });
 
     let contentRef = $state<HTMLElement | null>(null);
@@ -72,6 +73,10 @@
                 value={dateValue}
                 onValueChange={handleDateChange}
                 disabled={field.disabled || field.readonly}
+                locale={field.locale || "en-US"}
+                weekdayFormat={field.weekdayFormat || "short"}
+                yearFormat={field.yearFormat || "numeric"}
+                monthFormat={field.monthFormat || "long"}
             />
         </Popover.Content>
     </Popover.Root>

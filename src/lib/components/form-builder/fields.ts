@@ -78,6 +78,31 @@ class FieldBuilder {
         return this;
     }
 
+    locale(localeString: string): this {
+        this.field.locale = localeString;
+        return this;
+    }
+
+    weekdayFormat(format: 'short' | 'long' | 'narrow'): this {
+        this.field.weekdayFormat = format;
+        return this;
+    }
+
+    yearFormat(format: 'numeric' | '2-digit'): this {
+        this.field.yearFormat = format;
+        return this;
+    }
+
+    monthFormat(format: 'numeric' | '2-digit' | 'short' | 'long' | 'narrow'): this {
+        this.field.monthFormat = format;
+        return this;
+    }
+
+    dateStyle(style: 'full' | 'long' | 'medium' | 'short'): this {
+        this.field.dateStyle = style;
+        return this;
+    }
+
     build(): FormField {
         if (!this.field.label) {
             throw new Error(`Field "${this.field.name}" must have a label`);

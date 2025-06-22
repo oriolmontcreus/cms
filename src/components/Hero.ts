@@ -55,6 +55,12 @@ export const HeroFields = buildFields(
     
     Date('publish_date')
         .label('Publish Date')
+        .weekdayFormat('long')
+        .placeholder('Select a date')
+        .monthFormat('short')
+        .yearFormat('numeric')
+        .locale('es-ES')
+        .dateStyle('short')
         .helperText('When this hero should go live'),
     
     Date('expiry_date')

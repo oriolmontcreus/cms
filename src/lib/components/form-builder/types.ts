@@ -16,6 +16,12 @@ export interface FormField {
     pattern?: string; // For text validation
     helperText?: string; // Additional help text
     searchable?: boolean; // For searchable select fields
+    // Date-specific formatting options
+    locale?: string; // For date fields (e.g., 'en-US', 'es-ES')
+    weekdayFormat?: 'short' | 'long' | 'narrow'; // For date fields
+    yearFormat?: 'numeric' | '2-digit'; // For date fields
+    monthFormat?: 'numeric' | '2-digit' | 'short' | 'long' | 'narrow'; // For date fields
+    dateStyle?: 'full' | 'long' | 'medium' | 'short'; // For date fields display style
 }
 
 export interface Component {
