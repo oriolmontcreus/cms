@@ -7,13 +7,9 @@
 	import SettingsIcon from "@tabler/icons-svelte/icons/settings";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { ComponentProps } from "svelte";
+	import { loggedUser } from "@/stores/loggedUser";
 
 	const data = {
-		user: {
-			name: "shadcn",
-			email: "m@example.com",
-			avatar: "/avatars/shadcn.jpg",
-		},
 		navMain: [
 			{
 				title: "Dashboard",
@@ -55,6 +51,8 @@
 		<NavMain items={data.navMain} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={data.user} />
+		{#if $loggedUser}
+			<NavUser user={$loggedUser} />
+		{/if}
 	</Sidebar.Footer>
 </Sidebar.Root>
