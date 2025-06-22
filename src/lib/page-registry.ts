@@ -12,12 +12,4 @@ export function getPageConfig(slug: string): PageConfig | null {
     return pageConfigs[slug] || null;
 }
 
-export function getAllPageSlugs(): string[] {
-    return Object.keys(pageConfigs);
-}
-
-export function getAllPagesWithData(): Record<string, PageConfig> {
-    return pageConfigs;
-}
-
 export default pageConfigs; 
