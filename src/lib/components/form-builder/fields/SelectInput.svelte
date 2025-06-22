@@ -127,7 +127,7 @@
                         {#each filteredOptions() as option (option.value)}
                             <button
                                 type="button"
-                                class="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                                class="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-in-out cursor-pointer"
                                 onclick={() => handleSearchableSelect(option.value)}
                             >
                                 <span>{option.label}</span>
