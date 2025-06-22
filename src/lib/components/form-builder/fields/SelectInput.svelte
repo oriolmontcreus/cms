@@ -7,6 +7,7 @@
     import { cn } from "$lib/utils";
     import Check from "@lucide/svelte/icons/check";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
+    import { ScrollArea } from "$lib/components/ui/scroll-area";
 
     let {
         field,
@@ -136,7 +137,7 @@
                     bind:value={searchQuery}
                     class="mb-2"
                 />
-                <div class="max-h-60 overflow-auto">
+                <ScrollArea class="h-60 pr-4">
                     {#if filteredOptions().length === 0}
                         <div
                             class="py-6 text-center text-sm text-muted-foreground"
@@ -169,7 +170,7 @@
                             </button>
                         {/each}
                     {/if}
-                </div>
+                </ScrollArea>
             </div>
         </Popover.Content>
     </Popover.Root>
