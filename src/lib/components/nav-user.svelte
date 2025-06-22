@@ -7,7 +7,7 @@
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-
+	import { handleLogout } from "@/services/auth.service";
 	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
 
 	const sidebar = Sidebar.useSidebar();
@@ -73,7 +73,7 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item onclick={handleLogout}>
 					<LogoutIcon />
 					Log out
 				</DropdownMenu.Item>

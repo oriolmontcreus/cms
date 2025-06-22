@@ -48,4 +48,13 @@ export async function handleLogin(email: string, password: string, redirect: boo
     });
     if (!err) if (redirect) goto('/');
 }
+
+export async function handleLogout(): Promise<void> {
+    const [ok, err] = await fetchWithToast(logout(), {
+        loading: 'Logging out...',
+        success: () => `Logged out successfully.`,
+        error: 'Error logging out. Please try again.'
+    });
+    if (!err) goto('/login');
+}
 //endregion
