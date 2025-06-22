@@ -137,7 +137,9 @@
                     bind:value={searchQuery}
                     class="mb-2"
                 />
-                <ScrollArea class="h-60 pr-4">
+                <ScrollArea class={cn(
+                    filteredOptions().length > 4 ? "h-60 pr-4" : ""
+                )}>
                     {#if filteredOptions().length === 0}
                         <div
                             class="py-6 text-center text-sm text-muted-foreground"
