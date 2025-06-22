@@ -21,22 +21,20 @@
     })));
 
     // Separate values for single and multiple modes with proper typing
-    let singleValue = $derived.by(() => {
-        if (field.multiple) return "";
-        return Array.isArray(value) ? "" : (value || "");
-    });
+    let singleValue = $state(
+        field.multiple ? "" : (Array.isArray(value) ? "" : (value || ""))
+    );
 
-    let multipleValue = $derived.by(() => {
-        if (!field.multiple) return [];
-        return Array.isArray(value) ? value : [];
-    });
+    let multipleValue = $state(
+        field.multiple ? (Array.isArray(value) ? value : []) : []
+    );
 
-    // Update the main value when single or multiple values change
+    // Initialize values from props
     $effect(() => {
         if (field.multiple) {
-            value = multipleValue;
+            multipleValue = Array.isArray(value) ? value : [];
         } else {
-            value = singleValue;
+            singleValue = Array.isArray(value) ? "" : (value || "");
         }
     });
 
@@ -73,12 +71,16 @@
             const index = currentValues.indexOf(currentValue);
             if (index > -1) {
                 multipleValue = currentValues.filter(v => v !== currentValue);
+                value = multipleValue;
             } else {
                 multipleValue = [...currentValues, currentValue];
+                value = multipleValue;
             }
         } else {
             // Set single value
-            singleValue = currentValue === singleValue ? '' : currentValue;
+            const newValue = currentValue === singleValue ? '' : currentValue;
+            singleValue = newValue;
+            value = newValue;
             searchableOpen = false;
         }
         
@@ -149,7 +151,15 @@
     </Popover.Root>
 {:else if field.multiple}
     <!-- Regular Multiple Select -->
-    <Select.Root type="multiple" name={fieldId} bind:value={multipleValue}>
+    <Select.Root 
+        type="multiple" 
+        name={fieldId} 
+        bind:value={multipleValue}
+        onValueChange={(newValue) => {
+            multipleValue = newValue || [];
+            value = multipleValue;
+        }}
+    >
         <Select.Trigger class="w-full" disabled={field.disabled}>
             {triggerContent()}
         </Select.Trigger>
@@ -169,7 +179,15 @@
     </Select.Root>
 {:else}
     <!-- Regular Single Select -->
-    <Select.Root type="single" name={fieldId} bind:value={singleValue}>
+    <Select.Root 
+        type="single" 
+        name={fieldId} 
+        bind:value={singleValue}
+        onValueChange={(newValue) => {
+            singleValue = newValue || "";
+            value = singleValue;
+        }}
+    >
         <Select.Trigger class="w-full" disabled={field.disabled}>
             {triggerContent()}
         </Select.Trigger>
