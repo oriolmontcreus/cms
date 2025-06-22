@@ -22,6 +22,9 @@ export interface FormField {
     yearFormat?: 'numeric' | '2-digit'; // For date fields
     monthFormat?: 'numeric' | '2-digit' | 'short' | 'long' | 'narrow'; // For date fields
     dateStyle?: 'full' | 'long' | 'medium' | 'short'; // For date fields display style
+    // Date range constraints
+    minDate?: string; // For date fields - minimum selectable date (ISO string format)
+    maxDate?: string; // For date fields - maximum selectable date (ISO string format)
 }
 
 export interface Component {

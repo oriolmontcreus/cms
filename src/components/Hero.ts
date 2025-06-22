@@ -1,4 +1,4 @@
-import { TextInput, Textarea, Number, Date, Email, Select, buildFields } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields } from '../lib/components/form-builder/fields';
 
 export const HeroFields = buildFields(
     TextInput('title')
@@ -53,17 +53,19 @@ export const HeroFields = buildFields(
         .step(0.1)
         .helperText('Delay before animations start'),
     
-    Date('publish_date')
+    DatePicker('publish_date')
         .label('Publish Date')
         .weekdayFormat('long')
         .placeholder('Select a date')
         .monthFormat('short')
+        .minDate(new Date())
+        .maxDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1)))
         .yearFormat('numeric')
         .locale('es-ES')
         .dateStyle('short')
         .helperText('When this hero should go live'),
     
-    Date('expiry_date')
+    DatePicker('expiry_date')
         .label('Expiry Date')
         .helperText('Optional expiry date for time-sensitive content'),
     

@@ -103,6 +103,16 @@ class FieldBuilder {
         return this;
     }
 
+    minDate(date: string | Date): this {
+        this.field.minDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+        return this;
+    }
+
+    maxDate(date: string | Date): this {
+        this.field.maxDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+        return this;
+    }
+
     build(): FormField {
         if (!this.field.label) {
             throw new Error(`Field "${this.field.name}" must have a label`);
@@ -115,7 +125,7 @@ class FieldBuilder {
 export const TextInput = (name: string) => new FieldBuilder('text', name);
 export const Textarea = (name: string) => new FieldBuilder('textarea', name);
 export const Number = (name: string) => new FieldBuilder('number', name);
-export const Date = (name: string) => new FieldBuilder('date', name);
+export const DatePicker = (name: string) => new FieldBuilder('date', name);
 export const Email = (name: string) => new FieldBuilder('email', name);
 export const Select = (name: string) => new FieldBuilder('select', name);
 

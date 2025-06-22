@@ -39,13 +39,38 @@
         return undefined;
     });
 
-    // Handle date selection from calendar
-    function handleDateChange(newDate: DateValue | undefined) {
-        if (newDate) {
-            value = newDate.toString();
-        } else {
-            value = '';
+    // Convert min/max date strings to DateValue objects
+    let minDateValue = $derived.by(() => {
+        if (field.minDate) {
+            try {
+                return parseDate(field.minDate);
+            } catch {
+                return undefined;
+            }
         }
+        return undefined;
+    });
+
+    let maxDateValue = $derived.by(() => {
+        if (field.maxDate) {
+            try {
+                return parseDate(field.maxDate);
+            } catch {
+                return undefined;
+            }
+        }
+        return undefined;
+    });
+
+    // Function to determine if a date should be unavailable
+    const isDateUnavailable = (date: DateValue) => {
+        if (minDateValue && date.compare(minDateValue) < 0) return true;
+        if (maxDateValue && date.compare(maxDateValue) > 0) return true;
+        return false;
+    };
+
+    function handleDateChange(newDate: DateValue | undefined) {
+        value = newDate ? newDate.toString() : '';
     }
 </script>
 
@@ -77,6 +102,9 @@
                 weekdayFormat={field.weekdayFormat || "short"}
                 yearFormat={field.yearFormat || "numeric"}
                 monthFormat={field.monthFormat || "long"}
+                minValue={minDateValue}
+                maxValue={maxDateValue}
+                isDateUnavailable={isDateUnavailable}
             />
         </Popover.Content>
     </Popover.Root>
