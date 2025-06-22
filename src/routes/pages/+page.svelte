@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
-    import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+    import { Card, CardContent } from '$lib/components/ui/card';
     import SiteHeader from '$lib/components/site-header.svelte';
     import PageCard from '$lib/components/PageCard.svelte';
     import { handleGetPages } from '@/services/page.service';

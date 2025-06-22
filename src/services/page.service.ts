@@ -1,23 +1,84 @@
-import { api } from "@/lib/utils/api";
 import type { Page, Component } from "@shared/types/pages.type";
 import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "@/services/toast.service";
+import { getPageConfig, getAllPageSlugs } from "@/lib/page-registry";
+import { api } from "@/lib/utils/api";
+import { SITE_DIRECTORY_NAME } from "@shared/env";
 
-const root = "/pages";
-
-//region routes
-export async function getPages(): Promise<Page[]> {
-    const { data } = await api.get<Page[]>(root);
-    return data;
+//region Local data helpers
+async function getExistingPagesData(): Promise<Page[]> {
+    try {
+        // Import the pages.json data directly
+        const pagesData = await import(`../../../${SITE_DIRECTORY_NAME}/src/data/pages.json`);
+        return pagesData.default || [];
+    } catch (error) {
+        console.log('No existing pages.json found, starting fresh');
+        return [];
+    }
 }
 
-export async function getPageBySlug(slug: string): Promise<Page> {
-    const { data } = await api.get<Page>(`${root}/${slug}`);
-    return data;
+function configToPageDTO(config: any, slug: string, existingPage?: Page): Page {
+    const components: Component[] = config.components.map((comp: any) => {
+        // Find existing component data
+        const existingComponent = existingPage?.components?.find((c: Component) => c.instanceId === comp.id);
+        
+        return {
+            componentName: comp.component.name,
+            instanceId: comp.id,
+            displayName: comp.displayName || comp.component.name,
+            formData: existingComponent?.formData || {}
+        };
+    });
+
+    return {
+        _id: existingPage?._id || slug,
+        title: config.title,
+        slug: config.slug,
+        content: existingPage?.content || "",
+        config: config,
+        components: components,
+        createdAt: existingPage?.createdAt || new Date().toISOString(),
+        updatedAt: existingPage?.updatedAt || new Date().toISOString()
+    };
+}
+//endregion
+
+//region Local routes (no API calls)
+export async function getPages(): Promise<Page[]> {
+    const slugs = getAllPageSlugs();
+    const existingPages = await getExistingPagesData();
+    const pages: Page[] = [];
+
+    for (const slug of slugs) {
+        const config = getPageConfig(slug);
+        if (config) {
+            const existingPage = existingPages.find(p => p.slug === slug);
+            pages.push(configToPageDTO(config, slug, existingPage));
+        }
+    }
+
+    return pages;
+}
+
+export async function getPageBySlug(slug: string): Promise<Page | null> {
+    const config = getPageConfig(slug);
+    if (!config) return null;
+
+    const existingPages = await getExistingPagesData();
+    const existingPage = existingPages.find(p => p.slug === slug);
+    
+    return configToPageDTO(config, slug, existingPage);
 }
 
 export async function updateComponents(slug: string, components: Component[]): Promise<Page> {
-    const { data } = await api.put<Page>(`${root}/${slug}/components`, { components });
+    // Still need API for writing to pages.json file
+    const { data } = await api.put<Page>(`/pages/${slug}/components`, { components });
+    return data;
+}
+
+export async function updateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page> {
+    // Still need API for writing to pages.json file
+    const { data } = await api.put<Page>(`/pages/${slug}/components/${instanceId}`, { formData });
     return data;
 }
 //endregion
@@ -40,6 +101,15 @@ export async function handleUpdateComponents(slug: string, components: Component
         loading: 'Updating components...',
         success: () => `Components updated successfully.`,
         error: 'Error updating components. Please try again.'
+    });
+    return err ? null : data;
+}
+
+export async function handleUpdateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page | null> {
+    const [data, err] = await fetchWithToast(updateComponentFormData(slug, instanceId, formData), {
+        loading: 'Updating component...',
+        success: () => `Component updated successfully.`,
+        error: 'Error updating component. Please try again.'
     });
     return err ? null : data;
 }
