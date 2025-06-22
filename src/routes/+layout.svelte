@@ -5,7 +5,7 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
 	import { onNavigate } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { autoLogin } from '@/services/auth.service';
 	import PageLoading from '$lib/components/PageLoading.svelte';
@@ -13,7 +13,7 @@
 	
 	let { children } = $props();
 	
-	const isLoginPage = $derived($page.route.id === '/login');
+	const isLoginPage = $derived(page.url.pathname === '/login');
 	let authInitialized = $state(false);
 	
 	onMount(async () => {

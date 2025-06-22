@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { page } from '$app/stores';
+    import { page } from '$app/state';
     import FormBuilder from '$lib/components/form-builder/FormBuilder.svelte';
     import type { PageConfig } from '$lib/components/form-builder/types';
     import { handleGetPageBySlug } from '@/services/page.service';
-    import type { Page } from '@shared/types/pages';
+    import type { Page } from '@shared/types/pages.type';
     import { onMount } from 'svelte';
     import SiteHeader from '$lib/components/site-header.svelte';
 
@@ -15,7 +15,7 @@
     onMount(async () => {
         try {
             loading = true;
-            const slug = $page.params.slug;
+            const slug = page.params.slug;
             pageData = await handleGetPageBySlug(slug);
             
             if (pageData && pageData.config) {

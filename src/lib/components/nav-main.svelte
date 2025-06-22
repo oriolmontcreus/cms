@@ -5,13 +5,13 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { Icon } from "@tabler/icons-svelte";
 	import { goto } from "$app/navigation";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	
 	let { items }: { items: { title: string; url: string; icon?: Icon }[] } = $props();
 	
 	function isActive(url: string): boolean {
-		if (url === "/") return $page.url.pathname === "/";
-		return $page.url.pathname.startsWith(url);
+		if (url === "/") return page.url.pathname === "/";
+		return page.url.pathname.startsWith(url);
 	}
 </script>
 

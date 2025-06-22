@@ -5,7 +5,7 @@
     import { Label } from '@components/ui/label';
     import { Textarea } from '@components/ui/textarea';
     import { handleUpdateComponents } from '@/services/page.service';
-    import type { Component } from '@shared/types/pages';
+    import type { Component } from '@shared/types/pages.type';
 
     export let config: PageConfig;
     export let slug: string;

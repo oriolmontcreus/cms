@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
-    import type { Page } from '@shared/types/pages';
+    import type { Page } from '@shared/types/pages.type';
 
     export let page: Page;
     export let onclick: () => void;

@@ -7,7 +7,7 @@
     import PageCard from '$lib/components/PageCard.svelte';
     import { handleGetPages } from '@/services/page.service';
     import { handleTriggerBuild } from '@/services/build.service';
-    import type { Page } from '@shared/types/pages';
+    import type { Page } from '@shared/types/pages.type';
     import { ScrollArea } from '$lib/components/ui/scroll-area';
 
     let pages: Page[] = [];
