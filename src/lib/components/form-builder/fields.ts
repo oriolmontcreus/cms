@@ -1,10 +1,10 @@
-import type { FormField } from './types';
+import type { FormField, FieldType } from './types';
 
-// Base field builder class
-abstract class BaseField {
-    protected field: Partial<FormField> = {};
+class FieldBuilder {
+    private field: Partial<FormField> = {};
 
-    constructor(name: string) {
+    constructor(type: FieldType, name: string) {
+        this.field.type = type;
         this.field.name = name;
     }
 
@@ -38,105 +38,24 @@ abstract class BaseField {
         return this;
     }
 
-    build(): FormField {
-        if (!this.field.label) {
-            throw new Error(`Field "${this.field.name}" must have a label`);
-        }
-        return this.field as FormField;
-    }
-}
-
-// Text input field builder
-export class TextInputField extends BaseField {
-    constructor(name: string) {
-        super(name);
-        this.field.type = 'text';
-    }
-
-    min(minLength: number): this {
-        this.field.min = minLength;
+    min(value: number): this {
+        this.field.min = value;
         return this;
     }
 
-    max(maxLength: number): this {
-        this.field.max = maxLength;
+    max(value: number): this {
+        this.field.max = value;
+        return this;
+    }
+
+    step(value: number): this {
+        this.field.step = value;
         return this;
     }
 
     pattern(regex: string): this {
         this.field.pattern = regex;
         return this;
-    }
-}
-
-// Textarea field builder
-export class TextareaField extends BaseField {
-    constructor(name: string) {
-        super(name);
-        this.field.type = 'textarea';
-    }
-
-    min(minLength: number): this {
-        this.field.min = minLength;
-        return this;
-    }
-
-    max(maxLength: number): this {
-        this.field.max = maxLength;
-        return this;
-    }
-}
-
-// Number input field builder
-export class NumberField extends BaseField {
-    constructor(name: string) {
-        super(name);
-        this.field.type = 'number';
-    }
-
-    min(minValue: number): this {
-        this.field.min = minValue;
-        return this;
-    }
-
-    max(maxValue: number): this {
-        this.field.max = maxValue;
-        return this;
-    }
-
-    step(stepValue: number): this {
-        this.field.step = stepValue;
-        return this;
-    }
-}
-
-// Date input field builder
-export class DateField extends BaseField {
-    constructor(name: string) {
-        super(name);
-        this.field.type = 'date';
-    }
-}
-
-// Email input field builder
-export class EmailField extends BaseField {
-    constructor(name: string) {
-        super(name);
-        this.field.type = 'email';
-    }
-
-    pattern(regex: string): this {
-        this.field.pattern = regex;
-        return this;
-    }
-}
-
-// Select field builder
-export class SelectField extends BaseField {
-    constructor(name: string) {
-        super(name);
-        this.field.type = 'select';
-        this.field.options = [];
     }
 
     options(optionsList: string[]): this {
@@ -148,17 +67,24 @@ export class SelectField extends BaseField {
         this.field.multiple = isMultiple;
         return this;
     }
+
+    build(): FormField {
+        if (!this.field.label) {
+            throw new Error(`Field "${this.field.name}" must have a label`);
+        }
+        return this.field as FormField;
+    }
 }
 
-// Factory functions for easier usage (similar to Filament)
-export const TextInput = (name: string) => new TextInputField(name);
-export const Textarea = (name: string) => new TextareaField(name);
-export const Number = (name: string) => new NumberField(name);
-export const Date = (name: string) => new DateField(name);
-export const Email = (name: string) => new EmailField(name);
-export const Select = (name: string) => new SelectField(name);
+// Factory functions for each field type
+export const TextInput = (name: string) => new FieldBuilder('text', name);
+export const Textarea = (name: string) => new FieldBuilder('textarea', name);
+export const Number = (name: string) => new FieldBuilder('number', name);
+export const Date = (name: string) => new FieldBuilder('date', name);
+export const Email = (name: string) => new FieldBuilder('email', name);
+export const Select = (name: string) => new FieldBuilder('select', name);
 
 // Helper function to build an array of fields
-export function buildFields(...fields: BaseField[]): FormField[] {
+export function buildFields(...fields: FieldBuilder[]): FormField[] {
     return fields.map(field => field.build());
 } 

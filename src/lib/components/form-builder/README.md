@@ -188,16 +188,23 @@ The FormBuilder has been refactored from a monolithic component with long if-els
 ### After (Component-based):
 - Each field type is its own component
 - Main FormBuilder is now ~50 lines
+- Builder file reduced from 160+ lines to ~70 lines
 - Adding new field types is as simple as:
   1. Create a new field component in `fields/` directory
   2. Add it to the `fieldComponents` mapping
-  3. Optionally add a builder class
+  3. Add one line to `fields.ts`: `export const NewField = (name: string) => new FieldBuilder('newtype', name);`
 
 ### Architecture:
 - `FormBuilder.svelte` - Main form container (handles submission logic)
 - `FormField.svelte` - Field wrapper (handles labels, help text)
 - `fields/` - Individual field components (TextInput, SelectInput, etc.)
 - `types.ts` - Type definitions
-- `fields.ts` - Fluent builder classes
+- `fields.ts` - Simple, unified field builder (now ~70 lines vs 160+ lines)
+
+### Key Improvements:
+- **Simplified Builder**: One flexible `FieldBuilder` class instead of 6+ separate classes
+- **Consistent API**: All field types use the same methods (only relevant ones apply)
+- **Easy to Extend**: Adding new field types requires just one line: `export const NewField = (name: string) => new FieldBuilder('newtype', name);`
+- **Reduced Code**: Cut the builder file size by more than half
 
 This makes the codebase more maintainable, testable, and easier to extend with new field types. 
