@@ -100,6 +100,7 @@
         <Popover.Trigger>
             {#snippet child({ props })}
                 <Button
+                    id={fieldId}
                     variant="outline"
                     role="combobox"
                     aria-expanded={searchableOpen}
@@ -179,7 +180,7 @@
         value={multipleValue}
         onValueChange={handleSelectChange}
     >
-        <Select.Trigger class="w-full" disabled={field.disabled}>
+        <Select.Trigger id={fieldId} class="w-full" disabled={field.disabled}>
             {triggerContent()}
         </Select.Trigger>
         <Select.Content>
@@ -200,7 +201,7 @@
         value={singleValue}
         onValueChange={handleSelectChange}
     >
-        <Select.Trigger class="w-full" disabled={field.disabled}>
+        <Select.Trigger id={fieldId} class="w-full" disabled={field.disabled}>
             {triggerContent()}
         </Select.Trigger>
         <Select.Content>
