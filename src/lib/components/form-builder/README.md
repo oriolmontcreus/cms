@@ -1,11 +1,11 @@
-# Form Builder - Fluent Interface
+# Form Builder - Refactored & Extensible
 
-This form builder uses a fluent interface pattern similar to Filament V3, allowing you to create form fields using chainable methods.
+This form builder has been refactored to use a component-based approach that eliminates long if-else chains and makes it easy to add new field types. It uses a fluent interface pattern similar to Filament V3 for defining fields.
 
 ## Basic Usage
 
 ```typescript
-import { TextInput, Textarea, Number, Select, Date, buildFields } from './fields';
+import { TextInput, Textarea, Number, Email, Select, Date, buildFields } from './fields';
 
 export const MyFormFields = buildFields(
     TextInput('username')
@@ -14,6 +14,11 @@ export const MyFormFields = buildFields(
         .min(3)
         .max(20)
         .placeholder('Enter your username'),
+    
+    Email('email')
+        .label('Email Address')
+        .required()
+        .placeholder('Enter your email'),
     
     Textarea('bio')
         .label('Biography')
@@ -169,4 +174,30 @@ export const ContactFormFields = buildFields(
 );
 ```
 
-This fluent interface makes form field definitions more readable and provides better IDE support with autocomplete and type checking. 
+This fluent interface makes form field definitions more readable and provides better IDE support with autocomplete and type checking.
+
+## Refactoring Benefits
+
+The FormBuilder has been refactored from a monolithic component with long if-else chains to a modular, component-based architecture:
+
+### Before (Monolithic):
+- One large component with 100+ lines of if-else statements
+- Hard to maintain and extend
+- Adding new field types required modifying the main component
+
+### After (Component-based):
+- Each field type is its own component
+- Main FormBuilder is now ~50 lines
+- Adding new field types is as simple as:
+  1. Create a new field component in `fields/` directory
+  2. Add it to the `fieldComponents` mapping
+  3. Optionally add a builder class
+
+### Architecture:
+- `FormBuilder.svelte` - Main form container (handles submission logic)
+- `FormField.svelte` - Field wrapper (handles labels, help text)
+- `fields/` - Individual field components (TextInput, SelectInput, etc.)
+- `types.ts` - Type definitions
+- `fields.ts` - Fluent builder classes
+
+This makes the codebase more maintainable, testable, and easier to extend with new field types. 

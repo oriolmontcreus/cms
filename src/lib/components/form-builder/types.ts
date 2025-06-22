@@ -1,10 +1,12 @@
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio';
+
 export interface FormField {
-    type: 'text' | 'textarea' | 'number' | 'date' | 'select';
+    type: FieldType;
     label: string;
     name: string;
     required?: boolean;
     placeholder?: string;
-    options?: string[]; // For select fields
+    options?: string[]; // For select/radio fields
     min?: number; // For text/textarea (min length) or number (min value)
     max?: number; // For text/textarea (max length) or number (max value)
     step?: number; // For number fields

@@ -118,6 +118,19 @@ export class DateField extends BaseField {
     }
 }
 
+// Email input field builder
+export class EmailField extends BaseField {
+    constructor(name: string) {
+        super(name);
+        this.field.type = 'email';
+    }
+
+    pattern(regex: string): this {
+        this.field.pattern = regex;
+        return this;
+    }
+}
+
 // Select field builder
 export class SelectField extends BaseField {
     constructor(name: string) {
@@ -142,6 +155,7 @@ export const TextInput = (name: string) => new TextInputField(name);
 export const Textarea = (name: string) => new TextareaField(name);
 export const Number = (name: string) => new NumberField(name);
 export const Date = (name: string) => new DateField(name);
+export const Email = (name: string) => new EmailField(name);
 export const Select = (name: string) => new SelectField(name);
 
 // Helper function to build an array of fields
