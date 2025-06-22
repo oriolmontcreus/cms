@@ -73,6 +73,11 @@ class FieldBuilder {
         return this;
     }
 
+    searchable(isSearchable: boolean = true): this {
+        this.field.searchable = isSearchable;
+        return this;
+    }
+
     build(): FormField {
         if (!this.field.label) {
             throw new Error(`Field "${this.field.name}" must have a label`);

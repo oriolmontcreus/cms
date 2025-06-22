@@ -65,6 +65,7 @@ export const HeroFields = buildFields(
         .label('Theme')
         .options(['light', 'dark', 'gradient', 'minimal'])
         .required()
+        .searchable()
         .helperText('Visual theme for the hero section'),
     
     Select('size')
@@ -84,8 +85,9 @@ export const HeroFields = buildFields(
     
     Select('tags')
         .label('Tags')
-        .options(['featured', 'promotional', 'seasonal', 'announcement', 'product-launch'])
+        .options(['featured', 'promotional', 'seasonal', 'announcement', 'product-launch', 'marketing', 'campaign', 'special-offer', 'limited-time', 'new-release'])
         .multiple()
+        .searchable()
         .helperText('Select multiple tags to categorize this hero')
 );
 

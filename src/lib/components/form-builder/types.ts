@@ -15,6 +15,7 @@ export interface FormField {
     readonly?: boolean;
     pattern?: string; // For text validation
     helperText?: string; // Additional help text
+    searchable?: boolean; // For searchable select fields
 }
 
 export interface Component {
