@@ -14,46 +14,39 @@
 
     let { field, fieldId, value = $bindable() }: Props = $props();
 
-    // Ensure value is a valid hex color or empty
-    $effect(() => {
-        if (value && !value.startsWith('#')) {
-            value = '#' + value;
-        }
-    });
-
-    // Predefined color palette
-    const colorPalette = [
+    const HEX_REGEX = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    const COLOR_PALETTE = [
         '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
         '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
         '#FFC0CB', '#A52A2A', '#808080', '#008000', '#000080',
         '#FF1493', '#00CED1', '#FFD700', '#DC143C', '#9ACD32'
     ];
 
+    const isValidColor = $derived(value && HEX_REGEX.test(value));
+    const isDisabled = $derived(field.disabled || field.readonly);
+    const displayValue = $derived(value || '');
+
+    $effect(() => {
+        if (value && !value.startsWith('#')) value = '#' + value;
+    });
+
+    function normalizeHexValue(inputValue: string): string {
+        return inputValue && !inputValue.startsWith('#') ? '#' + inputValue : inputValue;
+    }
+
     function handleColorSelect(color: string) {
-        if (field.disabled || field.readonly) return;
-        value = color;
+        if (!isDisabled) value = color;
     }
 
     function handleInputChange(event: Event) {
-        const target = event.target;
-        if (!target || !(target instanceof HTMLInputElement)) return;
+        const target = event.target as HTMLInputElement;
+        if (!target) return;
         
-        let inputValue = target.value;
-        
-        // Ensure it starts with #
-        if (inputValue && !inputValue.startsWith('#')) {
-            inputValue = '#' + inputValue;
-        }
-        
-        // Validate hex color format
-        const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        if (!inputValue || hexRegex.test(inputValue)) {
-            value = inputValue;
+        const normalizedValue = normalizeHexValue(target.value);
+        if (!normalizedValue || HEX_REGEX.test(normalizedValue)) {
+            value = normalizedValue;
         }
     }
-
-    const displayValue = $derived(value || '');
-    const isValidColor = $derived(value && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value));
 </script>
 
 <div class="space-y-2">
@@ -95,7 +88,7 @@
                 <Button 
                     variant="outline" 
                     size="icon"
-                    disabled={field.disabled || field.readonly}
+                    disabled={isDisabled}
                     type="button"
                     aria-label="Open color picker"
                 >
@@ -106,21 +99,19 @@
                 <div class="space-y-3">
                     <h4 class="text-sm font-medium select-none">Choose a color</h4>
                     <div class="grid grid-cols-5 gap-2">
-                        {#each colorPalette as color}
+                        {#each COLOR_PALETTE as color}
                             <button
                                 type="button"
                                 class={cn(
                                     "w-8 h-8 rounded border-2 transition-all cursor-pointer",
-                                    field.disabled || field.readonly 
-                                        ? "opacity-50 cursor-not-allowed" 
-                                        : "hover:scale-110",
+                                    isDisabled ? "opacity-50 cursor-not-allowed" : "hover:scale-110",
                                     value === color ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
                                 )}
                                 style="background-color: {color}"
                                 onclick={() => handleColorSelect(color)}
                                 title={color}
                                 aria-label="Select color {color}"
-                                disabled={field.disabled || field.readonly}
+                                disabled={isDisabled}
                             >
                             </button>
                         {/each}
@@ -136,18 +127,14 @@
                             type="color"
                             value={isValidColor ? value : '#000000'}
                             onchange={(e) => {
-                                const target = e.target;
-                                if (target && target instanceof HTMLInputElement) {
-                                    handleColorSelect(target.value);
-                                }
+                                const colorInput = e.target as HTMLInputElement;
+                                if (colorInput) handleColorSelect(colorInput.value);
                             }}
                             class={cn(
                                 "w-full h-8 rounded border border-border",
-                                field.disabled || field.readonly 
-                                    ? "cursor-not-allowed opacity-50" 
-                                    : "cursor-pointer"
+                                isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
                             )}
-                            disabled={field.disabled || field.readonly}
+                            disabled={isDisabled}
                         />
                     </div>
                 </div>
