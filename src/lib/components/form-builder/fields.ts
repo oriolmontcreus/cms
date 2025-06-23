@@ -133,6 +133,16 @@ class FieldBuilder {
         return this;
     }
 
+    rows(count: number): this {
+        this.field.rows = count;
+        return this;
+    }
+
+    resizable(isResizable: boolean = true): this {
+        this.field.resizable = isResizable;
+        return this;
+    }
+
     build(): FormField {
         if (!this.field.label) {
             throw new Error(`Field "${this.field.name}" must have a label`);

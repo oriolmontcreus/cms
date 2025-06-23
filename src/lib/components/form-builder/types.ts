@@ -22,6 +22,9 @@ export interface FormField {
     searchable?: boolean; // For searchable select fields
     prefix?: PrefixSuffix; // Prefix icon or text
     suffix?: PrefixSuffix; // Suffix icon or text
+    // Textarea-specific options
+    rows?: number; // For textarea fields - number of visible rows
+    resizable?: boolean; // For textarea fields - whether it can be resized (default: true)
     // Date-specific formatting options
     locale?: string; // For date fields (e.g., 'en-US', 'es-ES')
     weekdayFormat?: 'short' | 'long' | 'narrow'; // For date fields

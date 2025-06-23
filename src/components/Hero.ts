@@ -13,6 +13,8 @@ export const HeroFields = buildFields(
         .label('Description')
         .min(10)
         .max(500)
+        .rows(4)
+        .resizable(true)
         .placeholder('Enter the hero description')
         .helperText('This will be displayed as the main description on your page'),
     
@@ -121,7 +123,15 @@ export const HeroFields = buildFields(
     Toggle('autoSave')
         .label('Auto Save')
         .helperText('Automatically save changes')
-        .disabled() // Can be disabled if needed
+        .disabled(), // Can be disabled if needed
+    
+    Textarea('notes')
+        .label('Additional Notes')
+        .max(200)
+        .rows(3)
+        .resizable(false)
+        .placeholder('Add any additional notes here...')
+        .helperText('Internal notes for this hero section')
 );
 
 export const HeroComponent = {
