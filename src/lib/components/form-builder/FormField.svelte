@@ -4,7 +4,7 @@
     import TextInput from './fields/TextInput.svelte';
     import TextareaInput from './fields/TextareaInput.svelte';
     import NumberInput from './fields/NumberInput.svelte';
-    import DateInput from './fields/DateInput.svelte';
+    import DateInput from './fields/DatePicker.svelte';
     import SelectInput from './fields/SelectInput.svelte';
     import EmailInput from './fields/EmailInput.svelte';
     import ToggleInput from './fields/ToggleInput.svelte';
