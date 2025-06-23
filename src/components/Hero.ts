@@ -1,3 +1,4 @@
+import Cash from '@tabler/icons-svelte/icons/cash';
 import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields, Toggle, DateRangePicker } from '../lib/components/form-builder/fields';
 
 export const HeroFields = buildFields(
@@ -24,6 +25,7 @@ export const HeroFields = buildFields(
         .label('Call to Action Text')
         .placeholder('Get Started')
         .max(50)
+        .suffix(Cash)
         .helperText('Text for the main action button'),
     
     TextInput('cta_url')

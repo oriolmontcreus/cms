@@ -1,4 +1,4 @@
-import type { FormField, FieldType } from './types';
+import type { FormField, FieldType, PrefixSuffix } from './types';
 
 class FieldBuilder {
     private field: Partial<FormField> = {};
@@ -35,6 +35,16 @@ class FieldBuilder {
 
     helperText(text: string): this {
         this.field.helperText = text;
+        return this;
+    }
+
+    prefix(value: PrefixSuffix): this {
+        this.field.prefix = value;
+        return this;
+    }
+
+    suffix(value: PrefixSuffix): this {
+        this.field.suffix = value;
         return this;
     }
 

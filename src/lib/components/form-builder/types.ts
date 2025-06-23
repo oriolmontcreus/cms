@@ -1,5 +1,7 @@
 export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle';
 
+export type PrefixSuffix = string | any; // Can be either a string or an icon component
+
 export interface FormField {
     type: FieldType;
     label: string;
@@ -18,6 +20,8 @@ export interface FormField {
     pattern?: string; // For text validation
     helperText?: string; // Additional help text
     searchable?: boolean; // For searchable select fields
+    prefix?: PrefixSuffix; // Prefix icon or text
+    suffix?: PrefixSuffix; // Suffix icon or text
     // Date-specific formatting options
     locale?: string; // For date fields (e.g., 'en-US', 'es-ES')
     weekdayFormat?: 'short' | 'long' | 'narrow'; // For date fields

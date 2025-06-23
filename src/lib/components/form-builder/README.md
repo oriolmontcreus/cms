@@ -34,6 +34,9 @@ export const MyFormFields = buildFields(
 Creates a text input field with validation options.
 
 ```typescript
+import AtSign from '@lucide/svelte/icons/at-sign';
+import Search from '@lucide/svelte/icons/search';
+
 TextInput('fieldName')
     .label('Field Label')
     .required()                    // Makes field required
@@ -44,6 +47,43 @@ TextInput('fieldName')
     .disabled()                   // Disable the field
     .readonly()                   // Make field read-only
     .helperText('Help text')      // Additional help text
+    .prefix(AtSign)               // Add prefix icon
+    .suffix(Search)               // Add suffix icon
+    .prefix('$')                  // Add prefix text
+    .suffix('.com')               // Add suffix text
+```
+
+#### Prefix and Suffix Options
+
+You can add icons or text before (prefix) and after (suffix) your input fields. Simply pass either a string or an icon component:
+
+**With Icons:**
+```typescript
+import AtSign from '@lucide/svelte/icons/at-sign';
+import Search from '@lucide/svelte/icons/search';
+
+TextInput('email')
+    .label('Email')
+    .prefix(AtSign)               // Icon prefix
+    .suffix(Search)               // Icon suffix
+```
+
+**With Text:**
+```typescript
+TextInput('price')
+    .label('Price')
+    .prefix('$')                  // Text prefix
+    .suffix('USD')                // Text suffix
+```
+
+**Mixed (Icon + Text):**
+```typescript
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+
+TextInput('amount')
+    .label('Amount')
+    .prefix(DollarSign)           // Icon prefix
+    .suffix('per month')          // Text suffix
 ```
 
 ### Textarea
@@ -123,6 +163,8 @@ All field types support these common methods:
 - `.disabled(boolean)` - Disable the field (default: true if called without parameter)
 - `.readonly(boolean)` - Make field read-only (default: true if called without parameter)
 - `.helperText(text)` - Add helper text below the field
+- `.prefix(value)` - Add prefix text or icon before the input (string or icon component)
+- `.suffix(value)` - Add suffix text or icon after the input (string or icon component)
 
 ### Type-specific Methods
 
@@ -166,6 +208,9 @@ export const MyFields = buildFields(
 
 ```typescript
 import { TextInput, Textarea, Number, Select, DatePicker, DateRangePicker, buildFields } from '../lib/components/form-builder/fields';
+import AtSign from '@lucide/svelte/icons/at-sign';
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+import Search from '@lucide/svelte/icons/search';
 
 export const ContactFormFields = buildFields(
     TextInput('name')
@@ -179,13 +224,27 @@ export const ContactFormFields = buildFields(
         .label('Email Address')
         .required()
         .pattern('^[^@]+@[^@]+\\.[^@]+$')
-        .placeholder('your.email@example.com'),
+        .placeholder('your.email@example.com')
+        .prefix('@', AtSign),
     
-    Number('age')
-        .label('Age')
-        .min(18)
-        .max(120)
-        .step(1),
+    TextInput('website')
+        .label('Website')
+        .placeholder('your-site')
+        .prefix('https://')
+        .suffix('.com'),
+    
+    Number('budget')
+        .label('Project Budget')
+        .min(100)
+        .max(100000)
+        .step(100)
+        .prefix('$', DollarSign)
+        .suffix('USD'),
+    
+    TextInput('search')
+        .label('Search Keywords')
+        .placeholder('Enter keywords...')
+        .suffix('search', Search),
     
     Select('interests')
         .label('Areas of Interest')
