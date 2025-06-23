@@ -16,10 +16,10 @@
 
     const HEX_REGEX = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
     const COLOR_PALETTE = [
-        '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
-        '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
-        '#FFC0CB', '#A52A2A', '#808080', '#008000', '#000080',
-        '#FF1493', '#00CED1', '#FFD700', '#DC143C', '#9ACD32'
+        '#000000', '#FFFFFF', '#F3F4F6', '#6B7280', '#374151',
+        '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
+        '#22C55E', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9',
+        '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF'
     ];
 
     const isValidColor = $derived(value && HEX_REGEX.test(value));
