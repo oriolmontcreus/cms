@@ -22,7 +22,8 @@
                 formData[componentInstance.id][field.name] = existingValue;
             } else {
                 formData[componentInstance.id][field.name] = field.type === 'number' ? null :
-                    field.type === 'select' && field.multiple ? [] : '';
+                    field.type === 'select' && field.multiple ? [] :
+                    field.type === 'toggle' ? false : '';
             }
         });
     });

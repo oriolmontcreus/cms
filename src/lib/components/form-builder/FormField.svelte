@@ -7,6 +7,7 @@
     import DateInput from './fields/DateInput.svelte';
     import SelectInput from './fields/SelectInput.svelte';
     import EmailInput from './fields/EmailInput.svelte';
+    import ToggleInput from './fields/ToggleInput.svelte';
 
     export let field: FormField;
     export let fieldId: string;
@@ -19,14 +20,17 @@
         number: NumberInput,
         date: DateInput,
         select: SelectInput,
-        email: EmailInput
+        email: EmailInput,
+        toggle: ToggleInput
     };
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;
 </script>
 
 <div class="space-y-2">
-    <Label for={fieldId}>{field.label}</Label>
+    {#if field.type !== 'toggle'}
+        <Label for={fieldId}>{field.label}</Label>
+    {/if}
     
     <svelte:component 
         this={FieldComponent}
@@ -36,6 +40,6 @@
     />
     
     {#if field.helperText}
-        <p class="text-sm text-muted-foreground">{field.helperText}</p>
+        <p class="text-sm text-muted-foreground" id="{fieldId}-help">{field.helperText}</p>
     {/if}
 </div> 

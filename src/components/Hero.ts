@@ -1,4 +1,4 @@
-import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields, Toggle } from '../lib/components/form-builder/fields';
 
 export const HeroFields = buildFields(
     TextInput('title')
@@ -96,7 +96,16 @@ export const HeroFields = buildFields(
         .options(['featured', 'promotional', 'seasonal', 'announcement', 'product-launch', 'marketing', 'campaign', 'special-offer', 'limited-time', 'new-release'])
         .multiple()
         .searchable()
-        .helperText('Select multiple tags to categorize this hero')
+        .helperText('Select multiple tags to categorize this hero'),
+    
+    Toggle('darkMode')
+        .label('Dark Mode')
+        .helperText('Switch to dark theme'),
+        
+    Toggle('autoSave')
+        .label('Auto Save')
+        .helperText('Automatically save changes')
+        .disabled() // Can be disabled if needed
 );
 
 export const HeroComponent = {
