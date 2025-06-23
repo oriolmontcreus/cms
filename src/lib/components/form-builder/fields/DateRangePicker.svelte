@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { FormField } from '../types';
-    import Calendar from "@lucide/svelte/icons/calendar";
+    import CalendarIcon from "@lucide/svelte/icons/calendar";
     import ChevronLeft from "@lucide/svelte/icons/chevron-left";
     import ChevronRight from "@lucide/svelte/icons/chevron-right";
     import {
@@ -11,6 +11,7 @@
         today
     } from "@internationalized/date";
     import { cn } from "$lib/utils.js";
+    import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { type DateRange, DateRangePicker } from 'bits-ui';
     import { CMS_LOCALE } from "@shared/env";
 
@@ -102,42 +103,28 @@
         isDateUnavailable={isDateUnavailable}
         class="*:not-first:mt-2"
     >
-        <div class="flex">
-            <div
-                class={cn(
-                    "border-input bg-background ring-offset-background focus-within:border-ring focus-within:ring-ring/30 inline-flex h-9 w-full items-center overflow-hidden rounded-lg border px-3 py-2 pe-9 text-sm whitespace-nowrap shadow-xs shadow-black/[.04] transition-shadow focus-within:ring-2 focus-within:ring-offset-2 focus-within:outline-hidden",
-                    field.disabled && "opacity-50 cursor-not-allowed"
-                )}
-            >
-                {#each ['start', 'end'] as const as type (type)}
-                    <DateRangePicker.Input {type} id={type === 'start' ? fieldId : `${fieldId}-end`} name={type === 'start' ? fieldId : `${fieldId}-end`}>
-                        {#snippet children({ segments })}
-                            {#each segments as { part, value }}
-                                <DateRangePicker.Segment
-                                    {part}
-                                    class={cn(
-                                        "text-foreground focus:bg-accent data-invalid:focused:bg-destructive focused:aria-[valuetext=Empty]:text-foreground focused:text-foreground data-invalid:aria-[valuetext=Empty]:text-destructive data-invalid:text-destructive aria-[valuetext=Empty]:text-muted-foreground/70 data-invalid:focused:text-white data-invalid:focused:aria-[valuetext=Empty]:text-white inline rounded p-0.5 caret-transparent outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
-                                        "data-[segment=literal]:text-muted-foreground/70 data-[segment=literal]:px-0"
-                                    )}
-                                >
-                                    {value}
-                                </DateRangePicker.Segment>
-                            {/each}
-                        {/snippet}
-                    </DateRangePicker.Input>
-                    {#if type === 'start'}
-                        <span aria-hidden="true" class="text-muted-foreground/70 px-2">-</span>
-                    {/if}
-                {/each}
-            </div>
-
-            <DateRangePicker.Trigger
-                class="text-muted-foreground/80 ring-offset-background hover:text-foreground focus-visible:text-foreground data-focus-visible:border-ring data-focus-visible:ring-ring/30 z-10 -ms-9 -me-px flex w-9 items-center justify-center rounded-e-lg transition-shadow focus-visible:outline-hidden data-focus-visible:border data-focus-visible:ring-2 data-focus-visible:ring-offset-2"
-                disabled={field.disabled || field.readonly}
-            >
-                <Calendar size={16} />
-            </DateRangePicker.Trigger>
-        </div>
+        <DateRangePicker.Trigger
+            class={cn(
+                buttonVariants({
+                    variant: "outline",
+                    class: "w-full justify-start text-left font-normal"
+                }),
+                !dateRange.start && !dateRange.end && "text-muted-foreground",
+                field.disabled && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={field.disabled || field.readonly}
+            id={fieldId}
+            name={fieldId}
+        >
+            <CalendarIcon class="mr-2 h-4 w-4" />
+            {#if dateRange.start && dateRange.end}
+                {df.format(dateRange.start.toDate(getLocalTimeZone()))} - {df.format(dateRange.end.toDate(getLocalTimeZone()))}
+            {:else if dateRange.start}
+                {df.format(dateRange.start.toDate(getLocalTimeZone()))} - ...
+            {:else}
+                {field.placeholder || "Pick a date range"}
+            {/if}
+        </DateRangePicker.Trigger>
 
         <DateRangePicker.Content
             class="border-input bg-background text-foreground z-50 rounded-lg border shadow-lg shadow-black/[.04] outline-hidden"
