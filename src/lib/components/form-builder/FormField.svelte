@@ -5,6 +5,7 @@
     import TextareaInput from './fields/TextareaInput.svelte';
     import NumberInput from './fields/NumberInput.svelte';
     import DateInput from './fields/DatePicker.svelte';
+    import DateRangeInput from './fields/DateRangePicker.svelte';
     import SelectInput from './fields/SelectInput.svelte';
     import EmailInput from './fields/EmailInput.svelte';
     import ToggleInput from './fields/ToggleInput.svelte';
@@ -19,6 +20,7 @@
         textarea: TextareaInput,
         number: NumberInput,
         date: DateInput,
+        dateRange: DateRangeInput,
         select: SelectInput,
         email: EmailInput,
         toggle: ToggleInput

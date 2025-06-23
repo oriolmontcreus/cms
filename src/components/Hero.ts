@@ -1,4 +1,4 @@
-import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields, Toggle } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields, Toggle, DateRangePicker } from '../lib/components/form-builder/fields';
 
 export const HeroFields = buildFields(
     TextInput('title')
@@ -44,6 +44,16 @@ export const HeroFields = buildFields(
         .max(100)
         .step(1)
         .helperText('Order in which this hero should appear'),
+
+    DateRangePicker('eventDates')
+    .label('Event Date Range')
+    .required()
+    .minDate('2024-01-01')        // Minimum selectable date
+    .maxDate('2025-12-31')        // Maximum selectable date
+    .locale('es-ES')              // Date locale
+    .dateStyle('medium')          // Date display style
+    .weekdayFormat('short')       // Weekday format (short, long, narrow)
+    .helperText('Select the start and end dates for your event'),
     
     Number('no_decimals')
         .label('Animation Delay (seconds)')

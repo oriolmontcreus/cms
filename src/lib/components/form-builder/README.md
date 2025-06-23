@@ -72,14 +72,33 @@ Number('age')
     .placeholder('25')
 ```
 
-### Date
+### DatePicker
 Creates a date input field.
 
 ```typescript
-Date('birthDate')
+DatePicker('birthDate')
     .label('Birth Date')
     .required()
+    .minDate('2000-01-01')        // Minimum selectable date
+    .maxDate('2030-12-31')        // Maximum selectable date
+    .locale('en-US')              // Date locale
+    .dateStyle('medium')          // Date display style
     .helperText('Select your birth date')
+```
+
+### DateRangePicker
+Creates a date range picker field that allows selecting start and end dates.
+
+```typescript
+DateRangePicker('eventDates')
+    .label('Event Date Range')
+    .required()
+    .minDate('2024-01-01')        // Minimum selectable date
+    .maxDate('2025-12-31')        // Maximum selectable date
+    .locale('en-US')              // Date locale
+    .dateStyle('medium')          // Date display style
+    .weekdayFormat('short')       // Weekday format (short, long, narrow)
+    .helperText('Select the start and end dates for your event')
 ```
 
 ### Select
@@ -121,6 +140,15 @@ All field types support these common methods:
 - `.options(array)` - Array of options for the select field
 - `.multiple(boolean)` - Allow multiple selections (default: true if called without parameter)
 
+**DatePicker & DateRangePicker:**
+- `.minDate(date)` - Minimum selectable date (ISO string format)
+- `.maxDate(date)` - Maximum selectable date (ISO string format)
+- `.locale(string)` - Date locale (e.g., 'en-US', 'es-ES')
+- `.dateStyle(style)` - Date display style ('full', 'long', 'medium', 'short')
+- `.weekdayFormat(format)` - Weekday format ('short', 'long', 'narrow')
+- `.yearFormat(format)` - Year format ('numeric', '2-digit')
+- `.monthFormat(format)` - Month format ('numeric', '2-digit', 'short', 'long', 'narrow')
+
 ## Building Fields
 
 Use the `buildFields()` function to convert your fluent field definitions into the FormField array:
@@ -137,7 +165,7 @@ export const MyFields = buildFields(
 ## Complete Example
 
 ```typescript
-import { TextInput, Textarea, Number, Select, Date, buildFields } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, Select, DatePicker, DateRangePicker, buildFields } from '../lib/components/form-builder/fields';
 
 export const ContactFormFields = buildFields(
     TextInput('name')

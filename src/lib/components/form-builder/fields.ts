@@ -136,6 +136,7 @@ export const TextInput = (name: string) => new FieldBuilder('text', name);
 export const Textarea = (name: string) => new FieldBuilder('textarea', name);
 export const Number = (name: string) => new FieldBuilder('number', name);
 export const DatePicker = (name: string) => new FieldBuilder('date', name);
+export const DateRangePicker = (name: string) => new FieldBuilder('dateRange', name);
 export const Email = (name: string) => new FieldBuilder('email', name);
 export const Select = (name: string) => new FieldBuilder('select', name);
 export const Toggle = (name: string) => new FieldBuilder('toggle', name);

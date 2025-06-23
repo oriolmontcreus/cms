@@ -23,7 +23,8 @@
             } else {
                 formData[componentInstance.id][field.name] = field.type === 'number' ? null :
                     field.type === 'select' && field.multiple ? [] :
-                    field.type === 'toggle' ? false : '';
+                    field.type === 'toggle' ? false :
+                    field.type === 'dateRange' ? { start: '', end: '' } : '';
             }
         });
     });
