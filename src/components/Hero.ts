@@ -1,5 +1,5 @@
 import Cash from '@tabler/icons-svelte/icons/cash';
-import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields, Toggle, DateRangePicker, ColorPicker } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, DatePicker, Email, Select, buildFields, Toggle, DateRangePicker, ColorPicker, RichEditor } from '../lib/components/form-builder/fields';
 
 export const HeroFields = buildFields(
     TextInput('title')
@@ -17,7 +17,7 @@ export const HeroFields = buildFields(
         .resizable(true)
         .placeholder('Enter the hero description')
         .helperText('This will be displayed as the main description on your page'),
-    
+
     TextInput('subtitle')
         .label('Subtitle')
         .placeholder('Enter a subtitle (optional)')
@@ -135,7 +135,6 @@ export const HeroFields = buildFields(
     
     ColorPicker('primary_color')
         .label('Primary Color')
-        .required()
         .placeholder('#3B82F6')
         .helperText('Main brand color for the hero section'),
     

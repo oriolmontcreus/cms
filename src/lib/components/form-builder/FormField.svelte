@@ -10,6 +10,7 @@
     import EmailInput from './fields/EmailInput.svelte';
     import ToggleInput from './fields/ToggleInput.svelte';
     import ColorInput from './fields/ColorPicker.svelte';
+    import RichEditorInput from './fields/RichEditor.svelte';
 
     export let field: FormField;
     export let fieldId: string;
@@ -25,7 +26,8 @@
         select: SelectInput,
         email: EmailInput,
         toggle: ToggleInput,
-        color: ColorInput
+        color: ColorInput,
+        richtext: RichEditorInput
     };
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;

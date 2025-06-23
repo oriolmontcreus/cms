@@ -25,7 +25,8 @@
                     field.type === 'select' && field.multiple ? [] :
                     field.type === 'toggle' ? false :
                     field.type === 'dateRange' ? { start: '', end: '' } :
-                    field.type === 'color' ? '#000000' : '';
+                    field.type === 'color' ? '#000000' :
+                    field.type === 'richtext' ? '' : '';
             }
         });
     });

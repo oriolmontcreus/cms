@@ -161,6 +161,7 @@ export const Email = (name: string) => new FieldBuilder('email', name);
 export const Select = (name: string) => new FieldBuilder('select', name);
 export const Toggle = (name: string) => new FieldBuilder('toggle', name);
 export const ColorPicker = (name: string) => new FieldBuilder('color', name);
+export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 
 // Helper function to build an array of fields
 export function buildFields(...fields: FieldBuilder[]): FormField[] {
