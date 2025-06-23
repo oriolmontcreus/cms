@@ -30,6 +30,7 @@
     ];
 
     function handleColorSelect(color: string) {
+        if (field.disabled || field.readonly) return;
         value = color;
     }
 
@@ -103,27 +104,32 @@
             </Popover.Trigger>
             <Popover.Content class="w-64 p-4">
                 <div class="space-y-3">
-                    <h4 class="text-sm font-medium">Choose a color</h4>
+                    <h4 class="text-sm font-medium select-none">Choose a color</h4>
                     <div class="grid grid-cols-5 gap-2">
                         {#each colorPalette as color}
                             <button
                                 type="button"
                                 class={cn(
-                                    "w-8 h-8 rounded border-2 transition-all hover:scale-110",
+                                    "w-8 h-8 rounded border-2 transition-all cursor-pointer",
+                                    field.disabled || field.readonly 
+                                        ? "opacity-50 cursor-not-allowed" 
+                                        : "hover:scale-110",
                                     value === color ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
                                 )}
                                 style="background-color: {color}"
                                 onclick={() => handleColorSelect(color)}
                                 title={color}
                                 aria-label="Select color {color}"
-                            />
+                                disabled={field.disabled || field.readonly}
+                            >
+                            </button>
                         {/each}
                     </div>
                     
                     <!-- Native color input for advanced color picking -->
                     <div class="pt-2 border-t">
-                        <label for="{fieldId}-advanced" class="text-xs text-muted-foreground mb-1 block">
-                            Advanced color picker:
+                        <label for="{fieldId}-advanced" class="text-xs text-muted-foreground mb-1 block select-none">
+                            More options:
                         </label>
                         <input
                             id="{fieldId}-advanced"
@@ -135,7 +141,12 @@
                                     handleColorSelect(target.value);
                                 }
                             }}
-                            class="w-full h-8 rounded border border-border cursor-pointer"
+                            class={cn(
+                                "w-full h-8 rounded border border-border",
+                                field.disabled || field.readonly 
+                                    ? "cursor-not-allowed opacity-50" 
+                                    : "cursor-pointer"
+                            )}
                             disabled={field.disabled || field.readonly}
                         />
                     </div>
