@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color';
 
 export type PrefixSuffix = string | any; // Can be either a string or an icon component
 

@@ -9,6 +9,7 @@
     import SelectInput from './fields/SelectInput.svelte';
     import EmailInput from './fields/EmailInput.svelte';
     import ToggleInput from './fields/ToggleInput.svelte';
+    import ColorInput from './fields/ColorPicker.svelte';
 
     export let field: FormField;
     export let fieldId: string;
@@ -23,7 +24,8 @@
         dateRange: DateRangeInput,
         select: SelectInput,
         email: EmailInput,
-        toggle: ToggleInput
+        toggle: ToggleInput,
+        color: ColorInput
     };
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;
