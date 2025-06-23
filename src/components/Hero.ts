@@ -47,10 +47,11 @@ export const HeroFields = buildFields(
     
     Number('animation_delay')
         .label('Animation Delay (seconds)')
-        .placeholder('0.5')
+        .placeholder('0,5')
         .min(0)
         .max(10)
         .step(0.1)
+        .decimalSeparator(',')
         .helperText('Delay before animations start'),
     
     DatePicker('publish_date')

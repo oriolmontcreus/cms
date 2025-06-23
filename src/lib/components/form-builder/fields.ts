@@ -53,6 +53,11 @@ class FieldBuilder {
         return this;
     }
 
+    decimalSeparator(separator: ',' | '.'): this {
+        this.field.decimalSeparator = separator;
+        return this;
+    }
+
     pattern(regex: string): this {
         this.field.pattern = regex;
         return this;

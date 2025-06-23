@@ -10,6 +10,7 @@ export interface FormField {
     min?: number; // For text/textarea (min length) or number (min value)
     max?: number; // For text/textarea (max length) or number (max value)
     step?: number; // For number fields
+    decimalSeparator?: ',' | '.'; // For number fields - decimal separator preference
     multiple?: boolean; // For select fields
     disabled?: boolean;
     readonly?: boolean;

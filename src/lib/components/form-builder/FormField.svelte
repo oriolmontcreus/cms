@@ -37,6 +37,7 @@
         {field}
         {fieldId}
         bind:value
+        decimalSeparator={field.decimalSeparator || '.'}
     />
     
     {#if field.helperText}
