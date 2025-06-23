@@ -45,13 +45,14 @@ export const HeroFields = buildFields(
         .step(1)
         .helperText('Order in which this hero should appear'),
     
-    Number('animation_delay')
+    Number('no_decimals')
         .label('Animation Delay (seconds)')
         .placeholder('0,5')
         .min(0)
         .max(10)
         .step(0.1)
         .decimalSeparator(',')
+        .allowDecimals(false)
         .helperText('Delay before animations start'),
     
     DatePicker('publish_date')

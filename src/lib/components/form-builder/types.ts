@@ -11,6 +11,7 @@ export interface FormField {
     max?: number; // For text/textarea (max length) or number (max value)
     step?: number; // For number fields
     decimalSeparator?: ',' | '.'; // For number fields - decimal separator preference
+    allowDecimals?: boolean; // For number fields - whether decimal values are allowed
     multiple?: boolean; // For select fields
     disabled?: boolean;
     readonly?: boolean;

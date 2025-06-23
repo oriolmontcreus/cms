@@ -58,6 +58,11 @@ class FieldBuilder {
         return this;
     }
 
+    allowDecimals(allow: boolean = true): this {
+        this.field.allowDecimals = allow;
+        return this;
+    }
+
     pattern(regex: string): this {
         this.field.pattern = regex;
         return this;
