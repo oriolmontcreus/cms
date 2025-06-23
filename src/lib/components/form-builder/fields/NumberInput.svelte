@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { FormField } from '../types';
     import { Input } from '@components/ui/input';
+    import { cn } from '$lib/utils';
 
     export let field: FormField;
     export let fieldId: string;
@@ -10,7 +11,6 @@
     const allowDecimals = field.allowDecimals ?? true;
     const minValue = field.min;
     const maxValue = field.max;
-    const showMaxHint = maxValue !== undefined;
 
     const CONTROL_KEYS = [
         'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
@@ -24,6 +24,18 @@
 
     let inputElement: HTMLInputElement | null = null;
     let displayValue = value?.toString().replace('.', decimalSeparator) || '';
+
+    $: hasPrefix = field.prefix !== undefined;
+    $: hasSuffix = field.suffix !== undefined;
+    $: inputClasses = cn(
+        hasPrefix && 'ps-9',
+        hasSuffix && 'pe-9'
+    );
+
+    // Helper function to check if a value is a string
+    function isString(value: any): value is string {
+        return typeof value === 'string';
+    }
 
     $: if (value !== null && value !== undefined) {
         displayValue = value.toString().replace('.', decimalSeparator);
@@ -190,7 +202,7 @@
     }
 </script>
 
-{#if showMaxHint}
+{#if hasPrefix || hasSuffix}
     <div class="relative">
         <Input
             bind:ref={inputElement}
@@ -202,16 +214,31 @@
             disabled={field.disabled}
             readonly={field.readonly}
             value={displayValue}
-            class="peer pe-16"
+            class={inputClasses}
             onkeydown={handleKeydown}
             oninput={handleInput}
             onpaste={handlePaste}
         />
-        <span
-            class="text-muted-foreground pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-sm peer-disabled:opacity-50"
-        >
-            /{maxValue}
-        </span>
+        
+        {#if hasPrefix}
+            <div class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
+                {#if isString(field.prefix)}
+                    <span class="text-sm font-medium">{field.prefix}</span>
+                {:else}
+                    <svelte:component this={field.prefix} size={16} aria-hidden="true" />
+                {/if}
+            </div>
+        {/if}
+        
+        {#if hasSuffix}
+            <div class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 peer-disabled:opacity-50">
+                {#if isString(field.suffix)}
+                    <span class="text-sm font-medium">{field.suffix}</span>
+                {:else}
+                    <svelte:component this={field.suffix} size={16} aria-hidden="true" />
+                {/if}
+            </div>
+        {/if}
     </div>
 {:else}
     <Input

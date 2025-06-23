@@ -45,6 +45,8 @@ export const HeroFields = buildFields(
         .min(1)
         .max(100)
         .step(1)
+        .prefix('#')
+        .suffix(Cash)
         .helperText('Order in which this hero should appear'),
 
     DateRangePicker('eventDates')

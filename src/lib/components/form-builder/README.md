@@ -103,6 +103,8 @@ Textarea('description')
 Creates a number input field with numeric validation.
 
 ```typescript
+import DollarSign from '@lucide/svelte/icons/dollar-sign';
+
 Number('age')
     .label('Age')
     .required()
@@ -110,6 +112,8 @@ Number('age')
     .max(120)                     // Maximum value
     .step(1)                      // Step increment
     .placeholder('25')
+    .prefix(DollarSign)           // Add prefix icon
+    .suffix('USD')                // Add suffix text
 ```
 
 ### DatePicker
@@ -238,7 +242,7 @@ export const ContactFormFields = buildFields(
         .min(100)
         .max(100000)
         .step(100)
-        .prefix('$', DollarSign)
+        .prefix(DollarSign)
         .suffix('USD'),
     
     TextInput('search')

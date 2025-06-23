@@ -27,6 +27,8 @@
     };
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;
+    $: showMaxValue = field.type === 'number' && field.max !== undefined;
+    $: hasHelperText = field.helperText || showMaxValue;
 </script>
 
 <div class="space-y-2">
@@ -42,7 +44,16 @@
         decimalSeparator={field.decimalSeparator || '.'}
     />
     
-    {#if field.helperText}
-        <p class="text-sm text-muted-foreground" id="{fieldId}-help">{field.helperText}</p>
+    {#if hasHelperText}
+        <div class="flex justify-between items-center text-sm text-muted-foreground">
+            {#if field.helperText}
+                <p id="{fieldId}-help">{field.helperText}</p>
+            {:else}
+                <div></div>
+            {/if}
+            {#if showMaxValue}
+                <span class="text-xs">Max: {field.max}</span>
+            {/if}
+        </div>
     {/if}
 </div> 
