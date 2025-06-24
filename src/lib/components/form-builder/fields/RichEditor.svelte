@@ -1,6 +1,14 @@
 <script lang="ts">
     import type { FormField } from '../types';
     import { Button } from '@components/ui/button';
+    import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
+    import BoldIcon from '@lucide/svelte/icons/bold';
+    import ItalicIcon from '@lucide/svelte/icons/italic';
+    import UnderlineIcon from '@lucide/svelte/icons/underline';
+    import AlignLeftIcon from '@lucide/svelte/icons/align-left';
+    import AlignCenterIcon from '@lucide/svelte/icons/align-center';
+    import AlignRightIcon from '@lucide/svelte/icons/align-right';
+    import LinkIcon from '@lucide/svelte/icons/link';
     import { onMount } from 'svelte';
 
     export let field: FormField;
@@ -11,24 +19,54 @@
     let isLinkModalOpen = false;
     let linkUrl = '';
     let linkText = '';
+    let activeFormats: string[] = [];
+    let activeAlignment = '';
 
     onMount(() => {
         if (editorRef) {
             editorRef.innerHTML = value || '';
             editorRef.addEventListener('input', handleInput);
             editorRef.addEventListener('paste', handlePaste);
+            editorRef.addEventListener('mouseup', updateActiveFormats);
+            editorRef.addEventListener('keyup', updateActiveFormats);
+            document.addEventListener('selectionchange', updateActiveFormats);
         }
         
         return () => {
             if (editorRef) {
                 editorRef.removeEventListener('input', handleInput);
                 editorRef.removeEventListener('paste', handlePaste);
+                editorRef.removeEventListener('mouseup', updateActiveFormats);
+                editorRef.removeEventListener('keyup', updateActiveFormats);
+                document.removeEventListener('selectionchange', updateActiveFormats);
             }
         };
     });
 
     function handleInput() {
         value = editorRef.innerHTML;
+        setTimeout(updateActiveFormats, 0); // Delay to ensure DOM is updated
+    }
+
+    function updateActiveFormats() {
+        if (!editorRef || document.activeElement !== editorRef) return;
+        
+        const formats = [];
+        if (document.queryCommandState('bold')) formats.push('bold');
+        if (document.queryCommandState('italic')) formats.push('italic');
+        if (document.queryCommandState('underline')) formats.push('underline');
+        activeFormats = formats;
+
+        // Update alignment
+        if (document.queryCommandState('justifyLeft')) {
+            activeAlignment = 'left';
+        } else if (document.queryCommandState('justifyCenter')) {
+            activeAlignment = 'center';
+        } else if (document.queryCommandState('justifyRight')) {
+            activeAlignment = 'right';
+        } else {
+            activeAlignment = '';
+        }
     }
 
     function handlePaste(e: ClipboardEvent) {
@@ -45,12 +83,57 @@
         handleInput();
     }
 
-    function toggleFormat(command: string) {
-        execCommand(command);
+    function ensureEditorFocus() {
+        if (editorRef && document.activeElement !== editorRef) {
+            editorRef.focus();
+            // Restore cursor position if needed
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount === 0) {
+                const range = document.createRange();
+                range.selectNodeContents(editorRef);
+                range.collapse(false);
+                selection.addRange(range);
+            }
+        }
     }
 
-    function setAlignment(alignment: string) {
-        execCommand(`justify${alignment}`);
+    function handleFormatToggle(formats: string[]) {
+        if (field.readonly || field.disabled) return;
+        
+        ensureEditorFocus();
+        
+        // Apply or remove each format based on the new state
+        ['bold', 'italic', 'underline'].forEach(format => {
+            const isCurrentlyActive = document.queryCommandState(format);
+            const shouldBeActive = formats.includes(format);
+            
+            if (isCurrentlyActive !== shouldBeActive) {
+                document.execCommand(format, false);
+            }
+        });
+        
+        handleInput();
+    }
+
+    function handleAlignmentChange(alignment: string) {
+        if (field.readonly || field.disabled) return;
+        
+        if (alignment && alignment !== activeAlignment) {
+            ensureEditorFocus();
+            switch (alignment) {
+                case 'left':
+                    document.execCommand('justifyLeft', false);
+                    break;
+                case 'center':
+                    document.execCommand('justifyCenter', false);
+                    break;
+                case 'right':
+                    document.execCommand('justifyRight', false);
+                    break;
+            }
+            activeAlignment = alignment;
+            handleInput();
+        }
     }
 
     function openLinkModal() {
@@ -86,15 +169,15 @@
             switch (e.key) {
                 case 'b':
                     e.preventDefault();
-                    toggleFormat('bold');
+                    execCommand('bold');
                     break;
                 case 'i':
                     e.preventDefault();
-                    toggleFormat('italic');
+                    execCommand('italic');
                     break;
                 case 'u':
                     e.preventDefault();
-                    toggleFormat('underline');
+                    execCommand('underline');
                     break;
                 case 'k':
                     e.preventDefault();
@@ -111,98 +194,62 @@
 
 <div class="space-y-2">
     <!-- Toolbar -->
-    <div class="flex flex-wrap gap-1 p-2 border rounded-t-md bg-muted/50">
-        <!-- Format buttons -->
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2"
+    <div class="flex flex-wrap items-center gap-2 p-2 border rounded-t-md bg-muted/50">
+        <!-- Format toggle group -->
+        <ToggleGroup.Root 
+            variant="outline" 
+            type="multiple" 
+            value={activeFormats}
+            onValueChange={handleFormatToggle}
             disabled={field.readonly || field.disabled}
-            onclick={() => toggleFormat('bold')}
-            title="Bold (Ctrl+B)"
         >
-            <span class="font-bold">B</span>
-        </Button>
-        
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2"
-            disabled={field.readonly || field.disabled}
-            onclick={() => toggleFormat('italic')}
-            title="Italic (Ctrl+I)"
-        >
-            <span class="italic">I</span>
-        </Button>
-        
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2"
-            disabled={field.readonly || field.disabled}
-            onclick={() => toggleFormat('underline')}
-            title="Underline (Ctrl+U)"
-        >
-            <span class="underline">U</span>
-        </Button>
+            <ToggleGroup.Item value="bold" aria-label="Toggle bold" title="Bold (Ctrl+B)">
+                <BoldIcon class="h-4 w-4" />
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="italic" aria-label="Toggle italic" title="Italic (Ctrl+I)">
+                <ItalicIcon class="h-4 w-4" />
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="underline" aria-label="Toggle underline" title="Underline (Ctrl+U)">
+                <UnderlineIcon class="h-4 w-4" />
+            </ToggleGroup.Item>
+        </ToggleGroup.Root>
 
         <!-- Separator -->
-        <div class="w-px h-6 bg-border mx-1"></div>
+        <div class="w-px h-6 bg-border"></div>
 
-        <!-- Alignment buttons -->
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2"
+        <!-- Alignment toggle group -->
+        <ToggleGroup.Root 
+            variant="outline" 
+            type="single" 
+            value={activeAlignment}
+            onValueChange={handleAlignmentChange}
             disabled={field.readonly || field.disabled}
-            onclick={() => setAlignment('Left')}
-            title="Align Left"
         >
-            ⬅
-        </Button>
-        
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2"
-            disabled={field.readonly || field.disabled}
-            onclick={() => setAlignment('Center')}
-            title="Align Center"
-        >
-            ↔
-        </Button>
-        
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2"
-            disabled={field.readonly || field.disabled}
-            onclick={() => setAlignment('Right')}
-            title="Align Right"
-        >
-            ➡
-        </Button>
+            <ToggleGroup.Item value="left" aria-label="Align left" title="Align Left">
+                <AlignLeftIcon class="h-4 w-4" />
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="center" aria-label="Align center" title="Align Center">
+                <AlignCenterIcon class="h-4 w-4" />
+            </ToggleGroup.Item>
+            <ToggleGroup.Item value="right" aria-label="Align right" title="Align Right">
+                <AlignRightIcon class="h-4 w-4" />
+            </ToggleGroup.Item>
+        </ToggleGroup.Root>
 
         <!-- Separator -->
-        <div class="w-px h-6 bg-border mx-1"></div>
+        <div class="w-px h-6 bg-border"></div>
 
         <!-- Link button -->
         <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
-            class="h-8 px-2"
+            class="h-9 px-3"
             disabled={field.readonly || field.disabled}
             onclick={openLinkModal}
             title="Insert Link (Ctrl+K)"
         >
-            🔗
+            <LinkIcon class="h-4 w-4" />
         </Button>
     </div>
 

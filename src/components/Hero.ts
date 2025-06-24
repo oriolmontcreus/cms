@@ -29,6 +29,15 @@ export const HeroFields = buildFields(
         .max(50)
         .suffix(Cash)
         .helperText('Text for the main action button'),
+
+        
+    RichEditor('content')
+    .label('Article Content')
+    .placeholder('Start writing your article...')
+    .required()
+    .rows(10)
+    .helperText('Use the toolbar to format your text.')
+    .max(5000),
     
     TextInput('cta_url')
         .label('Call to Action URL')
