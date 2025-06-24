@@ -32,7 +32,9 @@
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;
     $: showMaxValue = field.type === 'number' && field.max !== undefined;
-    $: hasHelperText = field.helperText || showMaxValue;
+    $: showCharCount = field.type === 'textarea' && field.max !== undefined;
+    $: currentLength = field.type === 'textarea' ? (value?.length || 0) : 0;
+    $: hasHelperText = field.helperText || showMaxValue || showCharCount;
     $: shouldShowHelperSection = hasHelperText && field.type !== 'richtext';
 </script>
 
@@ -58,6 +60,8 @@
             {/if}
             {#if showMaxValue}
                 <span class="text-xs">Max: {field.max}</span>
+            {:else if showCharCount}
+                <span class="text-xs tabular-nums">{currentLength}/{field.max}</span>
             {/if}
         </div>
     {/if}
