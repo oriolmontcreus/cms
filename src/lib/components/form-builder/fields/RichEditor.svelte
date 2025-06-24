@@ -1,21 +1,10 @@
 <script lang="ts">
     import type { FormField } from '../types';
-    import { Button } from '@components/ui/button';
-    import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
-    import * as Popover from '$lib/components/ui/popover/index.js';
-    import { Input } from '$lib/components/ui/input/index.js';
-    import { Label } from '$lib/components/ui/label/index.js';
-    import BoldIcon from '@lucide/svelte/icons/bold';
-    import ItalicIcon from '@lucide/svelte/icons/italic';
-    import UnderlineIcon from '@lucide/svelte/icons/underline';
-    import AlignLeftIcon from '@lucide/svelte/icons/align-left';
-    import AlignCenterIcon from '@lucide/svelte/icons/align-center';
-    import AlignRightIcon from '@lucide/svelte/icons/align-right';
-    import LinkIcon from '@lucide/svelte/icons/link';
-    import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
-    import EditIcon from '@lucide/svelte/icons/edit';
-    import TrashIcon from '@lucide/svelte/icons/trash';
     import { onMount } from 'svelte';
+    import RichEditorToolbar from './rich-editor/RichEditorToolbar.svelte';
+    import RichEditorContent from './rich-editor/RichEditorContent.svelte';
+    import EditLinkPopover from './rich-editor/EditLinkPopover.svelte';
+    import CharacterCounter from './rich-editor/CharacterCounter.svelte';
 
     export let field: FormField;
     export let fieldId: string;
@@ -28,7 +17,6 @@
     let activeFormats: string[] = [];
     let activeAlignment = '';
     let linkPopoverOpen = false;
-    let editingExistingLink = false;
     let currentLinkElement: HTMLAnchorElement | null = null;
     
     // Separate state for editing existing links
@@ -41,16 +29,6 @@
 
     onMount(() => {
         if (editorRef) {
-            editorRef.innerHTML = value || '';
-            
-            // Make existing links focusable
-            const links = editorRef.querySelectorAll('a');
-            links.forEach(link => {
-                if (!link.hasAttribute('tabindex')) {
-                    link.setAttribute('tabindex', '0');
-                }
-            });
-            
             editorRef.addEventListener('input', handleInput);
             editorRef.addEventListener('paste', handlePaste);
             editorRef.addEventListener('mouseup', updateActiveFormats);
@@ -84,7 +62,7 @@
             }
         });
         
-        setTimeout(updateActiveFormats, 0); // Delay to ensure DOM is updated
+        setTimeout(updateActiveFormats, 0);
     }
 
     function updateActiveFormats() {
@@ -96,7 +74,6 @@
         if (document.queryCommandState('underline')) formats.push('underline');
         activeFormats = formats;
 
-        // Update alignment
         if (document.queryCommandState('justifyLeft')) {
             activeAlignment = 'left';
         } else if (document.queryCommandState('justifyCenter')) {
@@ -125,7 +102,6 @@
     function ensureEditorFocus() {
         if (editorRef && document.activeElement !== editorRef) {
             editorRef.focus();
-            // Restore cursor position if needed
             const selection = window.getSelection();
             if (selection && selection.rangeCount === 0) {
                 const range = document.createRange();
@@ -141,7 +117,6 @@
         
         ensureEditorFocus();
         
-        // Apply or remove each format based on the new state
         ['bold', 'italic', 'underline'].forEach(format => {
             const isCurrentlyActive = document.queryCommandState(format);
             const shouldBeActive = formats.includes(format);
@@ -189,7 +164,6 @@
             editLinkUrl = linkElement.href;
             editLinkText = linkElement.textContent || '';
             
-            // Position the hidden trigger near the clicked link
             if (editLinkTrigger) {
                 const rect = linkElement.getBoundingClientRect();
                 editLinkTrigger.style.position = 'absolute';
@@ -208,7 +182,6 @@
             const target = e.target as HTMLElement;
             const linkElement = target.closest('a') as HTMLAnchorElement;
             
-            // Only prevent default and handle link editing if we're actually on a link
             if (linkElement && editorRef.contains(linkElement)) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -217,7 +190,6 @@
                 editLinkUrl = linkElement.href;
                 editLinkText = linkElement.textContent || '';
                 
-                // Position the hidden trigger near the focused link
                 if (editLinkTrigger) {
                     const rect = linkElement.getBoundingClientRect();
                     editLinkTrigger.style.position = 'absolute';
@@ -227,58 +199,49 @@
                 
                 editLinkPopoverOpen = true;
             }
-            // If not on a link, let the keypress work normally (don't prevent default)
         }
     }
 
-    function openLinkPopover() {
-        const selection = window.getSelection();
-        console.log('Opening link popover, selection:', selection?.toString());
-        
-        // Save the current selection before the popover steals focus
-        if (selection && selection.rangeCount > 0) {
-            savedSelection = selection.getRangeAt(0).cloneRange();
-            console.log('Saved selection:', savedSelection.toString());
+    function handleLinkPopoverOpenChange(isOpen: boolean) {
+        if (isOpen) {
+            const selection = window.getSelection();
             
-            if (selection.toString()) {
-                linkText = selection.toString();
+            if (selection && selection.rangeCount > 0) {
+                savedSelection = selection.getRangeAt(0).cloneRange();
+                
+                if (selection.toString()) {
+                    linkText = selection.toString();
+                } else {
+                    linkText = '';
+                }
             } else {
+                savedSelection = null;
                 linkText = '';
             }
-        } else {
-            savedSelection = null;
-            linkText = '';
+            linkUrl = '';
         }
-        linkUrl = '';
+        linkPopoverOpen = isOpen;
     }
 
     function insertLink() {
         if (linkUrl) {
-            console.log('Inserting link, savedSelection:', savedSelection?.toString());
-            
-            // If we have a saved selection (text was selected when popover opened)
             if (savedSelection && savedSelection.toString()) {
                 const displayText = linkText || savedSelection.toString();
-                console.log('Using saved selection, displayText:', displayText);
                 
-                // Restore the selection
                 const selection = window.getSelection();
                 if (selection) {
                     selection.removeAllRanges();
                     selection.addRange(savedSelection);
                     
-                    // Create the link element
                     const linkElement = document.createElement('a');
                     linkElement.href = linkUrl;
                     linkElement.target = '_blank';
                     linkElement.tabIndex = 0;
                     linkElement.textContent = displayText;
                     
-                    // Replace the selected text with the link
                     savedSelection.deleteContents();
                     savedSelection.insertNode(linkElement);
                     
-                    // Clear selection and place cursor after the link
                     selection.removeAllRanges();
                     const newRange = document.createRange();
                     newRange.setStartAfter(linkElement);
@@ -288,8 +251,6 @@
                     handleInput();
                 }
             } else {
-                // If no saved selection, insert new link at cursor position
-                console.log('No saved selection, inserting at cursor');
                 const displayText = linkText || linkUrl;
                 execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${displayText}</a>`);
             }
@@ -327,7 +288,6 @@
         linkUrl = '';
         linkText = '';
         savedSelection = null;
-        console.log('Closed link popover, cleared saved selection');
     }
 
     function closeEditLinkPopover() {
@@ -338,7 +298,6 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        // Handle common keyboard shortcuts only when Ctrl/Cmd is pressed
         if (e.ctrlKey || e.metaKey) {
             switch (e.key) {
                 case 'b':
@@ -359,7 +318,12 @@
                     break;
             }
         }
-        // Allow all other keys (including Enter and Space) to work normally
+    }
+
+    // Get editor reference from child component
+    let richEditorContent: RichEditorContent;
+    $: if (richEditorContent) {
+        editorRef = richEditorContent.getEditorRef();
     }
 
     $: currentLength = value?.replace(/<[^>]*>/g, '').length || 0;
@@ -368,192 +332,52 @@
 </script>
 
 <div class="space-y-2">
-    <!-- Toolbar -->
-    <div class="flex flex-wrap items-center gap-2 p-2 border rounded-t-md bg-muted/50">
-        <!-- Format toggle group -->
-        <ToggleGroup.Root 
-            variant="outline" 
-            type="multiple" 
-            value={activeFormats}
-            onValueChange={handleFormatToggle}
-            disabled={field.readonly || field.disabled}
-        >
-            <ToggleGroup.Item value="bold" aria-label="Toggle bold" title="Bold (Ctrl+B)">
-                <BoldIcon class="h-4 w-4" />
-            </ToggleGroup.Item>
-            <ToggleGroup.Item value="italic" aria-label="Toggle italic" title="Italic (Ctrl+I)">
-                <ItalicIcon class="h-4 w-4" />
-            </ToggleGroup.Item>
-            <ToggleGroup.Item value="underline" aria-label="Toggle underline" title="Underline (Ctrl+U)">
-                <UnderlineIcon class="h-4 w-4" />
-            </ToggleGroup.Item>
-        </ToggleGroup.Root>
+    <RichEditorToolbar 
+        {activeFormats}
+        {activeAlignment}
+        disabled={field.readonly || field.disabled}
+        {linkPopoverOpen}
+        bind:linkUrl
+        bind:linkText
+        onFormatToggle={handleFormatToggle}
+        onAlignmentChange={handleAlignmentChange}
+        onLinkPopoverOpenChange={handleLinkPopoverOpenChange}
+        onInsertLink={insertLink}
+        onCloseLinkPopover={closeLinkPopover}
+    />
 
-        <!-- Separator -->
-        <div class="w-px h-6 bg-border"></div>
+    <RichEditorContent 
+        bind:this={richEditorContent}
+        {field}
+        {fieldId}
+        bind:value
+        showCharCount={!!showCharCount}
+        onInput={handleInput}
+        onPaste={handlePaste}
+        onMouseUp={updateActiveFormats}
+        onKeyUp={updateActiveFormats}
+        onLinkClick={handleLinkClick}
+        onLinkKeydown={handleLinkKeydown}
+        onKeydown={handleKeydown}
+    />
 
-        <!-- Alignment toggle group -->
-        <ToggleGroup.Root 
-            variant="outline" 
-            type="single" 
-            value={activeAlignment}
-            onValueChange={handleAlignmentChange}
-            disabled={field.readonly || field.disabled}
-        >
-            <ToggleGroup.Item value="left" aria-label="Align left" title="Align Left">
-                <AlignLeftIcon class="h-4 w-4" />
-            </ToggleGroup.Item>
-            <ToggleGroup.Item value="center" aria-label="Align center" title="Align Center">
-                <AlignCenterIcon class="h-4 w-4" />
-            </ToggleGroup.Item>
-            <ToggleGroup.Item value="right" aria-label="Align right" title="Align Right">
-                <AlignRightIcon class="h-4 w-4" />
-            </ToggleGroup.Item>
-        </ToggleGroup.Root>
-
-        <!-- Separator -->
-        <div class="w-px h-6 bg-border"></div>
-
-        <!-- Link popover -->
-        <Popover.Root bind:open={linkPopoverOpen} onOpenChange={(open) => { if (open) openLinkPopover(); }}>
-            <Popover.Trigger>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    class="h-9 px-3"
-                    disabled={field.readonly || field.disabled}
-                    title="Insert Link (Ctrl+K)"
-                >
-                    <LinkIcon class="h-4 w-4" />
-                </Button>
-            </Popover.Trigger>
-            <Popover.Content class="w-80">
-                <div class="grid gap-4">
-                    <div class="space-y-2">
-                        <h4 class="font-medium leading-none">Insert Link</h4>
-                        <p class="text-muted-foreground text-sm">
-                            Add a link to your content.
-                        </p>
-                    </div>
-                    <div class="grid gap-2">
-                        <div class="grid gap-2">
-                            <Label for="link-url">URL</Label>
-                            <Input 
-                                id="link-url"
-                                type="url"
-                                bind:value={linkUrl}
-                                placeholder="https://example.com"
-                                class="h-8"
-                            />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="link-text">Link Text (optional)</Label>
-                            <Input 
-                                id="link-text"
-                                type="text"
-                                bind:value={linkText}
-                                placeholder="Link text"
-                                class="h-8"
-                            />
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-2">
-                        <Button type="button" variant="outline" size="sm" onclick={closeLinkPopover}>
-                            Cancel
-                        </Button>
-                        <Button type="button" size="sm" onclick={insertLink} disabled={!linkUrl}>
-                            Insert Link
-                        </Button>
-                    </div>
-                </div>
-            </Popover.Content>
-        </Popover.Root>
-    </div>
-
-    <!-- Edit Link Popover (appears when clicking on existing links) -->
-    <Popover.Root bind:open={editLinkPopoverOpen}>
-        <Popover.Trigger>
-            <button class="hidden" bind:this={editLinkTrigger}>Hidden Trigger</button>
-        </Popover.Trigger>
-        <Popover.Content class="w-80">
-            <div class="grid gap-4">
-                <div class="space-y-2">
-                    <h4 class="font-medium leading-none">Edit Link</h4>
-                    <p class="text-muted-foreground text-sm">
-                        Modify the link or choose an action.
-                    </p>
-                </div>
-                <div class="grid gap-2">
-                    <div class="grid gap-2">
-                        <Label for="edit-link-url">URL</Label>
-                        <Input 
-                            id="edit-link-url"
-                            type="url"
-                            bind:value={editLinkUrl}
-                            placeholder="https://example.com"
-                            class="h-8"
-                        />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="edit-link-text">Link Text</Label>
-                        <Input 
-                            id="edit-link-text"
-                            type="text"
-                            bind:value={editLinkText}
-                            placeholder="Link text"
-                            class="h-8"
-                        />
-                    </div>
-                </div>
-                <div class="flex justify-between">
-                    <div class="flex gap-1">
-                        <Button type="button" variant="outline" size="sm" onclick={visitLink} title="Visit Link">
-                            <ExternalLinkIcon class="h-3 w-3" />
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" onclick={removeLink} title="Remove Link">
-                            <TrashIcon class="h-3 w-3" />
-                        </Button>
-                    </div>
-                    <div class="flex gap-2">
-                        <Button type="button" variant="outline" size="sm" onclick={closeEditLinkPopover}>
-                            Cancel
-                        </Button>
-                        <Button type="button" size="sm" onclick={updateExistingLink} disabled={!editLinkUrl}>
-                            Update Link
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </Popover.Content>
-    </Popover.Root>
-
-    <!-- Editor -->
-    <div
-        bind:this={editorRef}
-        contenteditable={!field.readonly && !field.disabled}
-        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rich-editor [&_a]:underline [&_a]:decoration-gray-400 [&_a]:underline-offset-2 [&_a]:text-blue-600 [&_a]:hover:text-blue-700 [&_a]:hover:decoration-blue-600 [&_a]:transition-colors [&_a]:cursor-pointer [&_a]:rounded-sm [&_a]:px-1 [&_a]:py-0.5 [&_a]:mx-0.5 [&_a]:bg-blue-50 [&_a]:hover:bg-blue-100 [&_a]:border [&_a]:border-transparent [&_a]:hover:border-blue-200 [&_a]:focus:outline-none [&_a]:focus:ring-2 [&_a]:focus:ring-ring [&_a]:focus:ring-offset-1 [&_a]:tabindex-0 dark:[&_a]:text-blue-400 dark:[&_a]:hover:text-blue-300 dark:[&_a]:decoration-gray-500 dark:[&_a]:hover:decoration-blue-400 dark:[&_a]:bg-blue-950/30 dark:[&_a]:hover:bg-blue-900/40 dark:[&_a]:hover:border-blue-700"
-        class:opacity-50={field.disabled}
-        class:cursor-not-allowed={field.disabled}
-        style="min-height: {field.rows ? field.rows * 1.5 : 8}rem;"
-        placeholder={field.placeholder}
-        aria-describedby={showCharCount ? `${fieldId}-characters-left` : undefined}
-        onkeydown={handleKeydown}
-        role="textbox"
-        aria-multiline="true"
-        aria-label={field.label}
-        tabindex="0"
-    ></div>
+    <EditLinkPopover 
+        open={editLinkPopoverOpen}
+        bind:linkUrl={editLinkUrl}
+        bind:linkText={editLinkText}
+        bind:triggerElement={editLinkTrigger}
+        onUpdateLink={updateExistingLink}
+        onVisitLink={visitLink}
+        onRemoveLink={removeLink}
+        onClose={closeEditLinkPopover}
+    />
 
     {#if showCharCount}
-        <p
-            id="{fieldId}-characters-left"
-            class="text-muted-foreground mt-2 text-right text-xs"
-            role="status"
-            aria-live="polite"
-        >
-            <span class="tabular-nums">{currentLength}/{maxLength}</span>
-        </p>
+        <CharacterCounter 
+            {fieldId}
+            {currentLength}
+            maxLength={maxLength || 0}
+        />
     {/if}
 </div>
 
