@@ -29,6 +29,11 @@
     let linkPopoverOpen = false;
     let editingExistingLink = false;
     let currentLinkElement: HTMLAnchorElement | null = null;
+    
+    // Separate state for editing existing links
+    let editLinkPopoverOpen = false;
+    let editLinkUrl = '';
+    let editLinkText = '';
 
     onMount(() => {
         if (editorRef) {
@@ -157,10 +162,9 @@
             e.stopPropagation();
             
             currentLinkElement = linkElement;
-            linkUrl = linkElement.href;
-            linkText = linkElement.textContent || '';
-            editingExistingLink = true;
-            linkPopoverOpen = true;
+            editLinkUrl = linkElement.href;
+            editLinkText = linkElement.textContent || '';
+            editLinkPopoverOpen = true;
         }
     }
 
@@ -168,35 +172,38 @@
         const selection = window.getSelection();
         if (selection && selection.toString()) {
             linkText = selection.toString();
+        } else {
+            linkText = '';
         }
-        editingExistingLink = false;
-        currentLinkElement = null;
-        linkPopoverOpen = true;
+        linkUrl = '';
     }
 
     function insertLink() {
         if (linkUrl) {
-            if (editingExistingLink && currentLinkElement) {
-                // Update existing link
-                currentLinkElement.href = linkUrl;
-                currentLinkElement.textContent = linkText || linkUrl;
+            // Insert new link
+            if (linkText) {
+                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkText}</a>`);
             } else {
-                // Insert new link
-                if (linkText) {
-                    execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkText}</a>`);
-                } else {
-                    execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkUrl}</a>`);
-                }
+                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkUrl}</a>`);
             }
         }
         closeLinkPopover();
     }
 
-    function visitLink() {
-        if (linkUrl) {
-            window.open(linkUrl, '_blank');
+    function updateExistingLink() {
+        if (editLinkUrl && currentLinkElement) {
+            currentLinkElement.href = editLinkUrl;
+            currentLinkElement.textContent = editLinkText || editLinkUrl;
+            handleInput();
         }
-        closeLinkPopover();
+        closeEditLinkPopover();
+    }
+
+    function visitLink() {
+        if (editLinkUrl) {
+            window.open(editLinkUrl, '_blank');
+        }
+        closeEditLinkPopover();
     }
 
     function removeLink() {
@@ -205,14 +212,19 @@
             currentLinkElement.outerHTML = textContent;
             handleInput();
         }
-        closeLinkPopover();
+        closeEditLinkPopover();
     }
 
     function closeLinkPopover() {
         linkPopoverOpen = false;
         linkUrl = '';
         linkText = '';
-        editingExistingLink = false;
+    }
+
+    function closeEditLinkPopover() {
+        editLinkPopoverOpen = false;
+        editLinkUrl = '';
+        editLinkText = '';
         currentLinkElement = null;
     }
 
@@ -234,7 +246,7 @@
                     break;
                 case 'k':
                     e.preventDefault();
-                    openLinkPopover();
+                    linkPopoverOpen = true;
                     break;
             }
         }
@@ -293,7 +305,7 @@
         <div class="w-px h-6 bg-border"></div>
 
         <!-- Link popover -->
-        <Popover.Root bind:open={linkPopoverOpen}>
+        <Popover.Root bind:open={linkPopoverOpen} onOpenChange={(open) => { if (open) openLinkPopover(); }}>
             <Popover.Trigger>
                 <Button
                     type="button"
@@ -309,11 +321,9 @@
             <Popover.Content class="w-80">
                 <div class="grid gap-4">
                     <div class="space-y-2">
-                        <h4 class="font-medium leading-none">
-                            {editingExistingLink ? 'Edit Link' : 'Insert Link'}
-                        </h4>
+                        <h4 class="font-medium leading-none">Insert Link</h4>
                         <p class="text-muted-foreground text-sm">
-                            {editingExistingLink ? 'Modify the link or choose an action.' : 'Add a link to your content.'}
+                            Add a link to your content.
                         </p>
                     </div>
                     <div class="grid gap-2">
@@ -338,32 +348,75 @@
                             />
                         </div>
                     </div>
-                    <div class="flex justify-between">
-                        {#if editingExistingLink}
-                            <div class="flex gap-1">
-                                <Button type="button" variant="outline" size="sm" onclick={visitLink} title="Visit Link">
-                                    <ExternalLinkIcon class="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="outline" size="sm" onclick={removeLink} title="Remove Link">
-                                    <TrashIcon class="h-3 w-3" />
-                                </Button>
-                            </div>
-                        {:else}
-                            <div></div>
-                        {/if}
-                        <div class="flex gap-2">
-                            <Button type="button" variant="outline" size="sm" onclick={closeLinkPopover}>
-                                Cancel
-                            </Button>
-                            <Button type="button" size="sm" onclick={insertLink} disabled={!linkUrl}>
-                                {editingExistingLink ? 'Update' : 'Insert'} Link
-                            </Button>
-                        </div>
+                    <div class="flex justify-end gap-2">
+                        <Button type="button" variant="outline" size="sm" onclick={closeLinkPopover}>
+                            Cancel
+                        </Button>
+                        <Button type="button" size="sm" onclick={insertLink} disabled={!linkUrl}>
+                            Insert Link
+                        </Button>
                     </div>
                 </div>
             </Popover.Content>
         </Popover.Root>
     </div>
+
+    <!-- Edit Link Popover (appears when clicking on existing links) -->
+    {#if editLinkPopoverOpen}
+        <div class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="fixed inset-0 bg-black/20" onclick={closeEditLinkPopover}></div>
+            <div class="relative bg-background border rounded-lg shadow-lg w-80 p-4 z-50">
+                <div class="grid gap-4">
+                    <div class="space-y-2">
+                        <h4 class="font-medium leading-none">Edit Link</h4>
+                        <p class="text-muted-foreground text-sm">
+                            Modify the link or choose an action.
+                        </p>
+                    </div>
+                    <div class="grid gap-2">
+                        <div class="grid gap-2">
+                            <Label for="edit-link-url">URL</Label>
+                            <Input 
+                                id="edit-link-url"
+                                type="url"
+                                bind:value={editLinkUrl}
+                                placeholder="https://example.com"
+                                class="h-8"
+                            />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="edit-link-text">Link Text</Label>
+                            <Input 
+                                id="edit-link-text"
+                                type="text"
+                                bind:value={editLinkText}
+                                placeholder="Link text"
+                                class="h-8"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <div class="flex gap-1">
+                            <Button type="button" variant="outline" size="sm" onclick={visitLink} title="Visit Link">
+                                <ExternalLinkIcon class="h-3 w-3" />
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onclick={removeLink} title="Remove Link">
+                                <TrashIcon class="h-3 w-3" />
+                            </Button>
+                        </div>
+                        <div class="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onclick={closeEditLinkPopover}>
+                                Cancel
+                            </Button>
+                            <Button type="button" size="sm" onclick={updateExistingLink} disabled={!editLinkUrl}>
+                                Update Link
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
 
     <!-- Editor -->
     <div
