@@ -60,7 +60,7 @@
                 {componentInstance.displayName || componentInstance.component.name}
             </h3>
             
-            <div class="space-y-4">
+            <div class="flex flex-col gap-8">
                 {#each componentInstance.component.fields as field (field.name)}
                     <FormField 
                         {field}
