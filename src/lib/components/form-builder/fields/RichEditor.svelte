@@ -35,6 +35,9 @@
     let editLinkPopoverOpen = false;
     let editLinkUrl = '';
     let editLinkText = '';
+    
+    // Store selection when popover opens
+    let savedSelection: Range | null = null;
 
     onMount(() => {
         if (editorRef) {
@@ -202,13 +205,14 @@
         if (field.readonly || field.disabled) return;
         
         if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            
             const target = e.target as HTMLElement;
             const linkElement = target.closest('a') as HTMLAnchorElement;
             
+            // Only prevent default and handle link editing if we're actually on a link
             if (linkElement && editorRef.contains(linkElement)) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 currentLinkElement = linkElement;
                 editLinkUrl = linkElement.href;
                 editLinkText = linkElement.textContent || '';
@@ -223,14 +227,26 @@
                 
                 editLinkPopoverOpen = true;
             }
+            // If not on a link, let the keypress work normally (don't prevent default)
         }
     }
 
     function openLinkPopover() {
         const selection = window.getSelection();
-        if (selection && selection.toString()) {
-            linkText = selection.toString();
+        console.log('Opening link popover, selection:', selection?.toString());
+        
+        // Save the current selection before the popover steals focus
+        if (selection && selection.rangeCount > 0) {
+            savedSelection = selection.getRangeAt(0).cloneRange();
+            console.log('Saved selection:', savedSelection.toString());
+            
+            if (selection.toString()) {
+                linkText = selection.toString();
+            } else {
+                linkText = '';
+            }
         } else {
+            savedSelection = null;
             linkText = '';
         }
         linkUrl = '';
@@ -238,11 +254,44 @@
 
     function insertLink() {
         if (linkUrl) {
-            // Insert new link with tabindex for keyboard accessibility
-            if (linkText) {
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${linkText}</a>`);
+            console.log('Inserting link, savedSelection:', savedSelection?.toString());
+            
+            // If we have a saved selection (text was selected when popover opened)
+            if (savedSelection && savedSelection.toString()) {
+                const displayText = linkText || savedSelection.toString();
+                console.log('Using saved selection, displayText:', displayText);
+                
+                // Restore the selection
+                const selection = window.getSelection();
+                if (selection) {
+                    selection.removeAllRanges();
+                    selection.addRange(savedSelection);
+                    
+                    // Create the link element
+                    const linkElement = document.createElement('a');
+                    linkElement.href = linkUrl;
+                    linkElement.target = '_blank';
+                    linkElement.tabIndex = 0;
+                    linkElement.textContent = displayText;
+                    
+                    // Replace the selected text with the link
+                    savedSelection.deleteContents();
+                    savedSelection.insertNode(linkElement);
+                    
+                    // Clear selection and place cursor after the link
+                    selection.removeAllRanges();
+                    const newRange = document.createRange();
+                    newRange.setStartAfter(linkElement);
+                    newRange.collapse(true);
+                    selection.addRange(newRange);
+                    
+                    handleInput();
+                }
             } else {
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${linkUrl}</a>`);
+                // If no saved selection, insert new link at cursor position
+                console.log('No saved selection, inserting at cursor');
+                const displayText = linkText || linkUrl;
+                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${displayText}</a>`);
             }
         }
         closeLinkPopover();
@@ -277,6 +326,8 @@
         linkPopoverOpen = false;
         linkUrl = '';
         linkText = '';
+        savedSelection = null;
+        console.log('Closed link popover, cleared saved selection');
     }
 
     function closeEditLinkPopover() {
@@ -287,7 +338,7 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        // Handle common keyboard shortcuts
+        // Handle common keyboard shortcuts only when Ctrl/Cmd is pressed
         if (e.ctrlKey || e.metaKey) {
             switch (e.key) {
                 case 'b':
@@ -308,6 +359,7 @@
                     break;
             }
         }
+        // Allow all other keys (including Enter and Space) to work normally
     }
 
     $: currentLength = value?.replace(/<[^>]*>/g, '').length || 0;
