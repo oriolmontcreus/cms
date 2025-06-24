@@ -25,6 +25,7 @@
     const isValidColor = $derived(value && HEX_REGEX.test(value));
     const isDisabled = $derived(field.disabled || field.readonly);
     const displayValue = $derived(value || '');
+    const shouldShowValidation = $derived(value && !isValidColor);
 
     $effect(() => {
         if (value && !value.startsWith('#')) value = '#' + value;
@@ -62,8 +63,7 @@
                 readonly={field.readonly}
                 value={displayValue}
                 oninput={handleInputChange}
-                class="pr-12"
-                pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                class={cn("pr-12", shouldShowValidation && "border-destructive focus-visible:ring-destructive")}
             />
             
             <!-- Color preview -->
@@ -141,4 +141,8 @@
             </Popover.Content>
         </Popover.Root>
     </div>
+    
+    {#if shouldShowValidation}
+        <p class="text-sm text-destructive">Please enter a valid hex color (e.g., #FF0000 or #F00)</p>
+    {/if}
 </div> 
