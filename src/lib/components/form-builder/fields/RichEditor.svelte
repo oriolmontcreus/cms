@@ -22,6 +22,7 @@
     export let value: string = '';
 
     let editorRef: HTMLDivElement;
+    let editLinkTrigger: HTMLButtonElement;
     let linkUrl = '';
     let linkText = '';
     let activeFormats: string[] = [];
@@ -38,11 +39,21 @@
     onMount(() => {
         if (editorRef) {
             editorRef.innerHTML = value || '';
+            
+            // Make existing links focusable
+            const links = editorRef.querySelectorAll('a');
+            links.forEach(link => {
+                if (!link.hasAttribute('tabindex')) {
+                    link.setAttribute('tabindex', '0');
+                }
+            });
+            
             editorRef.addEventListener('input', handleInput);
             editorRef.addEventListener('paste', handlePaste);
             editorRef.addEventListener('mouseup', updateActiveFormats);
             editorRef.addEventListener('keyup', updateActiveFormats);
             editorRef.addEventListener('click', handleLinkClick);
+            editorRef.addEventListener('keydown', handleLinkKeydown);
             document.addEventListener('selectionchange', updateActiveFormats);
         }
         
@@ -53,6 +64,7 @@
                 editorRef.removeEventListener('mouseup', updateActiveFormats);
                 editorRef.removeEventListener('keyup', updateActiveFormats);
                 editorRef.removeEventListener('click', handleLinkClick);
+                editorRef.removeEventListener('keydown', handleLinkKeydown);
                 document.removeEventListener('selectionchange', updateActiveFormats);
             }
         };
@@ -60,6 +72,15 @@
 
     function handleInput() {
         value = editorRef.innerHTML;
+        
+        // Make any new links focusable
+        const links = editorRef.querySelectorAll('a');
+        links.forEach(link => {
+            if (!link.hasAttribute('tabindex')) {
+                link.setAttribute('tabindex', '0');
+            }
+        });
+        
         setTimeout(updateActiveFormats, 0); // Delay to ensure DOM is updated
     }
 
@@ -164,7 +185,44 @@
             currentLinkElement = linkElement;
             editLinkUrl = linkElement.href;
             editLinkText = linkElement.textContent || '';
+            
+            // Position the hidden trigger near the clicked link
+            if (editLinkTrigger) {
+                const rect = linkElement.getBoundingClientRect();
+                editLinkTrigger.style.position = 'absolute';
+                editLinkTrigger.style.left = `${rect.left}px`;
+                editLinkTrigger.style.top = `${rect.bottom}px`;
+            }
+            
             editLinkPopoverOpen = true;
+        }
+    }
+
+    function handleLinkKeydown(e: KeyboardEvent) {
+        if (field.readonly || field.disabled) return;
+        
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const target = e.target as HTMLElement;
+            const linkElement = target.closest('a') as HTMLAnchorElement;
+            
+            if (linkElement && editorRef.contains(linkElement)) {
+                currentLinkElement = linkElement;
+                editLinkUrl = linkElement.href;
+                editLinkText = linkElement.textContent || '';
+                
+                // Position the hidden trigger near the focused link
+                if (editLinkTrigger) {
+                    const rect = linkElement.getBoundingClientRect();
+                    editLinkTrigger.style.position = 'absolute';
+                    editLinkTrigger.style.left = `${rect.left}px`;
+                    editLinkTrigger.style.top = `${rect.bottom}px`;
+                }
+                
+                editLinkPopoverOpen = true;
+            }
         }
     }
 
@@ -180,11 +238,11 @@
 
     function insertLink() {
         if (linkUrl) {
-            // Insert new link
+            // Insert new link with tabindex for keyboard accessibility
             if (linkText) {
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkText}</a>`);
+                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${linkText}</a>`);
             } else {
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkUrl}</a>`);
+                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${linkUrl}</a>`);
             }
         }
         closeLinkPopover();
@@ -362,67 +420,67 @@
     </div>
 
     <!-- Edit Link Popover (appears when clicking on existing links) -->
-    {#if editLinkPopoverOpen}
-        <div class="fixed inset-0 z-50 flex items-center justify-center">
-            <div class="fixed inset-0 bg-black/20" onclick={closeEditLinkPopover}></div>
-            <div class="relative bg-background border rounded-lg shadow-lg w-80 p-4 z-50">
-                <div class="grid gap-4">
-                    <div class="space-y-2">
-                        <h4 class="font-medium leading-none">Edit Link</h4>
-                        <p class="text-muted-foreground text-sm">
-                            Modify the link or choose an action.
-                        </p>
+    <Popover.Root bind:open={editLinkPopoverOpen}>
+        <Popover.Trigger>
+            <button class="hidden" bind:this={editLinkTrigger}>Hidden Trigger</button>
+        </Popover.Trigger>
+        <Popover.Content class="w-80">
+            <div class="grid gap-4">
+                <div class="space-y-2">
+                    <h4 class="font-medium leading-none">Edit Link</h4>
+                    <p class="text-muted-foreground text-sm">
+                        Modify the link or choose an action.
+                    </p>
+                </div>
+                <div class="grid gap-2">
+                    <div class="grid gap-2">
+                        <Label for="edit-link-url">URL</Label>
+                        <Input 
+                            id="edit-link-url"
+                            type="url"
+                            bind:value={editLinkUrl}
+                            placeholder="https://example.com"
+                            class="h-8"
+                        />
                     </div>
                     <div class="grid gap-2">
-                        <div class="grid gap-2">
-                            <Label for="edit-link-url">URL</Label>
-                            <Input 
-                                id="edit-link-url"
-                                type="url"
-                                bind:value={editLinkUrl}
-                                placeholder="https://example.com"
-                                class="h-8"
-                            />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="edit-link-text">Link Text</Label>
-                            <Input 
-                                id="edit-link-text"
-                                type="text"
-                                bind:value={editLinkText}
-                                placeholder="Link text"
-                                class="h-8"
-                            />
-                        </div>
+                        <Label for="edit-link-text">Link Text</Label>
+                        <Input 
+                            id="edit-link-text"
+                            type="text"
+                            bind:value={editLinkText}
+                            placeholder="Link text"
+                            class="h-8"
+                        />
                     </div>
-                    <div class="flex justify-between">
-                        <div class="flex gap-1">
-                            <Button type="button" variant="outline" size="sm" onclick={visitLink} title="Visit Link">
-                                <ExternalLinkIcon class="h-3 w-3" />
-                            </Button>
-                            <Button type="button" variant="outline" size="sm" onclick={removeLink} title="Remove Link">
-                                <TrashIcon class="h-3 w-3" />
-                            </Button>
-                        </div>
-                        <div class="flex gap-2">
-                            <Button type="button" variant="outline" size="sm" onclick={closeEditLinkPopover}>
-                                Cancel
-                            </Button>
-                            <Button type="button" size="sm" onclick={updateExistingLink} disabled={!editLinkUrl}>
-                                Update Link
-                            </Button>
-                        </div>
+                </div>
+                <div class="flex justify-between">
+                    <div class="flex gap-1">
+                        <Button type="button" variant="outline" size="sm" onclick={visitLink} title="Visit Link">
+                            <ExternalLinkIcon class="h-3 w-3" />
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onclick={removeLink} title="Remove Link">
+                            <TrashIcon class="h-3 w-3" />
+                        </Button>
+                    </div>
+                    <div class="flex gap-2">
+                        <Button type="button" variant="outline" size="sm" onclick={closeEditLinkPopover}>
+                            Cancel
+                        </Button>
+                        <Button type="button" size="sm" onclick={updateExistingLink} disabled={!editLinkUrl}>
+                            Update Link
+                        </Button>
                     </div>
                 </div>
             </div>
-        </div>
-    {/if}
+        </Popover.Content>
+    </Popover.Root>
 
     <!-- Editor -->
     <div
         bind:this={editorRef}
         contenteditable={!field.readonly && !field.disabled}
-        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rich-editor [&_a]:underline [&_a]:decoration-gray-400 [&_a]:underline-offset-2 [&_a]:text-blue-600 [&_a]:hover:text-blue-700 [&_a]:hover:decoration-blue-600 [&_a]:transition-colors [&_a]:cursor-pointer [&_a]:rounded-sm [&_a]:px-1 [&_a]:py-0.5 [&_a]:mx-0.5 [&_a]:bg-blue-50 [&_a]:hover:bg-blue-100 [&_a]:border [&_a]:border-transparent [&_a]:hover:border-blue-200 dark:[&_a]:text-blue-400 dark:[&_a]:hover:text-blue-300 dark:[&_a]:decoration-gray-500 dark:[&_a]:hover:decoration-blue-400 dark:[&_a]:bg-blue-950/30 dark:[&_a]:hover:bg-blue-900/40 dark:[&_a]:hover:border-blue-700"
+        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rich-editor [&_a]:underline [&_a]:decoration-gray-400 [&_a]:underline-offset-2 [&_a]:text-blue-600 [&_a]:hover:text-blue-700 [&_a]:hover:decoration-blue-600 [&_a]:transition-colors [&_a]:cursor-pointer [&_a]:rounded-sm [&_a]:px-1 [&_a]:py-0.5 [&_a]:mx-0.5 [&_a]:bg-blue-50 [&_a]:hover:bg-blue-100 [&_a]:border [&_a]:border-transparent [&_a]:hover:border-blue-200 [&_a]:focus:outline-none [&_a]:focus:ring-2 [&_a]:focus:ring-ring [&_a]:focus:ring-offset-1 [&_a]:tabindex-0 dark:[&_a]:text-blue-400 dark:[&_a]:hover:text-blue-300 dark:[&_a]:decoration-gray-500 dark:[&_a]:hover:decoration-blue-400 dark:[&_a]:bg-blue-950/30 dark:[&_a]:hover:bg-blue-900/40 dark:[&_a]:hover:border-blue-700"
         class:opacity-50={field.disabled}
         class:cursor-not-allowed={field.disabled}
         style="min-height: {field.rows ? field.rows * 1.5 : 8}rem;"
