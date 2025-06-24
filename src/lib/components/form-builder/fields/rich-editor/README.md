@@ -18,7 +18,6 @@ The RichEditor has been refactored into smaller, more manageable components for 
 #### Content & Interaction
 - **`RichEditorContent.svelte`** - The main contenteditable area with event handling
 - **`EditLinkPopover.svelte`** - Edit existing links with visit/remove options
-- **`CharacterCounter.svelte`** - Character count display component
 
 ## Benefits of This Architecture
 
@@ -52,6 +51,7 @@ The main `RichEditor` component:
 - Manages all state variables
 - Handles complex logic (DOM manipulation, selection handling)
 - Coordinates between child components via props and callbacks
+- Handles helper text and character counting display
 - Maintains backward compatibility with the original API
 
 Child components:
@@ -82,8 +82,7 @@ rich-editor/
 ├── LinkPopover.svelte           # Insert link functionality  
 ├── EditLinkPopover.svelte       # Edit existing links
 ├── RichEditorToolbar.svelte     # Toolbar container
-├── RichEditorContent.svelte     # Main editor area
-└── CharacterCounter.svelte      # Character count display
+└── RichEditorContent.svelte     # Main editor area
 ```
 
 This structure makes the codebase more maintainable while preserving all original functionality. 

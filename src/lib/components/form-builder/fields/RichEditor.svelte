@@ -4,7 +4,6 @@
     import RichEditorToolbar from './rich-editor/RichEditorToolbar.svelte';
     import RichEditorContent from './rich-editor/RichEditorContent.svelte';
     import EditLinkPopover from './rich-editor/EditLinkPopover.svelte';
-    import CharacterCounter from './rich-editor/CharacterCounter.svelte';
 
     // Constants
     const FORMATS = ['bold', 'italic', 'underline'] as const;
@@ -322,7 +321,7 @@
     }
 </script>
 
-<div class="space-y-2">
+<div>
     <RichEditorToolbar 
         {activeFormats}
         {activeAlignment}
@@ -363,12 +362,24 @@
         onClose={resetEditLinkPopoverState}
     />
 
-    {#if showCharCount}
-        <CharacterCounter 
-            {fieldId}
-            {currentLength}
-            maxLength={maxLength || 0}
-        />
+    {#if field.helperText || showCharCount}
+        <div class="flex justify-between items-center text-sm text-muted-foreground -mt-4">
+            {#if field.helperText}
+                <p id="{fieldId}-help">{field.helperText}</p>
+            {:else}
+                <div></div>
+            {/if}
+            {#if showCharCount}
+                <p
+                    id="{fieldId}-characters-left"
+                    class="text-xs"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <span class="tabular-nums">{currentLength}/{maxLength}</span>
+                </p>
+            {/if}
+        </div>
     {/if}
 </div>
 

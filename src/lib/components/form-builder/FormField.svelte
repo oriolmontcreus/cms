@@ -33,6 +33,7 @@
     $: FieldComponent = fieldComponents[field.type] || TextInput;
     $: showMaxValue = field.type === 'number' && field.max !== undefined;
     $: hasHelperText = field.helperText || showMaxValue;
+    $: shouldShowHelperSection = hasHelperText && field.type !== 'richtext';
 </script>
 
 <div class="space-y-2">
@@ -48,7 +49,7 @@
         decimalSeparator={field.decimalSeparator || '.'}
     />
     
-    {#if hasHelperText}
+    {#if shouldShowHelperSection}
         <div class="flex justify-between items-center text-sm text-muted-foreground">
             {#if field.helperText}
                 <p id="{fieldId}-help">{field.helperText}</p>
