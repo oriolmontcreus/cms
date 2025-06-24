@@ -2,6 +2,9 @@
     import type { FormField } from '../types';
     import { Button } from '@components/ui/button';
     import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
+    import * as Popover from '$lib/components/ui/popover/index.js';
+    import { Input } from '$lib/components/ui/input/index.js';
+    import { Label } from '$lib/components/ui/label/index.js';
     import BoldIcon from '@lucide/svelte/icons/bold';
     import ItalicIcon from '@lucide/svelte/icons/italic';
     import UnderlineIcon from '@lucide/svelte/icons/underline';
@@ -9,6 +12,9 @@
     import AlignCenterIcon from '@lucide/svelte/icons/align-center';
     import AlignRightIcon from '@lucide/svelte/icons/align-right';
     import LinkIcon from '@lucide/svelte/icons/link';
+    import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
+    import EditIcon from '@lucide/svelte/icons/edit';
+    import TrashIcon from '@lucide/svelte/icons/trash';
     import { onMount } from 'svelte';
 
     export let field: FormField;
@@ -16,11 +22,13 @@
     export let value: string = '';
 
     let editorRef: HTMLDivElement;
-    let isLinkModalOpen = false;
     let linkUrl = '';
     let linkText = '';
     let activeFormats: string[] = [];
     let activeAlignment = '';
+    let linkPopoverOpen = false;
+    let editingExistingLink = false;
+    let currentLinkElement: HTMLAnchorElement | null = null;
 
     onMount(() => {
         if (editorRef) {
@@ -29,6 +37,7 @@
             editorRef.addEventListener('paste', handlePaste);
             editorRef.addEventListener('mouseup', updateActiveFormats);
             editorRef.addEventListener('keyup', updateActiveFormats);
+            editorRef.addEventListener('click', handleLinkClick);
             document.addEventListener('selectionchange', updateActiveFormats);
         }
         
@@ -38,6 +47,7 @@
                 editorRef.removeEventListener('paste', handlePaste);
                 editorRef.removeEventListener('mouseup', updateActiveFormats);
                 editorRef.removeEventListener('keyup', updateActiveFormats);
+                editorRef.removeEventListener('click', handleLinkClick);
                 document.removeEventListener('selectionchange', updateActiveFormats);
             }
         };
@@ -136,31 +146,74 @@
         }
     }
 
-    function openLinkModal() {
+    function handleLinkClick(e: MouseEvent) {
+        if (field.readonly || field.disabled) return;
+        
+        const target = e.target as HTMLElement;
+        const linkElement = target.closest('a') as HTMLAnchorElement;
+        
+        if (linkElement && editorRef.contains(linkElement)) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            currentLinkElement = linkElement;
+            linkUrl = linkElement.href;
+            linkText = linkElement.textContent || '';
+            editingExistingLink = true;
+            linkPopoverOpen = true;
+        }
+    }
+
+    function openLinkPopover() {
         const selection = window.getSelection();
         if (selection && selection.toString()) {
             linkText = selection.toString();
         }
-        isLinkModalOpen = true;
+        editingExistingLink = false;
+        currentLinkElement = null;
+        linkPopoverOpen = true;
     }
 
     function insertLink() {
         if (linkUrl) {
-            if (linkText) {
-                // If we have selected text, replace it with the link
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkText}</a>`);
+            if (editingExistingLink && currentLinkElement) {
+                // Update existing link
+                currentLinkElement.href = linkUrl;
+                currentLinkElement.textContent = linkText || linkUrl;
             } else {
-                // If no text is selected, insert the URL as both href and text
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkUrl}</a>`);
+                // Insert new link
+                if (linkText) {
+                    execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkText}</a>`);
+                } else {
+                    execCommand('insertHTML', `<a href="${linkUrl}" target="_blank">${linkUrl}</a>`);
+                }
             }
         }
-        closeLinkModal();
+        closeLinkPopover();
     }
 
-    function closeLinkModal() {
-        isLinkModalOpen = false;
+    function visitLink() {
+        if (linkUrl) {
+            window.open(linkUrl, '_blank');
+        }
+        closeLinkPopover();
+    }
+
+    function removeLink() {
+        if (currentLinkElement) {
+            const textContent = currentLinkElement.textContent || '';
+            currentLinkElement.outerHTML = textContent;
+            handleInput();
+        }
+        closeLinkPopover();
+    }
+
+    function closeLinkPopover() {
+        linkPopoverOpen = false;
         linkUrl = '';
         linkText = '';
+        editingExistingLink = false;
+        currentLinkElement = null;
     }
 
     function handleKeydown(e: KeyboardEvent) {
@@ -181,7 +234,7 @@
                     break;
                 case 'k':
                     e.preventDefault();
-                    openLinkModal();
+                    openLinkPopover();
                     break;
             }
         }
@@ -239,25 +292,84 @@
         <!-- Separator -->
         <div class="w-px h-6 bg-border"></div>
 
-        <!-- Link button -->
-        <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            class="h-9 px-3"
-            disabled={field.readonly || field.disabled}
-            onclick={openLinkModal}
-            title="Insert Link (Ctrl+K)"
-        >
-            <LinkIcon class="h-4 w-4" />
-        </Button>
+        <!-- Link popover -->
+        <Popover.Root bind:open={linkPopoverOpen}>
+            <Popover.Trigger>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="h-9 px-3"
+                    disabled={field.readonly || field.disabled}
+                    title="Insert Link (Ctrl+K)"
+                >
+                    <LinkIcon class="h-4 w-4" />
+                </Button>
+            </Popover.Trigger>
+            <Popover.Content class="w-80">
+                <div class="grid gap-4">
+                    <div class="space-y-2">
+                        <h4 class="font-medium leading-none">
+                            {editingExistingLink ? 'Edit Link' : 'Insert Link'}
+                        </h4>
+                        <p class="text-muted-foreground text-sm">
+                            {editingExistingLink ? 'Modify the link or choose an action.' : 'Add a link to your content.'}
+                        </p>
+                    </div>
+                    <div class="grid gap-2">
+                        <div class="grid gap-2">
+                            <Label for="link-url">URL</Label>
+                            <Input 
+                                id="link-url"
+                                type="url"
+                                bind:value={linkUrl}
+                                placeholder="https://example.com"
+                                class="h-8"
+                            />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="link-text">Link Text (optional)</Label>
+                            <Input 
+                                id="link-text"
+                                type="text"
+                                bind:value={linkText}
+                                placeholder="Link text"
+                                class="h-8"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        {#if editingExistingLink}
+                            <div class="flex gap-1">
+                                <Button type="button" variant="outline" size="sm" onclick={visitLink} title="Visit Link">
+                                    <ExternalLinkIcon class="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="outline" size="sm" onclick={removeLink} title="Remove Link">
+                                    <TrashIcon class="h-3 w-3" />
+                                </Button>
+                            </div>
+                        {:else}
+                            <div></div>
+                        {/if}
+                        <div class="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onclick={closeLinkPopover}>
+                                Cancel
+                            </Button>
+                            <Button type="button" size="sm" onclick={insertLink} disabled={!linkUrl}>
+                                {editingExistingLink ? 'Update' : 'Insert'} Link
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </Popover.Content>
+        </Popover.Root>
     </div>
 
     <!-- Editor -->
     <div
         bind:this={editorRef}
         contenteditable={!field.readonly && !field.disabled}
-        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rich-editor"
         class:opacity-50={field.disabled}
         class:cursor-not-allowed={field.disabled}
         style="min-height: {field.rows ? field.rows * 1.5 : 8}rem;"
@@ -281,45 +393,14 @@
     {/if}
 </div>
 
-<!-- Link Modal -->
-{#if isLinkModalOpen}
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick={closeLinkModal}>
-        <div class="bg-background p-6 rounded-lg shadow-lg w-96" onclick={(e) => e.stopPropagation()}>
-            <h3 class="text-lg font-semibold mb-4">Insert Link</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <label for="link-url" class="block text-sm font-medium mb-1">URL</label>
-                    <input
-                        id="link-url"
-                        type="url"
-                        bind:value={linkUrl}
-                        placeholder="https://example.com"
-                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                        required
-                    />
-                </div>
-                
-                <div>
-                    <label for="link-text" class="block text-sm font-medium mb-1">Link Text (optional)</label>
-                    <input
-                        id="link-text"
-                        type="text"
-                        bind:value={linkText}
-                        placeholder="Link text"
-                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                </div>
-            </div>
-            
-            <div class="flex justify-end gap-2 mt-6">
-                <Button type="button" variant="outline" onclick={closeLinkModal}>
-                    Cancel
-                </Button>
-                <Button type="button" onclick={insertLink} disabled={!linkUrl}>
-                    Insert Link
-                </Button>
-            </div>
-        </div>
-    </div>
-{/if} 
+<style>
+    :global(.rich-editor a) {
+        color: hsl(var(--primary));
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    
+    :global(.rich-editor a:hover) {
+        color: hsl(var(--primary) / 0.8);
+    }
+</style> 
