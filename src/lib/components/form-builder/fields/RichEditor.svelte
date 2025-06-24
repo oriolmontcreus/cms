@@ -6,83 +6,162 @@
     import EditLinkPopover from './rich-editor/EditLinkPopover.svelte';
     import CharacterCounter from './rich-editor/CharacterCounter.svelte';
 
+    // Constants
+    const FORMATS = ['bold', 'italic', 'underline'] as const;
+    const ALIGNMENTS = {
+        left: 'justifyLeft',
+        center: 'justifyCenter',
+        right: 'justifyRight'
+    } as const;
+    const KEYBOARD_SHORTCUTS = {
+        'b': 'bold',
+        'i': 'italic',
+        'u': 'underline',
+        'k': 'link'
+    } as const;
+
     export let field: FormField;
     export let fieldId: string;
     export let value: string = '';
 
+    // Editor state
     let editorRef: HTMLDivElement;
-    let editLinkTrigger: HTMLButtonElement;
-    let linkUrl = '';
-    let linkText = '';
+    let richEditorContent: RichEditorContent;
     let activeFormats: string[] = [];
     let activeAlignment = '';
+
+    // Link state
+    let linkUrl = '';
+    let linkText = '';
     let linkPopoverOpen = false;
-    let currentLinkElement: HTMLAnchorElement | null = null;
-    
-    // Separate state for editing existing links
+    let savedSelection: Range | null = null;
+
+    // Edit link state
+    let editLinkTrigger: HTMLButtonElement;
     let editLinkPopoverOpen = false;
     let editLinkUrl = '';
     let editLinkText = '';
-    
-    // Store selection when popover opens
-    let savedSelection: Range | null = null;
+    let currentLinkElement: HTMLAnchorElement | null = null;
 
-    onMount(() => {
-        if (editorRef) {
-            editorRef.addEventListener('input', handleInput);
-            editorRef.addEventListener('paste', handlePaste);
-            editorRef.addEventListener('mouseup', updateActiveFormats);
-            editorRef.addEventListener('keyup', updateActiveFormats);
-            editorRef.addEventListener('click', handleLinkClick);
-            editorRef.addEventListener('keydown', handleLinkKeydown);
-            document.addEventListener('selectionchange', updateActiveFormats);
-        }
+    // Computed properties
+    $: isReadonly = field.readonly || field.disabled;
+    $: currentLength = value?.replace(/<[^>]*>/g, '').length || 0;
+    $: maxLength = field.max;
+    $: showCharCount = maxLength && maxLength > 0;
+    $: if (richEditorContent) editorRef = richEditorContent.getEditorRef();
+
+    // Utility functions
+    const getEventListeners = () => [
+        ['input', handleInput],
+        ['paste', handlePaste],
+        ['mouseup', updateActiveFormats],
+        ['keyup', updateActiveFormats],
+        ['click', handleLinkClick],
+        ['keydown', handleLinkKeydown]
+    ] as const;
+
+    const addEventListeners = () => {
+        if (!editorRef) return;
         
-        return () => {
-            if (editorRef) {
-                editorRef.removeEventListener('input', handleInput);
-                editorRef.removeEventListener('paste', handlePaste);
-                editorRef.removeEventListener('mouseup', updateActiveFormats);
-                editorRef.removeEventListener('keyup', updateActiveFormats);
-                editorRef.removeEventListener('click', handleLinkClick);
-                editorRef.removeEventListener('keydown', handleLinkKeydown);
-                document.removeEventListener('selectionchange', updateActiveFormats);
-            }
-        };
+        getEventListeners().forEach(([event, handler]) => {
+            editorRef.addEventListener(event, handler as EventListener);
+        });
+        document.addEventListener('selectionchange', updateActiveFormats);
+    };
+
+    const removeEventListeners = () => {
+        if (!editorRef) return;
+        
+        getEventListeners().forEach(([event, handler]) => {
+            editorRef.removeEventListener(event, handler as EventListener);
+        });
+        document.removeEventListener('selectionchange', updateActiveFormats);
+    };
+
+    const ensureEditorFocus = () => {
+        if (!editorRef || document.activeElement === editorRef) return;
+        
+        editorRef.focus();
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount === 0) {
+            const range = document.createRange();
+            range.selectNodeContents(editorRef);
+            range.collapse(false);
+            selection.addRange(range);
+        }
+    };
+
+    const makeLinksFocusable = () => {
+        const links = editorRef.querySelectorAll('a:not([tabindex])');
+        links.forEach(link => link.setAttribute('tabindex', '0'));
+    };
+
+    const getActiveFormats = () => {
+        return FORMATS.filter(format => document.queryCommandState(format));
+    };
+
+    const getActiveAlignment = () => {
+        const alignmentEntry = Object.entries(ALIGNMENTS)
+            .find(([_, command]) => document.queryCommandState(command));
+        return alignmentEntry?.[0] || '';
+    };
+
+    const positionPopover = (element: HTMLElement, trigger: HTMLButtonElement) => {
+        const rect = element.getBoundingClientRect();
+        trigger.style.position = 'absolute';
+        trigger.style.left = `${rect.left}px`;
+        trigger.style.top = `${rect.bottom}px`;
+    };
+
+    const resetLinkPopoverState = () => {
+        linkPopoverOpen = false;
+        linkUrl = '';
+        linkText = '';
+        savedSelection = null;
+    };
+
+    const resetEditLinkPopoverState = () => {
+        editLinkPopoverOpen = false;
+        editLinkUrl = '';
+        editLinkText = '';
+        currentLinkElement = null;
+    };
+
+    const prepareEditLinkState = (linkElement: HTMLAnchorElement) => {
+        currentLinkElement = linkElement;
+        editLinkUrl = linkElement.href;
+        editLinkText = linkElement.textContent || '';
+        
+        if (editLinkTrigger) positionPopover(linkElement, editLinkTrigger);
+        editLinkPopoverOpen = true;
+    };
+
+    const createLinkElement = (url: string, text: string) => {
+        const linkElement = document.createElement('a');
+        linkElement.href = url;
+        linkElement.target = '_blank';
+        linkElement.tabIndex = 0;
+        linkElement.textContent = text;
+        return linkElement;
+    };
+
+    // Event handlers
+    onMount(() => {
+        addEventListeners();
+        return removeEventListeners;
     });
 
     function handleInput() {
         value = editorRef.innerHTML;
-        
-        // Make any new links focusable
-        const links = editorRef.querySelectorAll('a');
-        links.forEach(link => {
-            if (!link.hasAttribute('tabindex')) {
-                link.setAttribute('tabindex', '0');
-            }
-        });
-        
+        makeLinksFocusable();
         setTimeout(updateActiveFormats, 0);
     }
 
     function updateActiveFormats() {
         if (!editorRef || document.activeElement !== editorRef) return;
         
-        const formats = [];
-        if (document.queryCommandState('bold')) formats.push('bold');
-        if (document.queryCommandState('italic')) formats.push('italic');
-        if (document.queryCommandState('underline')) formats.push('underline');
-        activeFormats = formats;
-
-        if (document.queryCommandState('justifyLeft')) {
-            activeAlignment = 'left';
-        } else if (document.queryCommandState('justifyCenter')) {
-            activeAlignment = 'center';
-        } else if (document.queryCommandState('justifyRight')) {
-            activeAlignment = 'right';
-        } else {
-            activeAlignment = '';
-        }
+        activeFormats = getActiveFormats();
+        activeAlignment = getActiveAlignment();
     }
 
     function handlePaste(e: ClipboardEvent) {
@@ -92,32 +171,19 @@
     }
 
     function execCommand(command: string, value?: string) {
-        if (field.readonly || field.disabled) return;
+        if (isReadonly) return;
         
         editorRef.focus();
         document.execCommand(command, false, value);
         handleInput();
     }
 
-    function ensureEditorFocus() {
-        if (editorRef && document.activeElement !== editorRef) {
-            editorRef.focus();
-            const selection = window.getSelection();
-            if (selection && selection.rangeCount === 0) {
-                const range = document.createRange();
-                range.selectNodeContents(editorRef);
-                range.collapse(false);
-                selection.addRange(range);
-            }
-        }
-    }
-
     function handleFormatToggle(formats: string[]) {
-        if (field.readonly || field.disabled) return;
+        if (isReadonly) return;
         
         ensureEditorFocus();
         
-        ['bold', 'italic', 'underline'].forEach(format => {
+        FORMATS.forEach(format => {
             const isCurrentlyActive = document.queryCommandState(format);
             const shouldBeActive = formats.includes(format);
             
@@ -130,148 +196,105 @@
     }
 
     function handleAlignmentChange(alignment: string) {
-        if (field.readonly || field.disabled) return;
+        if (isReadonly || !alignment || alignment === activeAlignment) return;
         
-        if (alignment && alignment !== activeAlignment) {
-            ensureEditorFocus();
-            switch (alignment) {
-                case 'left':
-                    document.execCommand('justifyLeft', false);
-                    break;
-                case 'center':
-                    document.execCommand('justifyCenter', false);
-                    break;
-                case 'right':
-                    document.execCommand('justifyRight', false);
-                    break;
-            }
+        ensureEditorFocus();
+        const command = ALIGNMENTS[alignment as keyof typeof ALIGNMENTS];
+        if (command) {
+            document.execCommand(command, false);
             activeAlignment = alignment;
             handleInput();
         }
     }
 
-    function handleLinkClick(e: MouseEvent) {
-        if (field.readonly || field.disabled) return;
+    function handleLinkInteraction(e: MouseEvent | KeyboardEvent, isKeyboard = false) {
+        if (isReadonly) return;
         
         const target = e.target as HTMLElement;
         const linkElement = target.closest('a') as HTMLAnchorElement;
         
-        if (linkElement && editorRef.contains(linkElement)) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            currentLinkElement = linkElement;
-            editLinkUrl = linkElement.href;
-            editLinkText = linkElement.textContent || '';
-            
-            if (editLinkTrigger) {
-                const rect = linkElement.getBoundingClientRect();
-                editLinkTrigger.style.position = 'absolute';
-                editLinkTrigger.style.left = `${rect.left}px`;
-                editLinkTrigger.style.top = `${rect.bottom}px`;
-            }
-            
-            editLinkPopoverOpen = true;
-        }
+        if (!linkElement || !editorRef.contains(linkElement)) return;
+        
+        if (isKeyboard && !['Enter', ' '].includes((e as KeyboardEvent).key)) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        prepareEditLinkState(linkElement);
+    }
+
+    function handleLinkClick(e: MouseEvent) {
+        handleLinkInteraction(e);
     }
 
     function handleLinkKeydown(e: KeyboardEvent) {
-        if (field.readonly || field.disabled) return;
-        
-        if (e.key === 'Enter' || e.key === ' ') {
-            const target = e.target as HTMLElement;
-            const linkElement = target.closest('a') as HTMLAnchorElement;
-            
-            if (linkElement && editorRef.contains(linkElement)) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                currentLinkElement = linkElement;
-                editLinkUrl = linkElement.href;
-                editLinkText = linkElement.textContent || '';
-                
-                if (editLinkTrigger) {
-                    const rect = linkElement.getBoundingClientRect();
-                    editLinkTrigger.style.position = 'absolute';
-                    editLinkTrigger.style.left = `${rect.left}px`;
-                    editLinkTrigger.style.top = `${rect.bottom}px`;
-                }
-                
-                editLinkPopoverOpen = true;
-            }
-        }
+        handleLinkInteraction(e, true);
     }
 
     function handleLinkPopoverOpenChange(isOpen: boolean) {
-        if (isOpen) {
-            const selection = window.getSelection();
-            
-            if (selection && selection.rangeCount > 0) {
-                savedSelection = selection.getRangeAt(0).cloneRange();
-                
-                if (selection.toString()) {
-                    linkText = selection.toString();
-                } else {
-                    linkText = '';
-                }
-            } else {
-                savedSelection = null;
-                linkText = '';
-            }
-            linkUrl = '';
+        if (!isOpen) return;
+        
+        const selection = window.getSelection();
+        
+        if (selection && selection.rangeCount > 0) {
+            savedSelection = selection.getRangeAt(0).cloneRange();
+            linkText = selection.toString();
+        } else {
+            savedSelection = null;
+            linkText = '';
         }
+        linkUrl = '';
         linkPopoverOpen = isOpen;
     }
 
     function insertLink() {
-        if (linkUrl) {
-            if (savedSelection && savedSelection.toString()) {
-                const displayText = linkText || savedSelection.toString();
-                
-                const selection = window.getSelection();
-                if (selection) {
-                    selection.removeAllRanges();
-                    selection.addRange(savedSelection);
-                    
-                    const linkElement = document.createElement('a');
-                    linkElement.href = linkUrl;
-                    linkElement.target = '_blank';
-                    linkElement.tabIndex = 0;
-                    linkElement.textContent = displayText;
-                    
-                    savedSelection.deleteContents();
-                    savedSelection.insertNode(linkElement);
-                    
-                    selection.removeAllRanges();
-                    const newRange = document.createRange();
-                    newRange.setStartAfter(linkElement);
-                    newRange.collapse(true);
-                    selection.addRange(newRange);
-                    
-                    handleInput();
-                }
-            } else {
-                const displayText = linkText || linkUrl;
-                execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${displayText}</a>`);
-            }
+        if (!linkUrl) {
+            resetLinkPopoverState();
+            return;
         }
-        closeLinkPopover();
+
+        const displayText = linkText || linkUrl;
+
+        if (savedSelection?.toString()) {
+            const selection = window.getSelection();
+            if (selection && savedSelection) {
+                selection.removeAllRanges();
+                selection.addRange(savedSelection);
+                
+                const linkElement = createLinkElement(linkUrl, linkText || savedSelection.toString());
+                
+                savedSelection.deleteContents();
+                savedSelection.insertNode(linkElement);
+                
+                selection.removeAllRanges();
+                const newRange = document.createRange();
+                newRange.setStartAfter(linkElement);
+                newRange.collapse(true);
+                selection.addRange(newRange);
+                
+                handleInput();
+            }
+        } else {
+            execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${displayText}</a>`);
+        }
+        
+        resetLinkPopoverState();
     }
 
     function updateExistingLink() {
-        if (editLinkUrl && currentLinkElement) {
-            currentLinkElement.href = editLinkUrl;
-            currentLinkElement.textContent = editLinkText || editLinkUrl;
-            handleInput();
+        if (!editLinkUrl || !currentLinkElement) {
+            resetEditLinkPopoverState();
+            return;
         }
-        closeEditLinkPopover();
+        
+        currentLinkElement.href = editLinkUrl;
+        currentLinkElement.textContent = editLinkText || editLinkUrl;
+        handleInput();
+        resetEditLinkPopoverState();
     }
 
     function visitLink() {
-        if (editLinkUrl) {
-            window.open(editLinkUrl, '_blank');
-        }
-        closeEditLinkPopover();
+        if (editLinkUrl) window.open(editLinkUrl, '_blank');
+        resetEditLinkPopoverState();
     }
 
     function removeLink() {
@@ -280,62 +303,30 @@
             currentLinkElement.outerHTML = textContent;
             handleInput();
         }
-        closeEditLinkPopover();
-    }
-
-    function closeLinkPopover() {
-        linkPopoverOpen = false;
-        linkUrl = '';
-        linkText = '';
-        savedSelection = null;
-    }
-
-    function closeEditLinkPopover() {
-        editLinkPopoverOpen = false;
-        editLinkUrl = '';
-        editLinkText = '';
-        currentLinkElement = null;
+        resetEditLinkPopoverState();
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        if (e.ctrlKey || e.metaKey) {
-            switch (e.key) {
-                case 'b':
-                    e.preventDefault();
-                    execCommand('bold');
-                    break;
-                case 'i':
-                    e.preventDefault();
-                    execCommand('italic');
-                    break;
-                case 'u':
-                    e.preventDefault();
-                    execCommand('underline');
-                    break;
-                case 'k':
-                    e.preventDefault();
-                    linkPopoverOpen = true;
-                    break;
-            }
+        if (!(e.ctrlKey || e.metaKey)) return;
+        
+        const shortcut = KEYBOARD_SHORTCUTS[e.key as keyof typeof KEYBOARD_SHORTCUTS];
+        if (!shortcut) return;
+        
+        e.preventDefault();
+        
+        if (shortcut === 'link') {
+            linkPopoverOpen = true;
+        } else {
+            execCommand(shortcut);
         }
     }
-
-    // Get editor reference from child component
-    let richEditorContent: RichEditorContent;
-    $: if (richEditorContent) {
-        editorRef = richEditorContent.getEditorRef();
-    }
-
-    $: currentLength = value?.replace(/<[^>]*>/g, '').length || 0;
-    $: maxLength = field.max;
-    $: showCharCount = maxLength && maxLength > 0;
 </script>
 
 <div class="space-y-2">
     <RichEditorToolbar 
         {activeFormats}
         {activeAlignment}
-        disabled={field.readonly || field.disabled}
+        disabled={isReadonly}
         {linkPopoverOpen}
         bind:linkUrl
         bind:linkText
@@ -343,7 +334,7 @@
         onAlignmentChange={handleAlignmentChange}
         onLinkPopoverOpenChange={handleLinkPopoverOpenChange}
         onInsertLink={insertLink}
-        onCloseLinkPopover={closeLinkPopover}
+        onCloseLinkPopover={resetLinkPopoverState}
     />
 
     <RichEditorContent 
@@ -369,7 +360,7 @@
         onUpdateLink={updateExistingLink}
         onVisitLink={visitLink}
         onRemoveLink={removeLink}
-        onClose={closeEditLinkPopover}
+        onClose={resetEditLinkPopoverState}
     />
 
     {#if showCharCount}
