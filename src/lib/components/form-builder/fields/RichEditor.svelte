@@ -369,7 +369,7 @@
     <div
         bind:this={editorRef}
         contenteditable={!field.readonly && !field.disabled}
-        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rich-editor"
+        class="min-h-32 p-3 border border-t-0 rounded-b-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rich-editor [&_a]:underline [&_a]:decoration-gray-400 [&_a]:underline-offset-2 [&_a]:text-blue-600 [&_a]:hover:text-blue-700 [&_a]:hover:decoration-blue-600 [&_a]:transition-colors [&_a]:cursor-pointer [&_a]:rounded-sm [&_a]:px-1 [&_a]:py-0.5 [&_a]:mx-0.5 [&_a]:bg-blue-50 [&_a]:hover:bg-blue-100 [&_a]:border [&_a]:border-transparent [&_a]:hover:border-blue-200 dark:[&_a]:text-blue-400 dark:[&_a]:hover:text-blue-300 dark:[&_a]:decoration-gray-500 dark:[&_a]:hover:decoration-blue-400 dark:[&_a]:bg-blue-950/30 dark:[&_a]:hover:bg-blue-900/40 dark:[&_a]:hover:border-blue-700"
         class:opacity-50={field.disabled}
         class:cursor-not-allowed={field.disabled}
         style="min-height: {field.rows ? field.rows * 1.5 : 8}rem;"
@@ -379,6 +379,7 @@
         role="textbox"
         aria-multiline="true"
         aria-label={field.label}
+        tabindex="0"
     ></div>
 
     {#if showCharCount}
@@ -393,14 +394,4 @@
     {/if}
 </div>
 
-<style>
-    :global(.rich-editor a) {
-        color: hsl(var(--primary));
-        text-decoration: underline;
-        cursor: pointer;
-    }
-    
-    :global(.rich-editor a:hover) {
-        color: hsl(var(--primary) / 0.8);
-    }
-</style> 
+ 
