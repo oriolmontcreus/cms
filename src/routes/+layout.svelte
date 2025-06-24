@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { Toaster } from 'svelte-sonner';
-	import { ModeWatcher } from "mode-watcher";
+	import { ModeWatcher, mode } from "mode-watcher";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
 	import { onNavigate } from '$app/navigation';
@@ -60,5 +60,5 @@
 	<PageLoading />
 {/if}
 
-<Toaster richColors />
+<Toaster richColors theme={mode.current === 'dark' ? 'dark' : 'light'} />
 <ModeWatcher defaultMode="dark" />
