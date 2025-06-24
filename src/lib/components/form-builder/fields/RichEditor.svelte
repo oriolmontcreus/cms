@@ -360,6 +360,7 @@
         onVisitLink={visitLink}
         onRemoveLink={removeLink}
         onClose={resetEditLinkPopoverState}
+        onOpenChange={(isOpen) => { if (!isOpen) resetEditLinkPopoverState(); }}
     />
 
     {#if field.helperText || showCharCount}

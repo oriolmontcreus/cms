@@ -14,9 +14,10 @@
     export let onVisitLink: () => void;
     export let onRemoveLink: () => void;
     export let onClose: () => void;
+    export let onOpenChange: (isOpen: boolean) => void = () => {};
 </script>
 
-<Popover.Root bind:open>
+<Popover.Root bind:open onOpenChange={(isOpen) => onOpenChange(isOpen)}>
     <Popover.Trigger>
         <button class="hidden" bind:this={triggerElement}>Hidden Trigger</button>
     </Popover.Trigger>
