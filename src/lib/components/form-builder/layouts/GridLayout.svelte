@@ -12,9 +12,11 @@
     const gap = layout.gap || 4;
     const responsive = layout.responsive;
 
+    // Filter fields based on active tab
     $: filteredFields = activeTab 
         ? layout.schema.filter(field => field.tab === activeTab)
         : layout.schema.filter(field => !field.tab);
+    $: hasFieldsToShow = filteredFields.length > 0;
 
     $: gridClasses = cn(
         'grid',
@@ -33,7 +35,7 @@
 </script>
 
 <!-- Only render grid if there are fields to show -->
-{#if filteredFields.length > 0}
+{#if hasFieldsToShow}
     <div class={gridClasses}>
         {#each filteredFields as field (field.name)}
             <div class={cn('space-y-2', getColumnSpanClass(field))}>

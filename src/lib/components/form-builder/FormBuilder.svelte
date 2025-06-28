@@ -56,20 +56,41 @@
         return convertToFormField(item) !== null;
     }
 
-    function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[]): Record<string, FormField[]> {
+    function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[], schema: any[]): Record<string, FormField[]> {
         const tabFields: Record<string, FormField[]> = {};
 
         tabs.forEach(tab => {
             tabFields[tab.name] = [];
         });
         
+        // Get field names that are inside grids to exclude them
+        const fieldsInGrids = new Set<string>();
+        if (Array.isArray(schema)) {
+            schema.forEach(item => {
+                if (item && typeof item === 'object' && 'type' in item && item.type === 'grid' && item.schema) {
+                    item.schema.forEach((field: any) => {
+                        if (field && field.name) {
+                            fieldsInGrids.add(field.name);
+                        }
+                    });
+                }
+            });
+        }
+        
         fields.forEach(field => {
-            if (field.tab && tabFields[field.tab]) {
+            // Only add fields that are NOT in grids (grids will handle their own fields)
+            if (field.tab && tabFields[field.tab] && !fieldsInGrids.has(field.name)) {
                 tabFields[field.tab].push(field);
             }
         });
         
         return tabFields;
+    }
+
+    // Helper function to check if a grid has non-tabbed fields
+    function gridHasNonTabbedFields(grid: any): boolean {
+        if (!grid || grid.type !== 'grid' || !grid.schema) return false;
+        return grid.schema.some((field: any) => !field.tab);
     }
     
     config.components.forEach(componentInstance => {
@@ -126,7 +147,7 @@
                 {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
                 {@const tabs = componentInstance.component.tabs || []}
                 {@const allFields = getAllFields(componentInstance.component.schema)}
-                {@const groupedFields = groupFieldsByTab(allFields, tabs)}
+                {@const groupedFields = groupFieldsByTab(allFields, tabs, schema)}
                 {@const defaultTab = componentInstance.component.activeTab || tabs[0]?.name || ''}
                 
                 <div class="space-y-6">
@@ -173,7 +194,7 @@
                                     {/each}
                                 </Tabs>
                             {/if}
-                        {:else if item.type === 'grid'}
+                        {:else if item.type === 'grid' && gridHasNonTabbedFields(item)}
                             <!-- Render grid layout at this position (only for non-tabbed fields) -->
                             <GridLayout 
                                 layout={item}
@@ -198,7 +219,7 @@
                 <!-- Legacy tab utility approach (persistent fields at top) -->
                 {@const fields = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema.map(item => convertToFormField(item)).filter((item): item is FormField => item !== null) : []}
                 {@const tabs = componentInstance.component.tabs || []}
-                {@const groupedFields = groupFieldsByTab(fields, tabs)}
+                {@const groupedFields = groupFieldsByTab(fields, tabs, Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : [])}
                 {@const persistentFields = fields.filter(f => !f.tab)}
                 {@const defaultTab = componentInstance.component.activeTab || tabs[0]?.name || ''}
                 
