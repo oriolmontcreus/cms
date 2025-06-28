@@ -118,7 +118,7 @@ export interface FieldBuilder {
 }
 
 // Schema item can be either a field, field builder, or a tabs placeholder
-export type SchemaItem = FormField | FieldBuilder | TabsSelector;
+export type SchemaItem = FormField | FieldBuilder | TabsSelector | GridLayout;
 
 export interface Component {
     name: string;

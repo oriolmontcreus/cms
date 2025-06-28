@@ -29,7 +29,12 @@
     function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
         if (Array.isArray(schema)) {
             return schema
-                .map(item => convertToFormField(item))
+                .flatMap(item => {
+                    if (item && typeof item === 'object' && 'type' in item && item.type === 'grid') {
+                        return item.schema || [];
+                    }
+                    return convertToFormField(item);
+                })
                 .filter((item): item is FormField => item !== null);
         }
         if (schema.type === 'grid') return schema.schema;
@@ -151,11 +156,31 @@
                                                         bind:value={formData[componentInstance.id][field.name]}
                                                     />
                                                 {/each}
+                                                
+                                                <!-- Render grids that have fields for this tab -->
+                                                {#each schema as item, index}
+                                                    {#if item.type === 'grid'}
+                                                        <GridLayout 
+                                                            layout={item}
+                                                            formData={formData[componentInstance.id]}
+                                                            componentId={componentInstance.id}
+                                                            activeTab={tab.name}
+                                                        />
+                                                    {/if}
+                                                {/each}
                                             </div>
                                         </TabsContent>
                                     {/each}
                                 </Tabs>
                             {/if}
+                        {:else if item.type === 'grid'}
+                            <!-- Render grid layout at this position (only for non-tabbed fields) -->
+                            <GridLayout 
+                                layout={item}
+                                formData={formData[componentInstance.id]}
+                                componentId={componentInstance.id}
+                                activeTab={undefined}
+                            />
                         {:else if isFormField(item) && !convertToFormField(item)?.tab}
                             <!-- Render regular field (only if not assigned to a tab) -->
                             {@const field = convertToFormField(item)}
@@ -214,6 +239,20 @@
                                             bind:value={formData[componentInstance.id][field.name]}
                                         />
                                     {/each}
+                                    
+                                    <!-- Render grids that have fields for this tab -->
+                                    {#if Array.isArray(componentInstance.component.schema)}
+                                        {#each componentInstance.component.schema as item, index}
+                                            {#if item.type === 'grid'}
+                                                <GridLayout 
+                                                    layout={item}
+                                                    formData={formData[componentInstance.id]}
+                                                    componentId={componentInstance.id}
+                                                    activeTab={tab.name}
+                                                />
+                                            {/if}
+                                        {/each}
+                                    {/if}
                                 </div>
                             </TabsContent>
                         {/each}

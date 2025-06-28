@@ -192,3 +192,43 @@ export function TabsSelector(id: string = 'tabs'): TabsSelector {
         id
     };
 }
+
+// Grid creation utilities
+export function defineGrid(
+    columns: number = 2,
+    gap: number = 4,
+    responsive?: { sm?: number; md?: number; lg?: number }
+): { 
+    type: 'grid',
+    columns: number,
+    gap: number,
+    responsive?: { sm?: number; md?: number; lg?: number },
+    schema: FormField[]
+} {
+    return {
+        type: 'grid',
+        columns,
+        gap,
+        responsive,
+        schema: []
+    };
+}
+
+export function GridContainer(
+    columns: number = 2,
+    gap: number = 4,
+    responsive?: { sm?: number; md?: number; lg?: number }
+) {
+    const grid = defineGrid(columns, gap, responsive);
+    
+    return {
+        ...grid,
+        add(...fields: (FormField | FieldBuilder)[]): typeof grid {
+            fields.forEach(field => {
+                const formField = field instanceof FieldBuilder ? field.toJSON() : field;
+                grid.schema.push(formField);
+            });
+            return grid;
+        }
+    };
+}
