@@ -19,6 +19,7 @@
             const slug = page.params.slug;
             const [data, err] = await safeFetch(getPageBySlug(slug));
             loading = false;
+            console.log(data);
             if (data) {
                 pageData = data;
                 config = data.config as PageConfig;

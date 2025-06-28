@@ -15,16 +15,10 @@
     let error: string | null = null;
     let isBuilding = false;
 
-    onMount(async () => {
-        try {
-            loading = true;
-            pages = await handleGetPages();
-        } catch (e) {
-            error = 'Failed to load pages';
-            console.error(e);
-        } finally {
-            loading = false;
-        }
+    onMount(async () => {   
+        pages = await handleGetPages();
+        console.log(pages);
+        loading = false;
     });
 
     function handlePageClick(slug: string) {
@@ -32,17 +26,9 @@
     }
 
     async function handlePublish() {
-        try {
-            isBuilding = true;
-            const result = await handleTriggerBuild();
-            if (result) {
-                console.log('Build completed:', result);
-            }
-        } catch (e) {
-            console.error('Failed to publish:', e);
-        } finally {
-            isBuilding = false;
-        }
+        isBuilding = true;
+        await handleTriggerBuild();
+        isBuilding = false;
     }
 </script>
 
