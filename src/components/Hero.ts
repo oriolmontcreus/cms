@@ -22,8 +22,7 @@ export const HeroComponent: Component = {
             .min(3)
             .max(100)
             .placeholder('Enter the hero title')
-            .helperText('This field is always visible regardless of the active tab')
-            .build(),
+            .helperText('This field is always visible regardless of the active tab'),
 
         // Tabs positioned here
         TabsSelector('main-tabs'),
@@ -35,47 +34,40 @@ export const HeroComponent: Component = {
             .min(3)
             .max(100)
             .placeholder('Enter the secondary title')
-            .helperText('This field is also always visible')
-            .build(),
+            .helperText('This field is also always visible'),
 
         // Fields assigned to tabs
         TextInput('subtitle')
             .label('Subtitle')
             .placeholder('Enter a subtitle')
             .helperText('Appears below the main title')
-            .tab('basic')
-            .build(),
+            .tab('basic'),
 
         TextInput('description')
             .label('Description')
             .placeholder('Enter hero description')
             .helperText('Brief description of your hero section')
-            .tab('content')
-            .build(),
+            .tab('content'),
 
         ColorPicker('backgroundColor')
             .label('Background Color')
             .helperText('Choose the background color for the hero section')
-            .tab('styling')
-            .build(),
+            .tab('styling'),
 
         ColorPicker('textColor')
             .label('Text Color')
             .helperText('Choose the text color for the hero section')
-            .tab('styling')
-            .build(),
+            .tab('styling'),
 
         Toggle('showButton')
             .label('Show Call-to-Action Button')
             .helperText('Display a button in the hero section')
-            .tab('settings')
-            .build(),
+            .tab('settings'),
 
         Toggle('autoSave')
             .label('Auto Save')
             .helperText('Automatically save changes')
             .disabled()
             .tab('settings')
-            .build()
     ]
 };

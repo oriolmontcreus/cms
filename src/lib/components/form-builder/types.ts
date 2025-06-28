@@ -81,8 +81,44 @@ export interface FormField {
     tab?: string; // Tab name this field belongs to
 }
 
-// Schema item can be either a field or a tabs placeholder
-export type SchemaItem = FormField | TabsSelector;
+// Type for FieldBuilder instances (for better type checking)
+export interface FieldBuilder {
+    type: FieldType;
+    name: string;
+    toJSON(): FormField;
+    label(text: string): FieldBuilder;
+    placeholder(text: string): FieldBuilder;
+    required(isRequired?: boolean): FieldBuilder;
+    disabled(isDisabled?: boolean): FieldBuilder;
+    readonly(isReadonly?: boolean): FieldBuilder;
+    helperText(text: string): FieldBuilder;
+    prefix(value: PrefixSuffix): FieldBuilder;
+    suffix(value: PrefixSuffix): FieldBuilder;
+    min(value: number): FieldBuilder;
+    max(value: number): FieldBuilder;
+    step(value: number): FieldBuilder;
+    decimalSeparator(separator: ',' | '.'): FieldBuilder;
+    allowDecimals(allow?: boolean): FieldBuilder;
+    pattern(regex: string): FieldBuilder;
+    url(): FieldBuilder;
+    options(optionsList: string[]): FieldBuilder;
+    multiple(isMultiple?: boolean): FieldBuilder;
+    searchable(isSearchable?: boolean): FieldBuilder;
+    locale(localeString: string): FieldBuilder;
+    weekdayFormat(format: 'short' | 'long' | 'narrow'): FieldBuilder;
+    yearFormat(format: 'numeric' | '2-digit'): FieldBuilder;
+    monthFormat(format: 'numeric' | '2-digit' | 'short' | 'long' | 'narrow'): FieldBuilder;
+    dateStyle(style: 'full' | 'long' | 'medium' | 'short'): FieldBuilder;
+    minDate(date: string | Date): FieldBuilder;
+    maxDate(date: string | Date): FieldBuilder;
+    rows(count: number): FieldBuilder;
+    resizable(isResizable?: boolean): FieldBuilder;
+    columnSpan(span: number): FieldBuilder;
+    tab(tabName: string): FieldBuilder;
+}
+
+// Schema item can be either a field, field builder, or a tabs placeholder
+export type SchemaItem = FormField | FieldBuilder | TabsSelector;
 
 export interface Component {
     name: string;

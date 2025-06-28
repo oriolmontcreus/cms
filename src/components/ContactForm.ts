@@ -1,8 +1,9 @@
-import { TextInput, Textarea, Email, Select, Toggle, buildFields, defineTab, defineTabs } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Email, Select, Toggle, defineTab, defineTabs } from '../lib/components/form-builder/fields';
+import type { Component } from '../lib/components/form-builder/types';
 import User from '@tabler/icons-svelte/icons/user';
 import MessageCircle from '@tabler/icons-svelte/icons/message-circle';
 
-export const ContactFormComponent = {
+export const ContactFormComponent: Component = {
     name: 'Contact Form',
     
     // Define tabs with name, label, and optional icon
@@ -15,7 +16,7 @@ export const ContactFormComponent = {
     activeTab: 'personal',
     
     // Fields with tab assignments
-    schema: buildFields(
+    schema: [
         // Personal Info tab
         TextInput('first_name')
             .label('First Name')
@@ -69,7 +70,7 @@ export const ContactFormComponent = {
             .required()
             .helperText('Required to process your request')
             .tab('preferences')
-    ),
+    ],
     
     validate: (data: Record<string, any>) => {
         const errors: string[] = [];

@@ -1,11 +1,14 @@
-import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector } from './types';
+import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector, FieldBuilder as IFieldBuilder } from './types';
 
-class FieldBuilder {
-    private field: Partial<FormField> = {};
+class FieldBuilder implements IFieldBuilder {
+    private field: FormField;
 
     constructor(type: FieldType, name: string) {
-        this.field.type = type;
-        this.field.name = name;
+        this.field = {
+            type,
+            name,
+            label: ''
+        };
     }
 
     label(text: string): this {
@@ -143,7 +146,6 @@ class FieldBuilder {
         return this;
     }
 
-    //region Layout utility methods
     columnSpan(span: number): this {
         this.field.columnSpan = span;
         return this;
@@ -153,17 +155,13 @@ class FieldBuilder {
         this.field.tab = tabName;
         return this;
     }
-    //endregion
 
-    build(): FormField {
-        if (!this.field.label) {
-            throw new Error(`Field "${this.field.name}" must have a label`);
-        }
-        return this.field as FormField;
-    }
+    toJSON(): FormField { return this.field;}
+    get type(): FieldType { return this.field.type; }
+    get name(): string { return this.field.name; }
 }
 
-// Factory functions for each field type
+// Factory functions that return FieldBuilder instances
 export const TextInput = (name: string) => new FieldBuilder('text', name);
 export const Textarea = (name: string) => new FieldBuilder('textarea', name);
 export const Number = (name: string) => new FieldBuilder('number', name);
@@ -174,10 +172,6 @@ export const Select = (name: string) => new FieldBuilder('select', name);
 export const Toggle = (name: string) => new FieldBuilder('toggle', name);
 export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
-
-export function buildFields(...fields: FieldBuilder[]): FormField[] {
-    return fields.map(field => field.build());
-}
 
 export function defineTab(name: string, label: string, icon?: any): ComponentTab {
     return {

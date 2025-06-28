@@ -15,9 +15,22 @@
 
     let formData: FormData = {};
 
+    // Helper function to convert FieldBuilder instances to FormField objects
+    function convertToFormField(item: any): FormField | null {
+        if (item && typeof item === 'object' && 'toJSON' in item && typeof item.toJSON === 'function') {
+            return item.toJSON();
+        }
+        if (item && 'name' in item && 'type' in item) {
+            return item as FormField;
+        }
+        return null;
+    }
+
     function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
         if (Array.isArray(schema)) {
-            return schema.filter(item => 'name' in item) as FormField[];
+            return schema
+                .map(item => convertToFormField(item))
+                .filter((item): item is FormField => item !== null);
         }
         if (schema.type === 'grid') return schema.schema;
         if (schema.type === 'tabs') return schema.tabs.flatMap(tab => tab.schema);
@@ -35,7 +48,7 @@
     }
 
     function isFormField(item: SchemaItem): item is FormField {
-        return 'name' in item;
+        return convertToFormField(item) !== null;
     }
 
     function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[]): Record<string, FormField[]> {
@@ -143,19 +156,22 @@
                                     {/each}
                                 </Tabs>
                             {/if}
-                        {:else if isFormField(item) && !item.tab}
+                        {:else if isFormField(item) && !convertToFormField(item)?.tab}
                             <!-- Render regular field (only if not assigned to a tab) -->
-                            <FormFieldComponent 
-                                field={item}
-                                fieldId="{componentInstance.id}-{item.name}"
-                                bind:value={formData[componentInstance.id][item.name]}
-                            />
+                            {@const field = convertToFormField(item)}
+                            {#if field}
+                                <FormFieldComponent 
+                                    {field}
+                                    fieldId="{componentInstance.id}-{field.name}"
+                                    bind:value={formData[componentInstance.id][field.name]}
+                                />
+                            {/if}
                         {/if}
                     {/each}
                 </div>
             {:else if usesTabUtility(componentInstance.component)}
                 <!-- Legacy tab utility approach (persistent fields at top) -->
-                {@const fields = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema.filter(item => 'name' in item) : []}
+                {@const fields = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema.map(item => convertToFormField(item)).filter((item): item is FormField => item !== null) : []}
                 {@const tabs = componentInstance.component.tabs || []}
                 {@const groupedFields = groupFieldsByTab(fields, tabs)}
                 {@const persistentFields = fields.filter(f => !f.tab)}
@@ -221,13 +237,16 @@
             {:else}
                 <!-- Default layout: vertical stack for field arrays -->
                 <div class="flex flex-col gap-8">
-                    {#each componentInstance.component.schema as item (isFormField(item) ? item.name : `item-${Math.random()}`)}
+                    {#each componentInstance.component.schema as item (isFormField(item) ? convertToFormField(item)?.name || `item-${Math.random()}` : `item-${Math.random()}`)}
                         {#if isFormField(item)}
-                            <FormFieldComponent 
-                                field={item}
-                                fieldId="{componentInstance.id}-{item.name}"
-                                bind:value={formData[componentInstance.id][item.name]}
-                            />
+                            {@const field = convertToFormField(item)}
+                            {#if field}
+                                <FormFieldComponent 
+                                    {field}
+                                    fieldId="{componentInstance.id}-{field.name}"
+                                    bind:value={formData[componentInstance.id][field.name]}
+                                />
+                            {/if}
                         {/if}
                     {/each}
                 </div>
