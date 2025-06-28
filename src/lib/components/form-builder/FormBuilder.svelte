@@ -7,7 +7,7 @@
     import GridLayout from './layouts/GridLayout.svelte';
     import TabsLayout from './layouts/TabsLayout.svelte';
     import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-    import type { FormField, Layout, ComponentTab } from './types';
+    import type { FormField, Layout, ComponentTab, SchemaItem } from './types';
 
     export let config: PageConfig;
     export let slug: string;
@@ -15,9 +15,11 @@
 
     let formData: FormData = {};
 
-    function getAllFields(schema: Layout | FormField[]): FormField[] {
-        if (Array.isArray(schema)) return schema;
-        if (schema.type === 'grid')  return schema.schema;
+    function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
+        if (Array.isArray(schema)) {
+            return schema.filter(item => 'name' in item) as FormField[];
+        }
+        if (schema.type === 'grid') return schema.schema;
         if (schema.type === 'tabs') return schema.tabs.flatMap(tab => tab.schema);
         return [];
     }
@@ -27,19 +29,29 @@
         return component.tabs && component.tabs.length > 0;
     }
 
+    function usesMixedSchema(component: any): boolean {
+        if (!Array.isArray(component.schema)) return false;
+        return component.schema.some((item: any) => item.type === 'tabs-placeholder');
+    }
+
+    function isFormField(item: SchemaItem): item is FormField {
+        return 'name' in item;
+    }
+
     function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[]): Record<string, FormField[]> {
-        const grouped: Record<string, FormField[]> = {};
+        const tabFields: Record<string, FormField[]> = {};
 
         tabs.forEach(tab => {
-            grouped[tab.name] = [];
+            tabFields[tab.name] = [];
         });
         
         fields.forEach(field => {
-            const tabName = field.tab || tabs[0]?.name || 'default';
-            if (!grouped[tabName]) grouped[tabName] = [];
-            grouped[tabName].push(field);
+            if (field.tab && tabFields[field.tab]) {
+                tabFields[field.tab].push(field);
+            }
         });
-        return grouped;
+        
+        return tabFields;
     }
     
     config.components.forEach(componentInstance => {
@@ -92,39 +104,106 @@
                 {componentInstance.displayName || componentInstance.component.name}
             </h3>
             
-            {#if usesTabUtility(componentInstance.component)}
-                <!-- New tab utility approach -->
-                {@const fields = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
+            {#if usesMixedSchema(componentInstance.component)}
+                <!-- New mixed schema approach with TabsPlaceholder -->
+                {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
                 {@const tabs = componentInstance.component.tabs || []}
-                {@const groupedFields = groupFieldsByTab(fields, tabs)}
+                {@const allFields = getAllFields(componentInstance.component.schema)}
+                {@const groupedFields = groupFieldsByTab(allFields, tabs)}
                 {@const defaultTab = componentInstance.component.activeTab || tabs[0]?.name || ''}
                 
-                <Tabs value={defaultTab} class="w-full">
-                    <TabsList class="grid w-full" style="grid-template-columns: repeat({tabs.length}, minmax(0, 1fr));">
-                        {#each tabs as tab (tab.name)}
-                            <TabsTrigger value={tab.name} class="flex items-center gap-2">
-                                {#if tab.icon}
-                                    <svelte:component this={tab.icon} size={16} />
-                                {/if}
-                                {tab.label}
-                            </TabsTrigger>
-                        {/each}
-                    </TabsList>
+                <div class="space-y-6">
+                    {#each schema as item, index (item.type === 'tabs-placeholder' ? item.id : isFormField(item) ? item.name : `item-${index}`)}
+                        {#if item.type === 'tabs-placeholder'}
+                            <!-- Render tabs at this position -->
+                            {#if tabs.length > 0}
+                                <Tabs value={defaultTab} class="w-full">
+                                    <TabsList class="grid w-full" style="grid-template-columns: repeat({tabs.length}, minmax(0, 1fr));">
+                                        {#each tabs as tab (tab.name)}
+                                            <TabsTrigger value={tab.name} class="flex items-center gap-2">
+                                                {#if tab.icon}
+                                                    <svelte:component this={tab.icon} size={16} />
+                                                {/if}
+                                                {tab.label}
+                                            </TabsTrigger>
+                                        {/each}
+                                    </TabsList>
 
-                    {#each tabs as tab (tab.name)}
-                        <TabsContent value={tab.name} class="mt-6">
-                            <div class="space-y-6">
-                                {#each groupedFields[tab.name] || [] as field (field.name)}
-                                    <FormFieldComponent 
-                                        {field}
-                                        fieldId="{componentInstance.id}-{field.name}"
-                                        bind:value={formData[componentInstance.id][field.name]}
-                                    />
-                                {/each}
-                            </div>
-                        </TabsContent>
+                                    {#each tabs as tab (tab.name)}
+                                        <TabsContent value={tab.name} class="mt-6">
+                                            <div class="space-y-6">
+                                                {#each groupedFields[tab.name] || [] as field (field.name)}
+                                                    <FormFieldComponent 
+                                                        {field}
+                                                        fieldId="{componentInstance.id}-{field.name}"
+                                                        bind:value={formData[componentInstance.id][field.name]}
+                                                    />
+                                                {/each}
+                                            </div>
+                                        </TabsContent>
+                                    {/each}
+                                </Tabs>
+                            {/if}
+                        {:else if isFormField(item) && !item.tab}
+                            <!-- Render regular field (only if not assigned to a tab) -->
+                            <FormFieldComponent 
+                                field={item}
+                                fieldId="{componentInstance.id}-{item.name}"
+                                bind:value={formData[componentInstance.id][item.name]}
+                            />
+                        {/if}
                     {/each}
-                </Tabs>
+                </div>
+            {:else if usesTabUtility(componentInstance.component)}
+                <!-- Legacy tab utility approach (persistent fields at top) -->
+                {@const fields = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema.filter(item => 'name' in item) : []}
+                {@const tabs = componentInstance.component.tabs || []}
+                {@const groupedFields = groupFieldsByTab(fields, tabs)}
+                {@const persistentFields = fields.filter(f => !f.tab)}
+                {@const defaultTab = componentInstance.component.activeTab || tabs[0]?.name || ''}
+                
+                <!-- Persistent fields (always visible) -->
+                {#if persistentFields.length > 0}
+                    <div class="space-y-6 mb-6">
+                        {#each persistentFields as field (field.name)}
+                            <FormFieldComponent 
+                                {field}
+                                fieldId="{componentInstance.id}-{field.name}"
+                                bind:value={formData[componentInstance.id][field.name]}
+                            />
+                        {/each}
+                    </div>
+                {/if}
+                
+                <!-- Tabbed fields -->
+                {#if tabs.length > 0}
+                    <Tabs value={defaultTab} class="w-full">
+                        <TabsList class="grid w-full" style="grid-template-columns: repeat({tabs.length}, minmax(0, 1fr));">
+                            {#each tabs as tab (tab.name)}
+                                <TabsTrigger value={tab.name} class="flex items-center gap-2">
+                                    {#if tab.icon}
+                                        <svelte:component this={tab.icon} size={16} />
+                                    {/if}
+                                    {tab.label}
+                                </TabsTrigger>
+                            {/each}
+                        </TabsList>
+
+                        {#each tabs as tab (tab.name)}
+                            <TabsContent value={tab.name} class="mt-6">
+                                <div class="space-y-6">
+                                    {#each groupedFields[tab.name] || [] as field (field.name)}
+                                        <FormFieldComponent 
+                                            {field}
+                                            fieldId="{componentInstance.id}-{field.name}"
+                                            bind:value={formData[componentInstance.id][field.name]}
+                                        />
+                                    {/each}
+                                </div>
+                            </TabsContent>
+                        {/each}
+                    </Tabs>
+                {/if}
             {:else if !Array.isArray(componentInstance.component.schema)}
                 <!-- Layout-based rendering (existing wrapper approach) -->
                 {#if componentInstance.component.schema.type === 'grid'}
@@ -143,12 +222,14 @@
             {:else}
                 <!-- Default layout: vertical stack for field arrays -->
                 <div class="flex flex-col gap-8">
-                    {#each componentInstance.component.schema as field (field.name)}
-                        <FormFieldComponent 
-                            {field}
-                            fieldId="{componentInstance.id}-{field.name}"
-                            bind:value={formData[componentInstance.id][field.name]}
-                        />
+                    {#each componentInstance.component.schema as item (isFormField(item) ? item.name : `item-${Math.random()}`)}
+                        {#if isFormField(item)}
+                            <FormFieldComponent 
+                                field={item}
+                                fieldId="{componentInstance.id}-{item.name}"
+                                bind:value={formData[componentInstance.id][item.name]}
+                            />
+                        {/if}
                     {/each}
                 </div>
             {/if}

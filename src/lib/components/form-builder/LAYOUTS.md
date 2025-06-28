@@ -1,6 +1,178 @@
-# Layout System - Ultimate Simplicity
+# Form Builder Layout System
 
-The Form Builder now supports the most intuitive layout system possible! Instead of complex wrappers, you can simply assign any field to a tab using the `.tab('tab-name')` utility method. This approach is inspired by Filament V3 but made even simpler.
+This document describes the layout system for the Form Builder component, which provides multiple approaches for organizing form fields.
+
+## Available Approaches
+
+### 1. Mixed Schema with TabsPlaceholder (Recommended)
+
+The most flexible approach that allows you to position tabs anywhere in the form flow, with fields appearing before, after, or between tabs.
+
+```typescript
+import { TextInput, TabsPlaceholder, defineTab, defineTabs } from './fields';
+
+const component = {
+    name: 'MyComponent',
+    tabs: defineTabs(
+        defineTab('basic', 'Basic Info', SettingsIcon),
+        defineTab('advanced', 'Advanced', WrenchIcon)
+    ),
+    schema: [
+        // Persistent field at the top
+        TextInput('title').label('Title').build(),
+        
+        // Tabs positioned here
+        TabsPlaceholder('main-tabs'),
+        
+        // Another persistent field after tabs
+        TextInput('footer').label('Footer Text').build(),
+        
+        // Fields assigned to tabs
+        TextInput('subtitle').label('Subtitle').tab('basic').build(),
+        TextInput('description').label('Description').tab('advanced').build()
+    ]
+};
+```
+
+**Key features:**
+- **Flexible positioning**: Use `TabsPlaceholder()` to position tabs anywhere in the schema
+- **Persistent fields**: Fields without `.tab()` assignment appear at their schema position
+- **Tab assignment**: Use `.tab('tab-name')` to assign fields to specific tabs
+- **Multiple placeholders**: You can have multiple `TabsPlaceholder()` instances (with different IDs)
+
+### 2. Tab Utility (Legacy)
+
+Simple approach where all persistent fields appear at the top, followed by tabs.
+
+```typescript
+const component = {
+    name: 'MyComponent',
+    tabs: defineTabs(
+        defineTab('basic', 'Basic Info'),
+        defineTab('advanced', 'Advanced')
+    ),
+    schema: [
+        TextInput('title').label('Title').build(), // Persistent (no .tab())
+        TextInput('subtitle').label('Subtitle').tab('basic').build(),
+        TextInput('description').label('Description').tab('advanced').build()
+    ]
+};
+```
+
+### 3. Grid Layout
+
+For responsive grid layouts with column spanning.
+
+```typescript
+import { Grid } from './fields';
+
+const component = {
+    name: 'MyComponent',
+    schema: Grid()
+        .columns(3)
+        .gap(4)
+        .responsive({ sm: 1, md: 2, lg: 3 })
+        .schema([
+            TextInput('title').label('Title').columnSpan(2).build(),
+            TextInput('subtitle').label('Subtitle').build()
+        ])
+        .build()
+};
+```
+
+### 4. Tabs Layout (Wrapper-based)
+
+Traditional wrapper approach with predefined tab structure.
+
+```typescript
+import { Tabs } from './fields';
+
+const component = {
+    name: 'MyComponent',
+    schema: Tabs('Configuration')
+        .tabs([
+            Tabs.Tab('Basic Info')
+                .schema([
+                    TextInput('title').label('Title').build()
+                ])
+                .build()
+        ])
+        .build()
+};
+```
+
+## Helper Functions
+
+### Tab Definitions
+```typescript
+// Define individual tabs
+const basicTab = defineTab('basic', 'Basic Info', SettingsIcon);
+
+// Define multiple tabs
+const tabs = defineTabs(
+    defineTab('basic', 'Basic Info', SettingsIcon),
+    defineTab('advanced', 'Advanced', WrenchIcon)
+);
+```
+
+### TabsPlaceholder
+```typescript
+// Default placeholder
+TabsPlaceholder() // ID: 'tabs'
+
+// Custom placeholder
+TabsPlaceholder('main-tabs') // ID: 'main-tabs'
+```
+
+## Field Assignment
+
+### Tab Assignment
+```typescript
+TextInput('name')
+    .label('Name')
+    .tab('basic') // Assigns to 'basic' tab
+    .build()
+```
+
+### Column Spanning (Grid Layout)
+```typescript
+TextInput('title')
+    .label('Title')
+    .columnSpan(2) // Spans 2 columns
+    .build()
+```
+
+## Best Practices
+
+1. **Use Mixed Schema** for maximum flexibility
+2. **Group related fields** in the same tab
+3. **Keep persistent fields minimal** - only essential fields that need to be always visible
+4. **Use meaningful tab names** that describe the content
+5. **Consider responsive design** for grid layouts
+6. **Test tab navigation** to ensure good UX
+
+## Migration Guide
+
+### From Tab Utility to Mixed Schema
+
+**Before:**
+```typescript
+schema: [
+    TextInput('title').label('Title').build(), // Persistent
+    TextInput('subtitle').tab('basic').build()
+]
+```
+
+**After:**
+```typescript
+schema: [
+    TextInput('title').label('Title').build(), // Persistent at top
+    TabsPlaceholder(), // Tabs positioned here
+    TextInput('subtitle').tab('basic').build() // Assigned to tab
+]
+```
+
+This allows you to control exactly where tabs appear in relation to other fields.
 
 ## Tab Utility Approach (Recommended)
 
@@ -178,8 +350,30 @@ Array of fields, some of which can have `.tab('tab-name')` assignments.
 ## Field Assignment Rules
 
 1. **Fields with `.tab()`**: Assigned to the specified tab
-2. **Fields without `.tab()`**: Assigned to the first tab
+2. **Fields without `.tab()`**: Persistent fields (always visible, regardless of active tab)
 3. **Invalid tab names**: Fields are assigned to the first tab with a console warning
+
+### Persistent Fields
+
+Fields without a `.tab()` assignment are **persistent** - they remain visible at all times, regardless of which tab is active. This is perfect for important fields that users should always see:
+
+```typescript
+schema: buildFields(
+    // Persistent field - always visible
+    TextInput('title')
+        .label('Title')
+        .required(), // No .tab() = always visible
+    
+    // Tab-specific fields
+    TextInput('subtitle')
+        .label('Subtitle')
+        .tab('basic'), // Only visible in 'basic' tab
+    
+    ColorPicker('color')
+        .label('Color')
+        .tab('styling') // Only visible in 'styling' tab
+)
+```
 
 ## Migration Examples
 

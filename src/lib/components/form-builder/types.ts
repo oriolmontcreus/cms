@@ -39,6 +39,12 @@ export interface ComponentTab {
     icon?: any; // Optional icon component
 }
 
+// Special placeholder for tabs in the schema flow
+export interface TabsPlaceholder {
+    type: 'tabs-placeholder';
+    id: string; // Unique identifier
+}
+
 export interface FormField {
     type: FieldType;
     label: string;
@@ -76,9 +82,12 @@ export interface FormField {
     tab?: string; // Tab name this field belongs to
 }
 
+// Schema item can be either a field or a tabs placeholder
+export type SchemaItem = FormField | TabsPlaceholder;
+
 export interface Component {
     name: string;
-    schema: Layout | FormField[]; // Can be a layout or just an array of fields
+    schema: Layout | SchemaItem[]; // Can be a layout or mixed array of fields and placeholders
     tabs?: ComponentTab[]; // Component-level tab definitions
     activeTab?: string; // Name of the initially active tab
     validate?: (data: Record<string, any>) => string[];
