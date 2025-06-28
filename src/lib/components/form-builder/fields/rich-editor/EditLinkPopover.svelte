@@ -24,7 +24,7 @@
     <Popover.Content class="w-80">
         <div class="grid gap-4">
             <div class="space-y-2">
-                <h4 class="font-medium leading-none">Edit Link</h4>
+                <h4 class="font-medium leading-none">Edit link</h4>
                 <p class="text-muted-foreground text-sm">
                     Modify the link or choose an action.
                 </p>
@@ -41,7 +41,7 @@
                     />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="edit-link-text">Link Text</Label>
+                    <Label for="edit-link-text">Link text</Label>
                     <Input 
                         id="edit-link-text"
                         type="text"
@@ -65,7 +65,7 @@
                         Cancel
                     </Button>
                     <Button type="button" size="sm" onclick={onUpdateLink} disabled={!linkUrl}>
-                        Update Link
+                        Update link
                     </Button>
                 </div>
             </div>

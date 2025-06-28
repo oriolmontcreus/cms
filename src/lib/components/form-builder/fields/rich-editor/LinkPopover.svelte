@@ -22,7 +22,7 @@
             size="sm"
             class="h-9 px-3"
             {disabled}
-            title="Insert Link (Ctrl+K)"
+            title="Insert link (Ctrl+K)"
         >
             <LinkIcon class="h-4 w-4" />
         </Button>
@@ -30,7 +30,7 @@
     <Popover.Content class="w-80">
         <div class="grid gap-4">
             <div class="space-y-2">
-                <h4 class="font-medium leading-none">Insert Link</h4>
+                <h4 class="font-medium leading-none">Insert link</h4>
                 <p class="text-muted-foreground text-sm">
                     Add a link to your content.
                 </p>
@@ -46,8 +46,8 @@
                         class="h-8"
                     />
                 </div>
-                <div class="grid gap-2">
-                    <Label for="link-text">Link Text (optional)</Label>
+                <div class="grid gap-2 mt-2">
+                    <Label for="link-text">Link text (optional)</Label>
                     <Input 
                         id="link-text"
                         type="text"
@@ -62,7 +62,7 @@
                     Cancel
                 </Button>
                 <Button type="button" size="sm" onclick={onInsertLink} disabled={!linkUrl}>
-                    Insert Link
+                    Insert link
                 </Button>
             </div>
         </div>
