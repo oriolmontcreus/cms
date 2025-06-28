@@ -87,7 +87,7 @@
 
 <form class="space-y-8" on:submit|preventDefault={handleSubmit}>
     {#each config.components as componentInstance (componentInstance.id)}
-        <div class="space-y-6 p-6 border rounded-lg bg-card">
+        <div class="space-y-6 p-6 border rounded-lg bg-card/50 dark:bg-card/20">
             <h3 class="text-lg font-semibold">
                 {componentInstance.displayName || componentInstance.component.name}
             </h3>
