@@ -39,10 +39,9 @@ export interface ComponentTab {
     icon?: any; // Optional icon component
 }
 
-// Special placeholder for tabs in the schema flow
-export interface TabsPlaceholder {
-    type: 'tabs-placeholder';
-    id: string; // Unique identifier
+export interface TabsSelector {
+    type: 'tabs-selector';
+    id: string;
 }
 
 export interface FormField {
@@ -83,7 +82,7 @@ export interface FormField {
 }
 
 // Schema item can be either a field or a tabs placeholder
-export type SchemaItem = FormField | TabsPlaceholder;
+export type SchemaItem = FormField | TabsSelector;
 
 export interface Component {
     name: string;

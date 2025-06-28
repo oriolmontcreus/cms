@@ -1,4 +1,4 @@
-import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsPlaceholder } from './types';
+import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector } from './types';
 
 class FieldBuilder {
     private field: Partial<FormField> = {};
@@ -192,9 +192,9 @@ export function defineTabs(...tabs: ComponentTab[]): ComponentTab[] {
 }
 
 // Create a tabs placeholder that defines where tabs should render in the schema flow
-export function TabsPlaceholder(id: string = 'tabs'): TabsPlaceholder {
+export function TabsSelector(id: string = 'tabs'): TabsSelector {
     return {
-        type: 'tabs-placeholder',
+        type: 'tabs-selector',
         id
     };
 }

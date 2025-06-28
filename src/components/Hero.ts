@@ -2,7 +2,7 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import PaletteIcon from '@lucide/svelte/icons/palette';
 import TypeIcon from '@lucide/svelte/icons/type';
 import WrenchIcon from '@lucide/svelte/icons/wrench';
-import { TextInput, ColorPicker, Toggle, defineTab, defineTabs, TabsPlaceholder } from '@/lib/components/form-builder/fields';
+import { TextInput, ColorPicker, Toggle, defineTab, defineTabs, TabsSelector } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 
 export const HeroComponent: Component = {
@@ -26,7 +26,7 @@ export const HeroComponent: Component = {
             .build(),
 
         // Tabs positioned here
-        TabsPlaceholder('main-tabs'),
+        TabsSelector('main-tabs'),
 
         // Another persistent field after tabs
         TextInput('title2')

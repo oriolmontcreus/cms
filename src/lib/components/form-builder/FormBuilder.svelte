@@ -31,7 +31,7 @@
 
     function usesMixedSchema(component: any): boolean {
         if (!Array.isArray(component.schema)) return false;
-        return component.schema.some((item: any) => item.type === 'tabs-placeholder');
+        return component.schema.some((item: any) => item.type === 'tabs-selector');
     }
 
     function isFormField(item: SchemaItem): item is FormField {
@@ -105,7 +105,6 @@
             </h3>
             
             {#if usesMixedSchema(componentInstance.component)}
-                <!-- New mixed schema approach with TabsPlaceholder -->
                 {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
                 {@const tabs = componentInstance.component.tabs || []}
                 {@const allFields = getAllFields(componentInstance.component.schema)}
@@ -113,8 +112,8 @@
                 {@const defaultTab = componentInstance.component.activeTab || tabs[0]?.name || ''}
                 
                 <div class="space-y-6">
-                    {#each schema as item, index (item.type === 'tabs-placeholder' ? item.id : isFormField(item) ? item.name : `item-${index}`)}
-                        {#if item.type === 'tabs-placeholder'}
+                    {#each schema as item, index (item.type === 'tabs-selector' ? item.id : isFormField(item) ? item.name : `item-${index}`)}
+                        {#if item.type === 'tabs-selector'}
                             <!-- Render tabs at this position -->
                             {#if tabs.length > 0}
                                 <Tabs value={defaultTab} class="w-full">
