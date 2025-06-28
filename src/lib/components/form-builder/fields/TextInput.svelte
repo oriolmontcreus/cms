@@ -14,7 +14,6 @@
         hasSuffix && 'pe-9'
     );
 
-    // Helper function to check if a value is a string
     function isString(value: any): value is string {
         return typeof value === 'string';
     }
