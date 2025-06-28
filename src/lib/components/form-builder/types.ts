@@ -2,6 +2,43 @@ export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 
 
 export type PrefixSuffix = string | any; // Can be either a string or an icon component
 
+// Layout Types
+export type LayoutType = 'grid' | 'tabs';
+
+export interface GridLayout {
+    type: 'grid';
+    columns?: number; // Number of columns (1-12, default: 2)
+    gap?: number; // Gap between grid items (1-8, default: 4)
+    responsive?: {
+        sm?: number; // Columns on small screens
+        md?: number; // Columns on medium screens
+        lg?: number; // Columns on large screens
+    };
+    schema: FormField[]; // Fields contained in this grid
+}
+
+export interface TabsLayout {
+    type: 'tabs';
+    tabs: TabDefinition[];
+    activeTab?: number; // Index of the initially active tab (0-based)
+}
+
+export interface TabDefinition {
+    id: string;
+    label: string;
+    icon?: any; // Icon component
+    schema: FormField[]; // Fields contained in this tab
+}
+
+export type Layout = GridLayout | TabsLayout;
+
+// New tab definition for component-level tabs
+export interface ComponentTab {
+    name: string; // Identifier (used in field.tab())
+    label: string; // Display name
+    icon?: any; // Optional icon component
+}
+
 export interface FormField {
     type: FieldType;
     label: string;
@@ -34,11 +71,16 @@ export interface FormField {
     // Date range constraints
     minDate?: string; // For date fields - minimum selectable date (ISO string format)
     maxDate?: string; // For date fields - maximum selectable date (ISO string format)
+    // Layout properties
+    columnSpan?: number; // For grid layout - how many columns this field should span
+    tab?: string; // Tab name this field belongs to
 }
 
 export interface Component {
     name: string;
-    fields: FormField[];
+    schema: Layout | FormField[]; // Can be a layout or just an array of fields
+    tabs?: ComponentTab[]; // Component-level tab definitions
+    activeTab?: string; // Name of the initially active tab
     validate?: (data: Record<string, any>) => string[];
     transform?: (data: Record<string, any>) => Record<string, any>;
 }

@@ -1,4 +1,4 @@
-import type { FormField, FieldType, PrefixSuffix } from './types';
+import type { FormField, FieldType, PrefixSuffix, ComponentTab } from './types';
 
 class FieldBuilder {
     private field: Partial<FormField> = {};
@@ -143,6 +143,18 @@ class FieldBuilder {
         return this;
     }
 
+    //region Layout utility methods
+    columnSpan(span: number): this {
+        this.field.columnSpan = span;
+        return this;
+    }
+
+    tab(tabName: string): this {
+        this.field.tab = tabName;
+        return this;
+    }
+    //endregion
+
     build(): FormField {
         if (!this.field.label) {
             throw new Error(`Field "${this.field.name}" must have a label`);
@@ -163,7 +175,19 @@ export const Toggle = (name: string) => new FieldBuilder('toggle', name);
 export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 
-// Helper function to build an array of fields
+
 export function buildFields(...fields: FieldBuilder[]): FormField[] {
     return fields.map(field => field.build());
-} 
+}
+
+export function defineTab(name: string, label: string, icon?: any): ComponentTab {
+    return {
+        name,
+        label,
+        icon
+    };
+}
+
+export function defineTabs(...tabs: ComponentTab[]): ComponentTab[] {
+    return tabs;
+}
