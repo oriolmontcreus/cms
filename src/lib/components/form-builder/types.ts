@@ -44,6 +44,35 @@ export interface TabsSelector {
     id: string;
 }
 
+export interface Tab {
+    type: 'tab';
+    name: string;
+    label: string;
+    icon?: any;
+    schema: SchemaItem[];
+}
+
+export interface TabsContainer {
+    type: 'tabs-container';
+    name: string;
+    tabs: Tab[];
+    activeTab?: string;
+}
+
+export interface TabBuilder {
+    make(name: string): TabBuilder;
+    icon(iconComponent: any): TabBuilder;
+    schema(fields: SchemaItem[]): TabBuilder;
+    toJSON(): Tab;
+}
+
+export interface TabsBuilder {
+    make(name: string): TabsBuilder;
+    tabs(tabsArray: (Tab | TabBuilder)[]): TabsBuilder;
+    activeTab(tabName: string): TabsBuilder;
+    toJSON(): TabsContainer;
+}
+
 export interface FormField {
     type: FieldType;
     label: string;
@@ -117,8 +146,8 @@ export interface FieldBuilder {
     tab(tabName: string): FieldBuilder;
 }
 
-// Schema item can be either a field, field builder, or a tabs placeholder
-export type SchemaItem = FormField | FieldBuilder | TabsSelector | GridLayout;
+// Schema item can be either a field, field builder, tabs container, or grid layout
+export type SchemaItem = FormField | FieldBuilder | TabsSelector | TabsContainer | GridLayout;
 
 export interface Component {
     name: string;

@@ -1,4 +1,4 @@
-import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector, FieldBuilder as IFieldBuilder } from './types';
+import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector, FieldBuilder as IFieldBuilder, TabBuilder as ITabBuilder, TabsBuilder as ITabsBuilder, Tab, TabsContainer, SchemaItem } from './types';
 
 class FieldBuilder implements IFieldBuilder {
     private field: FormField;
@@ -173,6 +173,72 @@ export const Toggle = (name: string) => new FieldBuilder('toggle', name);
 export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 
+class TabBuilderImpl implements ITabBuilder {
+    private tab: Tab;
+
+    constructor(name: string) {
+        this.tab = {
+            type: 'tab',
+            name,
+            label: name,
+            schema: []
+        };
+    }
+
+    icon(iconComponent: any): this {
+        this.tab.icon = iconComponent;
+        return this;
+    }
+
+    schema(fields: SchemaItem[]): this {
+        this.tab.schema = fields;
+        return this;
+    }
+
+    toJSON(): Tab {
+        return this.tab;
+    }
+
+    make(name: string): TabBuilderImpl {
+        return new TabBuilderImpl(name);
+    }
+}
+
+class TabsBuilderImpl implements ITabsBuilder {
+    private tabsContainer: TabsContainer;
+
+    constructor(name: string) {
+        this.tabsContainer = {
+            type: 'tabs-container',
+            name,
+            tabs: []
+        };
+    }
+
+    tabs(tabsArray: (Tab | ITabBuilder)[]): this {
+        this.tabsContainer.tabs = tabsArray.map(tab => 
+            'toJSON' in tab ? tab.toJSON() : tab
+        );
+        return this;
+    }
+
+    activeTab(tabName: string): this {
+        this.tabsContainer.activeTab = tabName;
+        return this;
+    }
+
+    toJSON(): TabsContainer {
+        return this.tabsContainer;
+    }
+
+    make(name: string): TabsBuilderImpl {
+        return new TabsBuilderImpl(name);
+    }
+}
+
+export const Tabs = (name: string) => new TabsBuilderImpl(name);
+export const TabField = (name: string) => new TabBuilderImpl(name);
+
 export function defineTab(name: string, label: string, icon?: any): ComponentTab {
     return {
         name,
@@ -185,7 +251,6 @@ export function defineTabs(...tabs: ComponentTab[]): ComponentTab[] {
     return tabs;
 }
 
-// Create a tabs placeholder that defines where tabs should render in the schema flow
 export function TabsSelector(id: string = 'tabs'): TabsSelector {
     return {
         type: 'tabs-selector',

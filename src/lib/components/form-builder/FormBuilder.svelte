@@ -7,7 +7,7 @@
     import GridLayout from './layouts/GridLayout.svelte';
     import TabsLayout from './layouts/TabsLayout.svelte';
     import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-    import type { FormField, Layout, ComponentTab, SchemaItem } from './types';
+    import type { FormField, Layout, ComponentTab, SchemaItem, TabsContainer } from './types';
 
     export let config: PageConfig;
     export let slug: string;
@@ -30,8 +30,15 @@
         if (Array.isArray(schema)) {
             return schema
                 .flatMap(item => {
-                    if (item && typeof item === 'object' && 'type' in item && item.type === 'grid') {
-                        return item.schema || [];
+                    if (item && typeof item === 'object' && 'type' in item) {
+                        if (item.type === 'grid') {
+                            return item.schema || [];
+                        }
+                        if (item.type === 'tabs-container') {
+                            return (item as TabsContainer).tabs.flatMap(tab => 
+                                getAllFields(tab.schema)
+                            );
+                        }
                     }
                     return convertToFormField(item);
                 })
@@ -52,8 +59,17 @@
         return component.schema.some((item: any) => item.type === 'tabs-selector');
     }
 
+    function usesFilamentTabs(component: any): boolean {
+        if (!Array.isArray(component.schema)) return false;
+        return component.schema.some((item: any) => item.type === 'tabs-container');
+    }
+
     function isFormField(item: SchemaItem): item is FormField {
         return convertToFormField(item) !== null;
+    }
+
+    function isTabsContainer(item: SchemaItem): item is TabsContainer {
+        return item && typeof item === 'object' && 'type' in item && item.type === 'tabs-container';
     }
 
     function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[], schema: any[]): Record<string, FormField[]> {
@@ -91,6 +107,30 @@
     function gridHasNonTabbedFields(grid: any): boolean {
         if (!grid || grid.type !== 'grid' || !grid.schema) return false;
         return grid.schema.some((field: any) => !field.tab);
+    }
+
+    // Helper function to render schema items recursively
+    function renderSchemaItem(item: SchemaItem, componentId: string, activeTab?: string) {
+        if (isFormField(item)) {
+            const field = convertToFormField(item);
+            if (field) {
+                return {
+                    type: 'field' as const,
+                    field,
+                    componentId
+                };
+            }
+        } else if (item && typeof item === 'object' && 'type' in item) {
+            if (item.type === 'grid') {
+                return {
+                    type: 'grid' as const,
+                    layout: item,
+                    componentId,
+                    activeTab
+                };
+            }
+        }
+        return null;
     }
     
     config.components.forEach(componentInstance => {
@@ -143,7 +183,75 @@
                 {componentInstance.displayName || componentInstance.component.name}
             </h3>
             
-            {#if usesMixedSchema(componentInstance.component)}
+            {#if usesFilamentTabs(componentInstance.component)}
+                <!-- New Filament V3 style tabs rendering -->
+                {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
+                
+                <div class="space-y-6">
+                    {#each schema as item, index (isTabsContainer(item) ? item.name : isFormField(item) ? convertToFormField(item)?.name || `item-${index}` : `item-${index}`)}
+                        {#if isTabsContainer(item)}
+                            {@const tabsContainer = item}
+                            {@const defaultTab = tabsContainer.activeTab || tabsContainer.tabs[0]?.name || ''}
+                            
+                            <Tabs value={defaultTab} class="w-full">
+                                <TabsList class="grid w-full" style="grid-template-columns: repeat({tabsContainer.tabs.length}, minmax(0, 1fr));">
+                                    {#each tabsContainer.tabs as tab (tab.name)}
+                                        <TabsTrigger value={tab.name} class="flex items-center gap-2">
+                                            {#if tab.icon}
+                                                <svelte:component this={tab.icon} size={16} />
+                                            {/if}
+                                            {tab.label}
+                                        </TabsTrigger>
+                                    {/each}
+                                </TabsList>
+
+                                {#each tabsContainer.tabs as tab (tab.name)}
+                                    <TabsContent value={tab.name} class="mt-6">
+                                        <div class="space-y-6">
+                                            {#each tab.schema as schemaItem}
+                                                {@const renderedItem = renderSchemaItem(schemaItem, componentInstance.id)}
+                                                {#if renderedItem}
+                                                    {#if renderedItem.type === 'field'}
+                                                        <FormFieldComponent 
+                                                            field={renderedItem.field}
+                                                            fieldId="{componentInstance.id}-{renderedItem.field.name}"
+                                                            bind:value={formData[componentInstance.id][renderedItem.field.name]}
+                                                        />
+                                                    {:else if renderedItem.type === 'grid'}
+                                                        <GridLayout 
+                                                            layout={renderedItem.layout}
+                                                            formData={formData[componentInstance.id]}
+                                                            componentId={componentInstance.id}
+                                                        />
+                                                    {/if}
+                                                {/if}
+                                            {/each}
+                                        </div>
+                                    </TabsContent>
+                                {/each}
+                            </Tabs>
+                        {:else if isFormField(item)}
+                            <!-- Render regular field -->
+                            {@const field = convertToFormField(item)}
+                            {#if field}
+                                <FormFieldComponent 
+                                    field={field}
+                                    fieldId="{componentInstance.id}-{field.name}"
+                                    bind:value={formData[componentInstance.id][field.name]}
+                                />
+                            {/if}
+                        {:else if item && typeof item === 'object' && 'type' in item && item.type === 'grid'}
+                            <!-- Render grid layout -->
+                            <GridLayout 
+                                layout={item}
+                                formData={formData[componentInstance.id]}
+                                componentId={componentInstance.id}
+                            />
+                        {/if}
+                    {/each}
+                </div>
+            {:else if usesMixedSchema(componentInstance.component)}
+                <!-- Existing mixed schema approach -->
                 {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
                 {@const tabs = componentInstance.component.tabs || []}
                 {@const allFields = getAllFields(componentInstance.component.schema)}
@@ -172,7 +280,7 @@
                                             <div class="space-y-6">
                                                 {#each groupedFields[tab.name] || [] as field (field.name)}
                                                     <FormFieldComponent 
-                                                        {field}
+                                                        field={field}
                                                         fieldId="{componentInstance.id}-{field.name}"
                                                         bind:value={formData[componentInstance.id][field.name]}
                                                     />
@@ -207,7 +315,7 @@
                             {@const field = convertToFormField(item)}
                             {#if field}
                                 <FormFieldComponent 
-                                    {field}
+                                    field={field}
                                     fieldId="{componentInstance.id}-{field.name}"
                                     bind:value={formData[componentInstance.id][field.name]}
                                 />
@@ -228,7 +336,7 @@
                     <div class="space-y-6 mb-6">
                         {#each persistentFields as field (field.name)}
                             <FormFieldComponent 
-                                {field}
+                                field={field}
                                 fieldId="{componentInstance.id}-{field.name}"
                                 bind:value={formData[componentInstance.id][field.name]}
                             />
@@ -255,7 +363,7 @@
                                 <div class="space-y-6">
                                     {#each groupedFields[tab.name] || [] as field (field.name)}
                                         <FormFieldComponent 
-                                            {field}
+                                            field={field}
                                             fieldId="{componentInstance.id}-{field.name}"
                                             bind:value={formData[componentInstance.id][field.name]}
                                         />
@@ -302,7 +410,7 @@
                             {@const field = convertToFormField(item)}
                             {#if field}
                                 <FormFieldComponent 
-                                    {field}
+                                    field={field}
                                     fieldId="{componentInstance.id}-{field.name}"
                                     bind:value={formData[componentInstance.id][field.name]}
                                 />
