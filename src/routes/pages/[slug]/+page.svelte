@@ -43,7 +43,7 @@
                         <div class="text-red-500 text-center">{error}</div>
                     </div>
                 {:else if config && pageData}
-                    <div class="max-w-2xl mx-auto">
+                    <div class="max-w-4xl mx-auto">
                         <FormBuilder 
                             {config} 
                             slug={pageData.slug} 
