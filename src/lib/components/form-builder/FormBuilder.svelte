@@ -178,7 +178,7 @@ import type { FormField, Layout, ComponentTab, SchemaItem, TabsContainer } from 
 
 <form class="space-y-8" on:submit|preventDefault={handleSubmit}>
     {#each config.components as componentInstance (componentInstance.id)}
-        <div class="space-y-6 p-6 border rounded-lg bg-card/50 dark:bg-card/20">
+        <div class="space-y-6 p-2 sm:p-6 sm:border rounded-lg bg-card/50 dark:bg-card/20">
             <h3 class="text-lg font-semibold">
                 {componentInstance.displayName || componentInstance.component.name}
             </h3>
