@@ -61,6 +61,7 @@ export interface TabsContainer {
 
 export interface TabBuilder {
     make(name: string): TabBuilder;
+    label(text: string): TabBuilder;
     icon(iconComponent: any): TabBuilder;
     schema(fields: SchemaItem[]): TabBuilder;
     toJSON(): Tab;

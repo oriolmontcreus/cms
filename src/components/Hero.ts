@@ -16,10 +16,10 @@ export const HeroComponent: Component = {
             .max(100)
             .placeholder('Enter the hero title')
             .helperText('This field is always visible regardless of the active tab'),
-
         Tabs('hero-tabs')
             .tabs([
                 TabField('basic')
+                    .label('Basic Settings')
                     .icon(SettingsIcon)
                     .schema([
                         GridContainer(2, 4, { sm: 1, md: 2 }).add(
@@ -38,6 +38,7 @@ export const HeroComponent: Component = {
                     ]),
 
                 TabField('content')
+                    .label('Content')
                     .icon(TypeIcon)
                     .schema([
                         GridContainer(1, 6).add(
@@ -49,6 +50,7 @@ export const HeroComponent: Component = {
                     ]),
 
                 TabField('styling')
+                    .label('Styling Options')
                     .icon(PaletteIcon)
                     .schema([
                         GridContainer(2, 4, { sm: 1, md: 2 }).add(
@@ -63,6 +65,7 @@ export const HeroComponent: Component = {
                     ]),
 
                 TabField('settings')
+                    .label('Advanced Settings')
                     .icon(WrenchIcon)
                     .schema([
                         GridContainer(2, 4, { sm: 1, md: 2 }).add(

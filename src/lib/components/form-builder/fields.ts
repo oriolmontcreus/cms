@@ -185,6 +185,11 @@ class TabBuilderImpl implements ITabBuilder {
         };
     }
 
+    label(text: string): this {
+        this.tab.label = text;
+        return this;
+    }
+
     icon(iconComponent: any): this {
         this.tab.icon = iconComponent;
         return this;
