@@ -17,7 +17,6 @@
 
     onMount(async () => {   
         pages = await handleGetPages();
-        console.log(pages);
         loading = false;
     });
 
