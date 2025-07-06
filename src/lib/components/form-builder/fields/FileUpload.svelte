@@ -3,11 +3,13 @@
     import { Input } from '@components/ui/input';
     import { Button } from '@components/ui/button';
     import { cn } from '$lib/utils';
-    import { handleUploadFiles, handleUploadSingleFile } from '@/services/file.service';
     import XIcon from '@lucide/svelte/icons/x';
+    import TrashIcon from '@lucide/svelte/icons/trash';
     import UploadIcon from '@lucide/svelte/icons/upload';
     import FileIcon from '@lucide/svelte/icons/file';
     import type { UploadedFile } from '@shared/types/file.type';
+    import { getContext } from 'svelte';
+    import type { Writable } from 'svelte/store';
 
     export let field: FormField;
     export let fieldId: string;
@@ -15,16 +17,55 @@
 
     let fileInput: HTMLInputElement;
     let isDragOver = false;
-    let uploadedFiles: File[] = [];
-    let uploadedFileData: UploadedFile[] = [];
-    let isUploading = false;
+    
+    // Separate arrays for existing uploaded files and new files to be uploaded
+    let existingFiles: UploadedFile[] = [];
+    let newFiles: File[] = [];
+    let filesToDelete: string[] = []; // IDs of existing files to delete
 
-    // Initialize uploaded files from value
-    $: if (value) {
-        if (Array.isArray(value)) {
-            uploadedFileData = value;
-        } else if (value) {
-            uploadedFileData = [value];
+    // Initialize from existing value on mount
+    let initialValue = value;
+    
+    // Get the file upload state from context
+    const fileUploadState = getContext<Writable<Record<string, { pendingFiles: File[]; filesToDelete: string[] }>>>('fileUploadState');
+    
+    // Update the context whenever our state changes
+    $: if (fileUploadState) {
+        fileUploadState.update(state => ({
+            ...state,
+            [fieldId]: {
+                pendingFiles: newFiles,
+                filesToDelete: filesToDelete
+            }
+        }));
+    }
+    
+    // Initialize existing files from the initial value
+    $: if (initialValue && existingFiles.length === 0 && newFiles.length === 0) {
+        if (Array.isArray(initialValue)) {
+            existingFiles = initialValue.filter(file => file.id);
+        } else if (initialValue && initialValue.id) {
+            existingFiles = [initialValue];
+        }
+    }
+
+    // Update the value based on current state
+    $: {
+        const allFiles = [...existingFiles, ...newFiles.map(file => ({
+            id: '', // Will be set after upload
+            originalName: file.name,
+            fileName: file.name,
+            mimeType: file.type,
+            size: file.size,
+            path: '',
+            uploadedAt: new Date(),
+            _pendingFile: file // Store the actual file for upload
+        } as UploadedFile & { _pendingFile: File }))];
+
+        if (field.multiple) {
+            value = allFiles.length > 0 ? allFiles : null;
+        } else {
+            value = allFiles.length > 0 ? allFiles[0] : null;
         }
     }
 
@@ -75,7 +116,7 @@
         isDragOver = false;
     }
 
-    async function processFiles(files: File[]) {
+    function processFiles(files: File[]) {
         const validFiles: File[] = [];
         
         for (const file of files) {
@@ -90,44 +131,26 @@
 
         if (validFiles.length === 0) return;
 
-        // Upload files
-        isUploading = true;
-        let uploadResult;
-        
+        // Add files to local state instead of uploading immediately
         if (field.multiple) {
-            uploadResult = await handleUploadFiles(validFiles);
+            newFiles = [...newFiles, ...validFiles];
         } else {
-            uploadResult = await handleUploadSingleFile(validFiles[0]);
-        }
-        
-        isUploading = false;
-
-        if (uploadResult) {
-            // Handle single vs multiple files
-            if (!field.multiple) {
-                uploadedFiles = [validFiles[0]];
-                uploadedFileData = [uploadResult as UploadedFile];
-                value = uploadResult as UploadedFile;
-            } else {
-                uploadedFiles = [...uploadedFiles, ...validFiles];
-                const newFileData = Array.isArray(uploadResult) ? uploadResult : [uploadResult];
-                uploadedFileData = [...uploadedFileData, ...newFileData];
-                value = uploadedFileData;
-            }
+            // For single file, replace existing
+            newFiles = [validFiles[0]];
+            existingFiles = [];
+            filesToDelete = existingFiles.map(f => f.id).filter(id => id);
         }
     }
 
-    function removeFile(index: number) {
-        uploadedFiles = uploadedFiles.filter((_, i) => i !== index);
-        uploadedFileData = uploadedFileData.filter((_, i) => i !== index);
-        
-        if (uploadedFileData.length === 0) {
-            value = null;
-        } else if (!field.multiple) {
-            value = uploadedFileData[0];
-        } else {
-            value = uploadedFileData;
-        }
+    function removeExistingFile(fileId: string) {
+        console.log('removeExistingFile', fileId);
+        filesToDelete = [...filesToDelete, fileId];
+        existingFiles = existingFiles.filter(f => f.id !== fileId);
+    }
+
+    function removeNewFile(index: number) {
+        // Remove new file from local state
+        newFiles = newFiles.filter((_, i) => i !== index);
     }
 
     function formatFileSize(bytes: number): string {
@@ -189,15 +212,15 @@
         </div>
     </div>
 
-    <!-- Uploaded files list -->
-    {#if uploadedFileData.length > 0}
+    <!-- Files list -->
+    {#if existingFiles.length > 0 || newFiles.length > 0}
         <div class="space-y-2">
             <h4 class="text-sm font-medium">
-                {field.multiple ? 'Uploaded Files' : 'Uploaded File'}
+                {field.multiple ? 'Files' : 'File'}
             </h4>
             <div class="space-y-2">
-                {#each uploadedFileData as fileData, index}
-                    {@const file = uploadedFiles[index]}
+                <!-- Existing files -->
+                {#each existingFiles as fileData}
                     <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div class="flex items-center space-x-3">
                             <FileIcon class="h-4 w-4 text-muted-foreground" />
@@ -214,22 +237,39 @@
                         <Button
                             variant="ghost"
                             size="sm"
-                            onclick={() => removeFile(index)}
-                            disabled={field.disabled || isUploading}
+                            onclick={() => removeExistingFile(fileData.id)}
+                            disabled={field.disabled}
+                            title="Delete file"
+                        >
+                            <TrashIcon class="h-4 w-4" />
+                        </Button>
+                    </div>
+                {/each}
+
+                <!-- New files (not yet uploaded) -->
+                {#each newFiles as file, index}
+                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg border-l-4 border-l-blue-500">
+                        <div class="flex items-center space-x-3">
+                            <FileIcon class="h-4 w-4 text-blue-600" />
+                            <div>
+                                <p class="text-sm font-medium">{file.name}</p>
+                                <p class="text-xs text-muted-foreground">
+                                    {formatFileSize(file.size)} • <span class="text-blue-600">New file</span>
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onclick={() => removeNewFile(index)}
+                            disabled={field.disabled}
+                            title="Remove file"
                         >
                             <XIcon class="h-4 w-4" />
                         </Button>
                     </div>
                 {/each}
             </div>
-        </div>
-    {/if}
-
-    <!-- Upload status -->
-    {#if isUploading}
-        <div class="flex items-center space-x-2 text-sm text-muted-foreground">
-            <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-            <span>Uploading...</span>
         </div>
     {/if}
 </div> 
