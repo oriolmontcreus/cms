@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { useRoutes } from '@/src/routes/useRoutes.js'
 import { connectMongoose } from './config/mongoose.config.js'
 import { errorHandler } from '@/lib/errorHandler.js'
@@ -21,6 +22,8 @@ app.use('*', cors({
 app.use('*', logger())
 
 app.onError(errorHandler);
+
+app.use('/uploads/*', serveStatic({ root: './' }));
 
 useRoutes(app);
 
