@@ -7,7 +7,7 @@ import BadRequest from "@/errors/BadRequest.js";
 import PayloadTooLarge from "@/errors/PayloadTooLarge.js";
 import { UploadedFile } from "@shared/types/file.type.js";
 
-export async function uploadFiles(files: File[]): Promise<void> {
+export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {
   if (!files || files.length === 0) throw new BadRequest("No files provided");
   if (files.length > MAX_FILES_PER_REQUEST) throw new BadRequest(`Maximum ${MAX_FILES_PER_REQUEST} files allowed per request`);
 
@@ -20,6 +20,8 @@ export async function uploadFiles(files: File[]): Promise<void> {
     const uploadedFile = await processFile(file);
     uploadedFiles.push(uploadedFile);
   }
+
+  return uploadedFiles;
 }
 
 //region Helper functions

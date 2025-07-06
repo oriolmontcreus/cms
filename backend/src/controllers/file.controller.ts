@@ -24,11 +24,12 @@ export class FileController {
       throw new BadRequest("No files found in request");
     }
 
-    const result = await fileService.uploadFiles(files);
+    const uploadedFiles = await fileService.uploadFiles(files);
     
     return c.json({
       success: true,
-      data: result
-    });
+      data: uploadedFiles,
+      message: `Successfully uploaded ${uploadedFiles.length} file(s)`
+    }, 200);
   }
 } 

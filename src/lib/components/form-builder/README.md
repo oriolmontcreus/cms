@@ -64,7 +64,7 @@ This form builder has been refactored to use a component-based approach that eli
 ## Basic Usage
 
 ```typescript
-import { TextInput, Textarea, Number, Email, Select, Date, buildFields } from './fields';
+import { TextInput, Textarea, Number, Email, Select, Date, FileUpload, buildFields } from './fields';
 
 export const MyFormFields = buildFields(
     TextInput('username')
@@ -216,6 +216,36 @@ Select('category')
     .multiple()                   // Allow multiple selections
 ```
 
+### FileUpload
+Creates a file upload field with drag-and-drop support, MIME type validation, and file size limits.
+
+```typescript
+FileUpload('documents')
+    .label('Upload Documents')
+    .required()
+    .multiple()                   // Allow multiple file uploads
+    .allowedMimeTypes([           // Restrict file types
+        'image/jpeg',
+        'image/png',
+        'application/pdf',
+        'text/plain'
+    ])
+    .maxFileSize(5 * 1024 * 1024) // 5MB max file size
+    .helperText('Upload PDF, images, or text files (max 5MB each)')
+```
+
+**Common MIME Types:**
+- Images: `'image/jpeg'`, `'image/png'`, `'image/gif'`, `'image/webp'`
+- Documents: `'application/pdf'`, `'text/plain'`, `'application/msword'`
+- Archives: `'application/zip'`, `'application/x-rar-compressed'`
+- Audio: `'audio/mpeg'`, `'audio/wav'`, `'audio/ogg'`
+- Video: `'video/mp4'`, `'video/avi'`, `'video/quicktime'`
+
+**File Size Examples:**
+- 1MB: `1 * 1024 * 1024`
+- 5MB: `5 * 1024 * 1024`
+- 10MB: `10 * 1024 * 1024`
+
 ## Available Methods
 
 All field types support these common methods:
@@ -254,6 +284,11 @@ All field types support these common methods:
 - `.yearFormat(format)` - Year format ('numeric', '2-digit')
 - `.monthFormat(format)` - Month format ('numeric', '2-digit', 'short', 'long', 'narrow')
 
+**FileUpload:**
+- `.allowedMimeTypes(array)` - Array of allowed MIME types (e.g., ['image/jpeg', 'application/pdf'])
+- `.maxFileSize(bytes)` - Maximum file size in bytes (e.g., 5 * 1024 * 1024 for 5MB)
+- `.multiple(boolean)` - Allow multiple file uploads (default: true if called without parameter)
+
 ## Building Fields
 
 Use the `buildFields()` function to convert your fluent field definitions into the FormField array:
@@ -270,7 +305,7 @@ export const MyFields = buildFields(
 ## Complete Example
 
 ```typescript
-import { TextInput, Textarea, Number, Select, DatePicker, DateRangePicker, buildFields } from '../lib/components/form-builder/fields';
+import { TextInput, Textarea, Number, Select, DatePicker, DateRangePicker, FileUpload, buildFields } from '../lib/components/form-builder/fields';
 import AtSign from '@lucide/svelte/icons/at-sign';
 import DollarSign from '@lucide/svelte/icons/dollar-sign';
 import Search from '@lucide/svelte/icons/search';
@@ -320,7 +355,19 @@ export const ContactFormFields = buildFields(
         .required()
         .min(20)
         .max(1000)
-        .placeholder('Tell us about your project...')
+        .placeholder('Tell us about your project...'),
+    
+    FileUpload('attachments')
+        .label('Project Files')
+        .multiple()
+        .allowedMimeTypes([
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+            'text/plain'
+        ])
+        .maxFileSize(10 * 1024 * 1024)
+        .helperText('Upload images, PDFs, or text files (max 10MB each)')
 );
 ```
 

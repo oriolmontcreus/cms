@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file';
 
 export type PrefixSuffix = string | any; // Can be either a string or an icon component
 
@@ -106,6 +106,9 @@ export interface FormField {
     // Date range constraints
     minDate?: string; // For date fields - minimum selectable date (ISO string format)
     maxDate?: string; // For date fields - maximum selectable date (ISO string format)
+    // File upload specific options
+    allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
+    maxFileSize?: number; // For file fields - maximum file size in bytes
     // Layout properties
     columnSpan?: number; // For grid layout - how many columns this field should span
     tab?: string; // Tab name this field belongs to
@@ -143,6 +146,8 @@ export interface FieldBuilder {
     maxDate(date: string | Date): FieldBuilder;
     rows(count: number): FieldBuilder;
     resizable(isResizable?: boolean): FieldBuilder;
+    allowedMimeTypes(types: string[]): FieldBuilder;
+    maxFileSize(size: number): FieldBuilder;
     columnSpan(span: number): FieldBuilder;
     tab(tabName: string): FieldBuilder;
 }

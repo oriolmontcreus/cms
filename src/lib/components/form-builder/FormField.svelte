@@ -11,6 +11,7 @@
     import ToggleInput from './fields/ToggleInput.svelte';
     import ColorInput from './fields/ColorPicker.svelte';
     import RichEditorInput from './fields/RichEditor.svelte';
+    import FileUploadInput from './fields/FileUpload.svelte';
 
     export let field: FormField;
     export let fieldId: string;
@@ -27,7 +28,8 @@
         email: EmailInput,
         toggle: ToggleInput,
         color: ColorInput,
-        richtext: RichEditorInput
+        richtext: RichEditorInput,
+        file: FileUploadInput
     };
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;
