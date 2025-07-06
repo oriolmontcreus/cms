@@ -30,6 +30,15 @@ export async function deleteFiles(fileIds: string[]): Promise<boolean> {
     return response.data.success;
 }
 
+export async function checkFilesExist(fileNames: string[]): Promise<{ fileName: string; exists: boolean }[]> {
+    const response = await api.post<{ success: boolean; data: { fileName: string; exists: boolean }[] }>(
+        `${root}/check-exists`,
+        { fileNames }
+    );
+
+    return response.data.data;
+}
+
 export async function handleUploadFiles(files: File[]): Promise<UploadedFile[] | null> {
     const [uploadedFiles, err] = await safeFetch(uploadFiles(files));
     if (!uploadedFiles) {

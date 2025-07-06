@@ -37,10 +37,21 @@
             for (const componentInstance of config.components) {
                 const allFields = getAllFields(componentInstance.component.schema);
                 const fileFields = allFields.filter(field => field.type === 'file');
+                const colorFields = allFields.filter(field => field.type === 'color');
+                
+                // Validate and clean form data
+                const componentFormData = { ...processedFormData[componentInstance.id] };
+                
+                // Ensure color fields only contain valid color strings
+                for (const field of colorFields) {
+                    const value = componentFormData[field.name];
+                    if (value && typeof value !== 'string') {
+                        console.warn(`Color field ${field.name} contains non-string value:`, value, 'Resetting to empty string');
+                        componentFormData[field.name] = '';
+                    }
+                }
                 
                 if (fileFields.length > 0) {
-                    const componentFormData = { ...processedFormData[componentInstance.id] };
-                    
                     // Process each file field
                     for (const field of fileFields) {
                         const key = `${componentInstance.id}-${field.name}`;
@@ -79,9 +90,9 @@
                             }
                         }
                     }
-                    
-                    processedFormData[componentInstance.id] = componentFormData;
                 }
+                
+                processedFormData[componentInstance.id] = componentFormData;
             }
             
             const updatedComponents: Component[] = config.components.map(componentInstance => ({

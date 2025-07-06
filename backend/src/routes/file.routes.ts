@@ -11,4 +11,14 @@ router.post(
     withAuth(fileController.upload.bind(fileController))
 );
 
+router.delete(
+  "/delete",
+    withAuth(fileController.delete.bind(fileController))
+);
+
+router.post(
+  "/check-exists",
+    withAuth(fileController.checkExists.bind(fileController))
+);
+
 export { router as fileRouter }; 

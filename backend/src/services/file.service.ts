@@ -5,7 +5,9 @@ import { randomUUID } from "crypto";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE, MAX_FILES_PER_REQUEST, UPLOAD_DIR } from "@/constants/file.js";
 import BadRequest from "@/errors/BadRequest.js";
 import PayloadTooLarge from "@/errors/PayloadTooLarge.js";
+import NotFound from "@/errors/NotFound.js";
 import { UploadedFile } from "@shared/types/file.type.js";
+import { unlink, readdir } from "fs/promises";
 
 export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {
   if (!files || files.length === 0) throw new BadRequest("No files provided");
@@ -22,6 +24,26 @@ export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {
   }
 
   return uploadedFiles;
+}
+
+export async function deleteFiles(fileIdentifiers: string[]): Promise<{ deletedFiles: string[], errors: string[] }> {
+  if (!fileIdentifiers || fileIdentifiers.length === 0) throw new BadRequest("No file identifiers provided");
+  
+  const deletedFiles: string[] = [];
+  const errors: string[] = [];
+
+  for (const identifier of fileIdentifiers) {
+    try {
+      const fileName = await resolveFileName(identifier);
+      await deleteFile(fileName);
+      deletedFiles.push(identifier);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${identifier}`;
+      errors.push(errorMessage);
+    }
+  }
+
+  return { deletedFiles, errors };
 }
 
 //region Helper functions
@@ -59,6 +81,46 @@ async function processFile(file: File): Promise<UploadedFile> {
   };
 }
 
+async function resolveFileName(identifier: string): Promise<string> {
+  if (!identifier || identifier.trim() === "") {
+    throw new BadRequest("File identifier is required");
+  }
+
+  const sanitizedIdentifier = path.basename(identifier);
+  
+  // If identifier contains a file extension, treat it as a filename
+  if (path.extname(sanitizedIdentifier)) {
+    return sanitizedIdentifier;
+  }
+  
+  // Otherwise, treat it as a file ID and find the corresponding file
+  await ensureUploadDirectory();
+  const files = await readdir(UPLOAD_DIR);
+  const matchingFile = files.find(file => file.startsWith(sanitizedIdentifier));
+  
+  if (!matchingFile) {
+    throw new NotFound(`File with ID ${identifier} not found`);
+  }
+  
+  return matchingFile;
+}
+
+async function deleteFile(fileName: string): Promise<void> {
+  if (!fileName || fileName.trim() === "") {
+    throw new BadRequest("File name is required");
+  }
+
+  // Sanitize file name to prevent directory traversal
+  const sanitizedFileName = path.basename(fileName);
+  const filePath = path.join(UPLOAD_DIR, sanitizedFileName);
+
+  if (!existsSync(filePath)) {
+    throw new NotFound(`File ${fileName} not found`);
+  }
+
+  await unlink(filePath);
+}
+
 async function ensureUploadDirectory(): Promise<void> {
   if (!existsSync(UPLOAD_DIR)) {
     await mkdir(UPLOAD_DIR, { recursive: true });
@@ -71,5 +133,21 @@ export function getFileUrl(fileName: string): string {
 
 export function isValidMimeType(mimeType: string): boolean {
   return ALLOWED_MIME_TYPES.includes(mimeType as any);
+}
+
+export function checkFileExists(fileName: string): boolean {
+  if (!fileName || fileName.trim() === "") return false;
+  
+  const sanitizedFileName = path.basename(fileName);
+  const filePath = path.join(UPLOAD_DIR, sanitizedFileName);
+  
+  return existsSync(filePath);
+}
+
+export function checkFilesExist(fileNames: string[]): { fileName: string; exists: boolean }[] {
+  return fileNames.map(fileName => ({
+    fileName,
+    exists: checkFileExists(fileName)
+  }));
 } 
 //endregion

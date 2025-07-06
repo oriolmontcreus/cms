@@ -7,9 +7,11 @@
     import TrashIcon from '@lucide/svelte/icons/trash';
     import UploadIcon from '@lucide/svelte/icons/upload';
     import FileIcon from '@lucide/svelte/icons/file';
+    import AlertTriangleIcon from '@lucide/svelte/icons/alert-triangle';
     import type { UploadedFile } from '@shared/types/file.type';
-    import { getContext } from 'svelte';
+    import { getContext, onMount } from 'svelte';
     import type { Writable } from 'svelte/store';
+    import { checkFilesExist } from '@/services/file.service';
 
     export let field: FormField;
     export let fieldId: string;
@@ -22,6 +24,8 @@
     let existingFiles: UploadedFile[] = [];
     let newFiles: File[] = [];
     let filesToDelete: string[] = []; // IDs of existing files to delete
+    let fileExistenceMap: Record<string, boolean> = {}; // Track which files exist
+    let isCheckingFiles = false;
 
     // Initialize from existing value on mount
     let initialValue = value;
@@ -46,6 +50,35 @@
             existingFiles = initialValue.filter(file => file.id);
         } else if (initialValue && initialValue.id) {
             existingFiles = [initialValue];
+        }
+    }
+
+    // Check file existence when existing files change
+    $: if (existingFiles.length > 0) {
+        checkFileExistence();
+    }
+
+    async function checkFileExistence() {
+        if (isCheckingFiles || existingFiles.length === 0) return;
+        
+        isCheckingFiles = true;
+        try {
+            const fileNames = existingFiles.map(file => file.fileName);
+            const results = await checkFilesExist(fileNames);
+            
+            fileExistenceMap = results.reduce((acc, result) => {
+                acc[result.fileName] = result.exists;
+                return acc;
+            }, {} as Record<string, boolean>);
+        } catch (error) {
+            console.error('Error checking file existence:', error);
+            // If check fails, assume files don't exist to prevent errors
+            fileExistenceMap = existingFiles.reduce((acc, file) => {
+                acc[file.fileName] = false;
+                return acc;
+            }, {} as Record<string, boolean>);
+        } finally {
+            isCheckingFiles = false;
         }
     }
 
@@ -164,6 +197,14 @@
     function openFileDialog() {
         fileInput?.click();
     }
+
+    function getFileStatus(file: UploadedFile): 'exists' | 'missing' | 'checking' {
+        if (isCheckingFiles) return 'checking';
+        if (file.fileName in fileExistenceMap) {
+            return fileExistenceMap[file.fileName] ? 'exists' : 'missing';
+        }
+        return 'checking';
+    }
 </script>
 
 <div class="space-y-4">
@@ -221,15 +262,28 @@
             <div class="space-y-2">
                 <!-- Existing files -->
                 {#each existingFiles as fileData}
-                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    {@const status = getFileStatus(fileData)}
+                    <div class={cn(
+                        "flex items-center justify-between p-3 rounded-lg",
+                        status === 'missing' ? "bg-red-50 border border-red-200" : "bg-muted"
+                    )}>
                         <div class="flex items-center space-x-3">
-                            <FileIcon class="h-4 w-4 text-muted-foreground" />
+                            {#if status === 'missing'}
+                                <AlertTriangleIcon class="h-4 w-4 text-red-500" />
+                            {:else}
+                                <FileIcon class="h-4 w-4 text-muted-foreground" />
+                            {/if}
                             <div>
                                 <p class="text-sm font-medium">{fileData.originalName}</p>
                                 <p class="text-xs text-muted-foreground">
                                     {formatFileSize(fileData.size)}
                                     {#if fileData.id}
                                         • ID: {fileData.id.substring(0, 8)}...
+                                    {/if}
+                                    {#if status === 'missing'}
+                                        • <span class="text-red-600">File not found</span>
+                                    {:else if status === 'checking'}
+                                        • <span class="text-blue-600">Checking...</span>
                                     {/if}
                                 </p>
                             </div>
@@ -239,7 +293,7 @@
                             size="sm"
                             onclick={() => removeExistingFile(fileData.id)}
                             disabled={field.disabled}
-                            title="Delete file"
+                            title={status === 'missing' ? 'Remove missing file' : 'Delete file'}
                         >
                             <TrashIcon class="h-4 w-4" />
                         </Button>

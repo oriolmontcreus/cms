@@ -22,13 +22,20 @@
         '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF'
     ];
 
-    const isValidColor = $derived(value && HEX_REGEX.test(value));
+    const isValidColor = $derived(value && typeof value === 'string' && HEX_REGEX.test(value));
     const isDisabled = $derived(field.disabled || field.readonly);
-    const displayValue = $derived(value || '');
-    const shouldShowValidation = $derived(value && !isValidColor);
+    const displayValue = $derived(typeof value === 'string' ? value : '');
+    const shouldShowValidation = $derived(value && typeof value === 'string' && !isValidColor);
 
     $effect(() => {
-        if (value && !value.startsWith('#')) value = '#' + value;
+        // Reset non-string values to prevent CSS errors
+        if (value && typeof value !== 'string') {
+            console.warn('ColorPicker received non-string value:', value, 'Resetting to empty string');
+            value = '';
+            return;
+        }
+        
+        if (value && typeof value === 'string' && !value.startsWith('#')) value = '#' + value;
     });
 
     function normalizeHexValue(inputValue: string): string {
@@ -48,6 +55,9 @@
             value = normalizedValue;
         }
     }
+
+    // Safe color value for CSS - only use if it's a valid color string
+    const safeColorValue = $derived(isValidColor && typeof value === 'string' ? value : null);
 </script>
 
 <div class="space-y-2">
@@ -72,7 +82,7 @@
                     "absolute right-2 top-1/2 -translate-y-1/2 w-8 h-6 rounded border border-border",
                     !isValidColor && "bg-muted"
                 )}
-                style={isValidColor ? `background-color: ${value}` : ''}
+                style={safeColorValue ? `background-color: ${safeColorValue}` : ''}
             >
                 {#if !isValidColor}
                     <div class="w-full h-full flex items-center justify-center">
@@ -105,7 +115,7 @@
                                 class={cn(
                                     "w-8 h-8 rounded border-2 transition-all cursor-pointer",
                                     isDisabled ? "opacity-50 cursor-not-allowed" : "hover:scale-110",
-                                    value === color ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
+                                    safeColorValue === color ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50"
                                 )}
                                 style="background-color: {color}"
                                 onclick={() => handleColorSelect(color)}
@@ -125,7 +135,7 @@
                         <input
                             id="{fieldId}-advanced"
                             type="color"
-                            value={isValidColor ? value : '#000000'}
+                            value={safeColorValue || '#000000'}
                             onchange={(e) => {
                                 const colorInput = e.target as HTMLInputElement;
                                 if (colorInput) handleColorSelect(colorInput.value);
