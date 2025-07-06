@@ -8,13 +8,8 @@ import PayloadTooLarge from "@/errors/PayloadTooLarge.js";
 import { UploadedFile } from "@shared/types/file.type.js";
 
 export async function uploadFiles(files: File[]): Promise<void> {
-  if (!files || files.length === 0) {
-    throw new BadRequest("No files provided");
-  }
-
-  if (files.length > MAX_FILES_PER_REQUEST) {
-    throw new BadRequest(`Maximum ${MAX_FILES_PER_REQUEST} files allowed per request`);
-  }
+  if (!files || files.length === 0) throw new BadRequest("No files provided");
+  if (files.length > MAX_FILES_PER_REQUEST) throw new BadRequest(`Maximum ${MAX_FILES_PER_REQUEST} files allowed per request`);
 
   const uploadedFiles: UploadedFile[] = [];
 
@@ -22,12 +17,12 @@ export async function uploadFiles(files: File[]): Promise<void> {
 
   for (const file of files) {
     await validateFile(file);
-    
     const uploadedFile = await processFile(file);
     uploadedFiles.push(uploadedFile);
   }
 }
 
+//region Helper functions
 async function validateFile(file: File): Promise<void> {
   if (!file.name || file.name.trim() === "") {
     throw new BadRequest("File name is required");
@@ -75,3 +70,4 @@ export function getFileUrl(fileName: string): string {
 export function isValidMimeType(mimeType: string): boolean {
   return ALLOWED_MIME_TYPES.includes(mimeType as any);
 } 
+//endregion
