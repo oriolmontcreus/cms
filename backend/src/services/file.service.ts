@@ -5,9 +5,9 @@ import { randomUUID } from "crypto";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE, MAX_FILES_PER_REQUEST, UPLOAD_DIR } from "@/constants/file.js";
 import BadRequest from "@/errors/BadRequest.js";
 import PayloadTooLarge from "@/errors/PayloadTooLarge.js";
-import { FileUploadResult, UploadedFile } from "@shared/types/file.type.js";
+import { UploadedFile } from "@shared/types/file.type.js";
 
-export async function uploadFiles(files: File[]): Promise<FileUploadResult> {
+export async function uploadFiles(files: File[]): Promise<void> {
   if (!files || files.length === 0) {
     throw new BadRequest("No files provided");
   }
@@ -17,23 +17,15 @@ export async function uploadFiles(files: File[]): Promise<FileUploadResult> {
   }
 
   const uploadedFiles: UploadedFile[] = [];
-  let totalSize = 0;
 
   await ensureUploadDirectory();
 
   for (const file of files) {
     await validateFile(file);
-    totalSize += file.size;
     
     const uploadedFile = await processFile(file);
     uploadedFiles.push(uploadedFile);
   }
-
-  return {
-    files: uploadedFiles,
-    totalFiles: uploadedFiles.length,
-    totalSize
-  };
 }
 
 async function validateFile(file: File): Promise<void> {
