@@ -16,9 +16,4 @@ router.delete(
     withAuth(fileController.delete.bind(fileController))
 );
 
-router.post(
-  "/check-exists",
-    withAuth(fileController.checkExists.bind(fileController))
-);
-
 export { router as fileRouter }; 

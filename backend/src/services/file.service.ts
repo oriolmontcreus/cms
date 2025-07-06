@@ -134,20 +134,4 @@ export function getFileUrl(fileName: string): string {
 export function isValidMimeType(mimeType: string): boolean {
   return ALLOWED_MIME_TYPES.includes(mimeType as any);
 }
-
-export function checkFileExists(fileName: string): boolean {
-  if (!fileName || fileName.trim() === "") return false;
-  
-  const sanitizedFileName = path.basename(fileName);
-  const filePath = path.join(UPLOAD_DIR, sanitizedFileName);
-  
-  return existsSync(filePath);
-}
-
-export function checkFilesExist(fileNames: string[]): { fileName: string; exists: boolean }[] {
-  return fileNames.map(fileName => ({
-    fileName,
-    exists: checkFileExists(fileName)
-  }));
-} 
 //endregion

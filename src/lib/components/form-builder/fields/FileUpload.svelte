@@ -11,7 +11,6 @@
     import type { UploadedFile } from '@shared/types/file.type';
     import { getContext, onMount } from 'svelte';
     import type { Writable } from 'svelte/store';
-    import { checkFilesExist } from '@/services/file.service';
 
     export let field: FormField;
     export let fieldId: string;
@@ -53,36 +52,6 @@
         }
     }
 
-    // Check file existence when existing files change
-    $: if (existingFiles.length > 0) {
-        checkFileExistence();
-    }
-
-    async function checkFileExistence() {
-        if (isCheckingFiles || existingFiles.length === 0) return;
-        
-        isCheckingFiles = true;
-        try {
-            const fileNames = existingFiles.map(file => file.fileName);
-            const results = await checkFilesExist(fileNames);
-            
-            fileExistenceMap = results.reduce((acc, result) => {
-                acc[result.fileName] = result.exists;
-                return acc;
-            }, {} as Record<string, boolean>);
-        } catch (error) {
-            console.error('Error checking file existence:', error);
-            // If check fails, assume files don't exist to prevent errors
-            fileExistenceMap = existingFiles.reduce((acc, file) => {
-                acc[file.fileName] = false;
-                return acc;
-            }, {} as Record<string, boolean>);
-        } finally {
-            isCheckingFiles = false;
-        }
-    }
-
-    // Update the value based on current state
     $: {
         const allFiles = [...existingFiles, ...newFiles.map(file => ({
             id: '', // Will be set after upload

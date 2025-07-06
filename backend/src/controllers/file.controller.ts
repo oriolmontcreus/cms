@@ -54,18 +54,4 @@ export class FileController {
         : `Successfully deleted ${result.deletedFiles.length} file(s)`
     }, statusCode);
   }
-
-  async checkExists(c: Context) {
-    const body = await c.req.json();
-    const { fileNames } = body;
-    
-    if (!fileNames || !Array.isArray(fileNames)) throw new BadRequest("fileNames array is required");
-
-    const result = fileService.checkFilesExist(fileNames);
-    
-    return c.json({
-      success: true,
-      data: result
-    }, 200);
-  }
 } 
