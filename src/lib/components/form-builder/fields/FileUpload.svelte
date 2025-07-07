@@ -28,6 +28,7 @@
 
     // Initialize from existing value on mount
     let initialValue = value;
+    let hasInitialized = false;
     
     // Get the file upload state from context
     const fileUploadState = getContext<Writable<Record<string, { pendingFiles: File[]; filesToDelete: string[] }>>>('fileUploadState');
@@ -43,13 +44,14 @@
         }));
     }
     
-    // Initialize existing files from the initial value
-    $: if (initialValue && existingFiles.length === 0 && newFiles.length === 0) {
+    // Initialize existing files from the initial value (only once)
+    $: if (initialValue && !hasInitialized && existingFiles.length === 0 && newFiles.length === 0) {
         if (Array.isArray(initialValue)) {
             existingFiles = initialValue.filter(file => file.id);
         } else if (initialValue && initialValue.id) {
             existingFiles = [initialValue];
         }
+        hasInitialized = true;
     }
 
     $: {
@@ -145,13 +147,11 @@
     }
 
     function removeExistingFile(fileId: string) {
-        console.log('removeExistingFile', fileId);
-        filesToDelete = [...filesToDelete, fileId];
+        if (!filesToDelete.includes(fileId)) filesToDelete = [...filesToDelete, fileId];
         existingFiles = existingFiles.filter(f => f.id !== fileId);
     }
 
     function removeNewFile(index: number) {
-        // Remove new file from local state
         newFiles = newFiles.filter((_, i) => i !== index);
     }
 
