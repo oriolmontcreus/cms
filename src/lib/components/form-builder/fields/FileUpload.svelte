@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { FormField } from '../types';
-    import { Input } from '@components/ui/input';
     import { Button } from '@components/ui/button';
+    import ConfirmPopover from '@components/ConfirmPopover.svelte';
     import { cn } from '$lib/utils';
     import XIcon from '@lucide/svelte/icons/x';
     import TrashIcon from '@lucide/svelte/icons/trash';
@@ -257,15 +257,24 @@
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onclick={() => removeExistingFile(fileData.id)}
+                        <ConfirmPopover
+                            title="Confirm file deletion"
+                            description="Are you sure you want to delete this file? This action cannot be undone."
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            variant="destructive"
+                            onConfirm={() => removeExistingFile(fileData.id)}
                             disabled={field.disabled}
-                            title={status === 'missing' ? 'Remove missing file' : 'Delete file'}
                         >
-                            <TrashIcon class="h-4 w-4" />
-                        </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={field.disabled}
+                                title={status === 'missing' ? 'Remove missing file' : 'Delete file'}
+                            >
+                                <TrashIcon class="h-4 w-4" />
+                            </Button>
+                        </ConfirmPopover>
                     </div>
                 {/each}
 
