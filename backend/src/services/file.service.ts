@@ -38,8 +38,12 @@ export async function deleteFiles(fileIdentifiers: string[]): Promise<{ deletedF
       await deleteFile(fileName);
       deletedFiles.push(identifier);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${identifier}`;
-      errors.push(errorMessage);
+      if (error instanceof NotFound) {
+        deletedFiles.push(identifier);
+      } else {
+        const errorMessage = error instanceof Error ? error.message : `Failed to delete ${identifier}`;
+        errors.push(errorMessage);
+      }
     }
   }
 
