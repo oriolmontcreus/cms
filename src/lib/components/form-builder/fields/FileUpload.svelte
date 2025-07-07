@@ -6,10 +6,10 @@
     import XIcon from '@lucide/svelte/icons/x';
     import TrashIcon from '@lucide/svelte/icons/trash';
     import UploadIcon from '@lucide/svelte/icons/upload';
-    import FileIcon from '@lucide/svelte/icons/file';
     import AlertTriangleIcon from '@lucide/svelte/icons/alert-triangle';
     import type { UploadedFile } from '@shared/types/file.type';
     import { getContext, onMount } from 'svelte';
+    import FileIcon from './FileIcon.svelte';
     import type { Writable } from 'svelte/store';
 
     export let field: FormField;
@@ -22,8 +22,7 @@
     let existingFiles: UploadedFile[] = [];
     let newFiles: File[] = [];
     let filesToDelete: string[] = [];
-    let fileExistenceMap: Record<string, boolean> = {};
-    let isCheckingFiles = false;
+
 
     const fileUploadState = getContext<Writable<Record<string, { pendingFiles: File[]; filesToDelete: string[] }>>>('fileUploadState');
     
@@ -127,13 +126,7 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const getFileStatus = (file: UploadedFile): 'exists' | 'missing' | 'checking' => {
-        if (isCheckingFiles) return 'checking';
-        if (file.fileName in fileExistenceMap) {
-            return fileExistenceMap[file.fileName] ? 'exists' : 'missing';
-        }
-        return 'checking';
-    };
+
 </script>
 
 <div class="space-y-4">
@@ -187,29 +180,18 @@
             </h4>
             <div class="space-y-2">
                 {#each existingFiles as fileData}
-                    {@const status = getFileStatus(fileData)}
-                    <div class={cn(
-                        "flex items-center justify-between p-3 rounded-lg",
-                        status === 'missing' ? "bg-red-50 border border-red-200" : "bg-muted"
-                    )}>
+                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div class="flex items-center space-x-3">
-                            {#if status === 'missing'}
-                                <AlertTriangleIcon class="h-4 w-4 text-red-500" />
-                            {:else}
-                                <FileIcon class="h-4 w-4 text-muted-foreground" />
-                            {/if}
+                            <FileIcon 
+                                mimeType={fileData.mimeType} 
+                                fileName={fileData.originalName} 
+                                size={32} 
+                                class="text-muted-foreground" 
+                            />
                             <div>
                                 <p class="text-sm font-medium">{fileData.originalName}</p>
                                 <p class="text-xs text-muted-foreground">
                                     {formatFileSize(fileData.size)}
-                                    {#if fileData.id}
-                                        • ID: {fileData.id.substring(0, 8)}...
-                                    {/if}
-                                    {#if status === 'missing'}
-                                        • <span class="text-red-600">File not found</span>
-                                    {:else if status === 'checking'}
-                                        • <span class="text-blue-600">Checking...</span>
-                                    {/if}
                                 </p>
                             </div>
                         </div>
@@ -226,7 +208,7 @@
                                 variant="ghost"
                                 size="sm"
                                 disabled={field.disabled}
-                                title={status === 'missing' ? 'Remove missing file' : 'Delete file'}
+                                title="Delete file"
                             >
                                 <TrashIcon class="h-4 w-4" />
                             </Button>
@@ -235,13 +217,18 @@
                 {/each}
 
                 {#each newFiles as file, index}
-                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg border-l-4 border-l-blue-500">
+                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div class="flex items-center space-x-3">
-                            <FileIcon class="h-4 w-4 text-blue-600" />
+                            <FileIcon 
+                                mimeType={file.type} 
+                                fileName={file.name} 
+                                size={32} 
+                                class="text-muted-foreground" 
+                            />
                             <div>
                                 <p class="text-sm font-medium">{file.name}</p>
                                 <p class="text-xs text-muted-foreground">
-                                    {formatFileSize(file.size)} • <span class="text-blue-600">New file</span>
+                                    {formatFileSize(file.size)}
                                 </p>
                             </div>
                         </div>
