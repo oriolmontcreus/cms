@@ -17,6 +17,7 @@
         TooltipProvider,
         TooltipTrigger
     } from '@components/ui/tooltip';
+    import { getFileUrl } from '@/services/file.service';
 
     export let field: FormField;
     export let fieldId: string;
@@ -224,14 +225,16 @@
                             <div class="flex items-center space-x-3">
                                 {#if isImage(fileData.mimeType)}
                                     <img 
-                                        src={fileData.path} 
+                                        src={getFileUrl(fileData)}
+                                        loading="lazy"
+                                        draggable={false}
                                         alt={fileData.originalName}
-                                        class="h-32 w-32 object-cover rounded"
+                                        class="h-32 w-32 object-cover rounded select-none"
                                     />
                                 {:else if isVideo(fileData.mimeType)}
                                     <video 
-                                        src={fileData.path}
-                                        class="h-32 w-32 object-cover rounded"
+                                        src={getFileUrl(fileData)}
+                                        class="h-32 w-32 object-cover rounded select-none"
                                         controls
                                     >
                                         <track kind="captions">

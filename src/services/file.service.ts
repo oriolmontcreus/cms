@@ -5,6 +5,23 @@ import type { UploadedFile } from "@shared/types/file.type";
 
 const root = "/files";
 
+// Update utility function to get file URL
+export function getFileUrl(file: UploadedFile): string {
+    // If the file path is already a full URL, return it
+    if (file.path.startsWith('http://') || file.path.startsWith('https://')) {
+        return file.path;
+    }
+    
+    // Extract just the filename from the path
+    const filename = file.path.split('/').pop() || file.fileName;
+    
+    // Get the base URL without the /api prefix
+    const baseUrl = api.defaults.baseURL?.replace('/api', '') || '';
+    
+    // Construct the URL to the uploads directory
+    return `${baseUrl}/${filename}`;
+}
+
 export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {
     const formData = new FormData();
     
