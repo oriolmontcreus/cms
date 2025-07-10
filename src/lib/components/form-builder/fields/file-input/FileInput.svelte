@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { FormField } from '../types';
+    import type { FormField } from '../../types';
     import { Button } from '@components/ui/button';
     import ConfirmPopover from '@components/ConfirmPopover.svelte';
     import { cn } from '$lib/utils';
@@ -8,7 +8,7 @@
     import UploadIcon from '@lucide/svelte/icons/upload';
     import type { UploadedFile } from '@shared/types/file.type';
     import { getContext, onMount } from 'svelte';
-    import FileIcon from './FileIcon.svelte';
+    import FileIcon from '../FileIcon.svelte';
     import VideoPreview from './VideoPreview.svelte';
     import type { Writable } from 'svelte/store';
     import {
@@ -169,8 +169,6 @@
             timeStyle: 'short'
         }).format(date);
     };
-
-
 </script>
 
 <TooltipProvider>
@@ -249,10 +247,10 @@
                                         class="text-muted-foreground" 
                                     />
                                 {/if}
-                                <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 to enable truncation -->
+                                <div class="min-w-0 flex-1">
                                     <Tooltip>
-                                        <TooltipTrigger class="block w-full text-left"> <!-- Changed to block and w-full -->
-                                            <p class="text-sm font-medium truncate"> <!-- Removed hardcoded max-width -->
+                                        <TooltipTrigger class="block w-full text-left">
+                                            <p class="text-sm font-medium truncate">
                                                 {fileData.originalName}
                                             </p>
                                         </TooltipTrigger>
@@ -325,10 +323,10 @@
                                         class="text-muted-foreground" 
                                     />
                                 {/if}
-                                <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 to enable truncation -->
+                                <div class="min-w-0 flex-1">
                                     <Tooltip>
-                                        <TooltipTrigger class="block w-full text-left"> <!-- Changed to block and w-full -->
-                                            <p class="text-sm font-medium truncate"> <!-- Removed hardcoded max-width -->
+                                        <TooltipTrigger class="block w-full text-left">
+                                            <p class="text-sm font-medium truncate">
                                                 {file.name}
                                             </p>
                                         </TooltipTrigger>

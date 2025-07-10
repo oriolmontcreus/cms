@@ -11,7 +11,7 @@
     import ToggleInput from './fields/ToggleInput.svelte';
     import ColorInput from './fields/ColorPicker.svelte';
     import RichEditorInput from './fields/RichEditor.svelte';
-    import FileUploadInput from './fields/FileUpload.svelte';
+    import FileInput from './fields/file-input/FileInput.svelte';
 
     export let field: FormField;
     export let fieldId: string;
@@ -29,7 +29,7 @@
         toggle: ToggleInput,
         color: ColorInput,
         richtext: RichEditorInput,
-        file: FileUploadInput
+        file: FileInput
     };
 
     $: FieldComponent = fieldComponents[field.type] || TextInput;

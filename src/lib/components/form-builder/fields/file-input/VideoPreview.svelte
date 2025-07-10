@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogTrigger, DialogClose } from '$lib/components/ui/dialog';
-    import { buttonVariants } from '$lib/components/ui/button';
+    import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '$lib/components/ui/dialog';
     import IconEye from '@tabler/icons-svelte/icons/eye';
 
     export let src: string;

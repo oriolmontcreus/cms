@@ -2,7 +2,7 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import PaletteIcon from '@lucide/svelte/icons/palette';
 import TypeIcon from '@lucide/svelte/icons/type';
 import WrenchIcon from '@lucide/svelte/icons/wrench';
-import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileUpload } from '@/lib/components/form-builder/fields';
+import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileInput } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 
 export const HeroComponent: Component = {
@@ -35,7 +35,7 @@ export const HeroComponent: Component = {
                                 .placeholder('Enter a subtitle')
                                 .helperText('Appears below the main title'),
 
-                            FileUpload('image')
+                            FileInput('image')
                                 .label('Image')
                                 .helperText('Upload an image for the hero section')
                                 .allowedMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
