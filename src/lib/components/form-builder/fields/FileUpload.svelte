@@ -249,8 +249,8 @@
                                 {/if}
                                 <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 to enable truncation -->
                                     <Tooltip>
-                                        <TooltipTrigger class="w-full text-left"> <!-- Added w-full and text-left -->
-                                            <p class="text-sm font-medium truncate max-w-[180px]"> <!-- Adjusted max-width -->
+                                        <TooltipTrigger class="block w-full text-left"> <!-- Changed to block and w-full -->
+                                            <p class="text-sm font-medium truncate"> <!-- Removed hardcoded max-width -->
                                                 {fileData.originalName}
                                             </p>
                                         </TooltipTrigger>
@@ -327,8 +327,8 @@
                                 {/if}
                                 <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 to enable truncation -->
                                     <Tooltip>
-                                        <TooltipTrigger class="w-full text-left"> <!-- Added w-full and text-left -->
-                                            <p class="text-sm font-medium truncate max-w-[180px]"> <!-- Adjusted max-width -->
+                                        <TooltipTrigger class="block w-full text-left"> <!-- Changed to block and w-full -->
+                                            <p class="text-sm font-medium truncate"> <!-- Removed hardcoded max-width -->
                                                 {file.name}
                                             </p>
                                         </TooltipTrigger>
