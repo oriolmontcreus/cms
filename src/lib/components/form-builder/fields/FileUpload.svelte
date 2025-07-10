@@ -96,6 +96,7 @@
         if (field.maxFileSize && file.size > field.maxFileSize) {
             const maxSizeMB = (field.maxFileSize / (1024 * 1024)).toFixed(1);
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            errorToast(`File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`);
             return `File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`;
         }
 

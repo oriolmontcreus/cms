@@ -39,7 +39,7 @@ export const HeroComponent: Component = {
                                 .label('Image')
                                 .helperText('Upload an image for the hero section')
                                 .allowedMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-                                .maxFileSize(10 * 1024 * 1024)
+                                .maxFileSize(1 * 1024 * 1024)
                         )
                     ]),
 
