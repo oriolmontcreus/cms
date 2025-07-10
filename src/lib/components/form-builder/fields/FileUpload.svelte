@@ -6,7 +6,6 @@
     import XIcon from '@lucide/svelte/icons/x';
     import TrashIcon from '@lucide/svelte/icons/trash';
     import UploadIcon from '@lucide/svelte/icons/upload';
-    import AlertTriangleIcon from '@lucide/svelte/icons/alert-triangle';
     import type { UploadedFile } from '@shared/types/file.type';
     import { getContext, onMount } from 'svelte';
     import FileIcon from './FileIcon.svelte';
@@ -19,7 +18,7 @@
         TooltipTrigger
     } from '@components/ui/tooltip';
     import { getFileUrl } from '@/services/file.service';
-
+    import { errorToast } from '@/services/toast.service';
     export let field: FormField;
     export let fieldId: string;
     export let value: UploadedFile[] | UploadedFile | null = null;
@@ -90,6 +89,7 @@
 
     const validateFile = (file: File): string | null => {
         if (field.allowedMimeTypes?.length && !field.allowedMimeTypes.includes(file.type)) {
+            errorToast(`File type "${file.type}" is not allowed`);
             return `File type "${file.type}" is not allowed. Allowed types: ${field.allowedMimeTypes.join(', ')}`;
         }
 
