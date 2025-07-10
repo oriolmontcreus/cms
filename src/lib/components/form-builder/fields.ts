@@ -151,8 +151,14 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
-    maxFileSize(size: number): this {
-        this.field.maxFileSize = size;
+    maxFileSize(size: number, unit: 'b' | 'kb' | 'mb' | 'gb' = 'mb'): this {
+        const multipliers: Record<'b' | 'kb' | 'mb' | 'gb', number> = {
+            'b': 1,
+            'kb': 1024,
+            'mb': 1024 * 1024,
+            'gb': 1024 * 1024 * 1024
+        };
+        this.field.maxFileSize = size * multipliers[unit];
         return this;
     }
 
