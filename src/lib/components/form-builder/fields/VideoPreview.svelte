@@ -40,14 +40,17 @@
                 <img 
                     src={thumbnailUrl} 
                     alt={title} 
-                    class={thumbnailClass}
+                    loading="lazy"
+                    draggable={false}
+                    class={`${thumbnailClass} select-none`}
                 />
             {:else}
                 <video 
                     bind:this={videoElement}
                     src={src}
-                    class={thumbnailClass}
+                    class={`${thumbnailClass} select-none`}
                     preload="metadata"
+                    draggable={false}
                     crossorigin="anonymous"
                     on:loadeddata={handleVideoLoad}
                 >
@@ -56,7 +59,7 @@
             {/if}
             
             <!-- Hover overlay with eye icon -->
-            <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+            <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                 <IconEye class="h-8 w-8 text-white" />
             </div>
         </button>
