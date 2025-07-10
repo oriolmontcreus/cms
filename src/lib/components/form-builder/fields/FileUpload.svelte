@@ -11,6 +11,12 @@
     import { getContext, onMount } from 'svelte';
     import FileIcon from './FileIcon.svelte';
     import type { Writable } from 'svelte/store';
+    import {
+        Tooltip,
+        TooltipContent,
+        TooltipProvider,
+        TooltipTrigger
+    } from '@components/ui/tooltip';
 
     export let field: FormField;
     export let fieldId: string;
@@ -23,6 +29,27 @@
     let newFiles: File[] = [];
     let filesToDelete: string[] = [];
 
+    const isImage = (mimeType: string) => mimeType.startsWith('image/');
+    const isVideo = (mimeType: string) => mimeType.startsWith('video/');
+
+    const getPreviewUrl = (file: File) => URL.createObjectURL(file);
+    let previewUrls: Record<string, string> = {};
+
+    onMount(() => {
+        return () => {
+            // Cleanup object URLs on component destroy
+            Object.values(previewUrls).forEach(URL.revokeObjectURL);
+        };
+    });
+
+    // Create preview URLs for new files
+    $: {
+        newFiles.forEach(file => {
+            if ((isImage(file.type) || isVideo(file.type)) && !previewUrls[file.name]) {
+                previewUrls[file.name] = getPreviewUrl(file);
+            }
+        });
+    }
 
     const fileUploadState = getContext<Writable<Record<string, { pendingFiles: File[]; filesToDelete: string[] }>>>('fileUploadState');
     
@@ -126,124 +153,220 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
+    const getFileExtension = (filename: string) => {
+        const parts = filename.split('.');
+        return parts.length > 1 ? parts.pop()?.toUpperCase() : 'UNKNOWN';
+    };
+
+    const formatDate = (date: Date) => {
+        return new Intl.DateTimeFormat('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        }).format(date);
+    };
+
 
 </script>
 
-<div class="space-y-4">
-    <input
-        bind:this={fileInput}
-        type="file"
-        class="hidden"
-        multiple={field.multiple}
-        accept={field.allowedMimeTypes?.join(',')}
-        on:change={handleFileSelect}
-        disabled={field.disabled}
-        required={field.required}
-    />
+<TooltipProvider>
+    <div class="space-y-4">
+        <input
+            bind:this={fileInput}
+            type="file"
+            class="hidden"
+            multiple={field.multiple}
+            accept={field.allowedMimeTypes?.join(',')}
+            on:change={handleFileSelect}
+            disabled={field.disabled}
+            required={field.required}
+        />
 
-    <div
-        class={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
-            isDragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25",
-            field.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
-        )}
-        on:drop={handleDrop}
-        on:dragover={handleDragOver}
-        on:dragleave={() => isDragOver = false}
-        on:click={() => fileInput?.click()}
-        role="button"
-        tabindex="0"
-        on:keydown={(e) => e.key === 'Enter' && fileInput?.click()}
-    >
-        <UploadIcon class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <div class="space-y-2">
-            <p class="text-sm font-medium">
-                {field.multiple ? 'Drop files here or click to browse' : 'Drop a file here or click to browse'}
-            </p>
-            {#if field.allowedMimeTypes?.length}
-                <p class="text-xs text-muted-foreground">
-                    Allowed types: {field.allowedMimeTypes.join(', ')}
-                </p>
-            {/if}
-            {#if field.maxFileSize}
-                <p class="text-xs text-muted-foreground">
-                    Maximum file size: {formatFileSize(field.maxFileSize)}
-                </p>
-            {/if}
-        </div>
-    </div>
-
-    {#if existingFiles.length > 0 || newFiles.length > 0}
-        <div class="space-y-2">
-            <h4 class="text-sm font-medium">
-                {field.multiple ? 'Files' : 'File'}
-            </h4>
+        <div
+            class={cn(
+                "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+                isDragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25",
+                field.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
+            )}
+            on:drop={handleDrop}
+            on:dragover={handleDragOver}
+            on:dragleave={() => isDragOver = false}
+            on:click={() => fileInput?.click()}
+            role="button"
+            tabindex="0"
+            on:keydown={(e) => e.key === 'Enter' && fileInput?.click()}
+        >
+            <UploadIcon class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <div class="space-y-2">
-                {#each existingFiles as fileData}
-                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            <FileIcon 
-                                mimeType={fileData.mimeType} 
-                                fileName={fileData.originalName} 
-                                size={32} 
-                                class="text-muted-foreground" 
-                            />
-                            <div>
-                                <p class="text-sm font-medium">{fileData.originalName}</p>
-                                <p class="text-xs text-muted-foreground">
-                                    {formatFileSize(fileData.size)}
-                                </p>
+                <p class="text-sm font-medium">
+                    {field.multiple ? 'Drop files here or click to browse' : 'Drop a file here or click to browse'}
+                </p>
+                {#if field.allowedMimeTypes?.length}
+                    <p class="text-xs text-muted-foreground">
+                        Allowed types: {field.allowedMimeTypes.join(', ')}
+                    </p>
+                {/if}
+                {#if field.maxFileSize}
+                    <p class="text-xs text-muted-foreground">
+                        Maximum file size: {formatFileSize(field.maxFileSize)}
+                    </p>
+                {/if}
+            </div>
+        </div>
+
+        {#if existingFiles.length > 0 || newFiles.length > 0}
+            <div class="space-y-2">
+                <h4 class="text-sm font-medium">
+                    {field.multiple ? 'Files' : 'File'}
+                </h4>
+                <div class="space-y-2">
+                    {#each existingFiles as fileData}
+                        <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                {#if isImage(fileData.mimeType)}
+                                    <img 
+                                        src={fileData.path} 
+                                        alt={fileData.originalName}
+                                        class="h-32 w-32 object-cover rounded"
+                                    />
+                                {:else if isVideo(fileData.mimeType)}
+                                    <video 
+                                        src={fileData.path}
+                                        class="h-32 w-32 object-cover rounded"
+                                        controls
+                                    >
+                                        <track kind="captions">
+                                    </video>
+                                {:else}
+                                    <FileIcon 
+                                        mimeType={fileData.mimeType} 
+                                        fileName={fileData.originalName} 
+                                        size={32} 
+                                        class="text-muted-foreground" 
+                                    />
+                                {/if}
+                                <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 to enable truncation -->
+                                    <Tooltip>
+                                        <TooltipTrigger class="w-full text-left"> <!-- Added w-full and text-left -->
+                                            <p class="text-sm font-medium truncate max-w-[180px]"> <!-- Adjusted max-width -->
+                                                {fileData.originalName}
+                                            </p>
+                                        </TooltipTrigger>
+                                        <TooltipContent class="space-y-2 w-[280px] p-3">
+                                            <div class="text-[13px] font-medium break-all">
+                                                {fileData.originalName}
+                                            </div>
+                                            <div class="space-y-1 text-xs text-muted-foreground">
+                                                <div class="flex justify-between">
+                                                    <span>Type</span>
+                                                    <span>{getFileExtension(fileData.originalName)}</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span>Size</span>
+                                                    <span>{formatFileSize(fileData.size)}</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span>Uploaded</span>
+                                                    <span>{formatDate(new Date(fileData.uploadedAt))}</span>
+                                                </div>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <p class="text-xs text-muted-foreground">
+                                        {formatFileSize(fileData.size)}
+                                    </p>
+                                </div>
                             </div>
+                            <ConfirmPopover
+                                title="Confirm file deletion"
+                                description="Are you sure you want to delete this file? This action cannot be undone."
+                                confirmText="Delete"
+                                cancelText="Cancel"
+                                variant="destructive"
+                                onConfirm={() => removeExistingFile(fileData.id)}
+                                disabled={field.disabled}
+                            >
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={field.disabled}
+                                    title="Delete file"
+                                >
+                                    <TrashIcon class="h-4 w-4" />
+                                </Button>
+                            </ConfirmPopover>
                         </div>
-                        <ConfirmPopover
-                            title="Confirm file deletion"
-                            description="Are you sure you want to delete this file? This action cannot be undone."
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            variant="destructive"
-                            onConfirm={() => removeExistingFile(fileData.id)}
-                            disabled={field.disabled}
-                        >
+                    {/each}
+
+                    {#each newFiles as file, index}
+                        <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                {#if isImage(file.type)}
+                                    <img 
+                                        src={previewUrls[file.name]} 
+                                        alt={file.name}
+                                        class="h-32 w-32 object-cover rounded"
+                                    />
+                                {:else if isVideo(file.type)}
+                                    <video 
+                                        src={previewUrls[file.name]}
+                                        class="h-32 w-32 object-cover rounded"
+                                        controls
+                                    >
+                                        <track kind="captions">
+                                    </video>
+                                {:else}
+                                    <FileIcon 
+                                        mimeType={file.type} 
+                                        fileName={file.name} 
+                                        size={32} 
+                                        class="text-muted-foreground" 
+                                    />
+                                {/if}
+                                <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 to enable truncation -->
+                                    <Tooltip>
+                                        <TooltipTrigger class="w-full text-left"> <!-- Added w-full and text-left -->
+                                            <p class="text-sm font-medium truncate max-w-[180px]"> <!-- Adjusted max-width -->
+                                                {file.name}
+                                            </p>
+                                        </TooltipTrigger>
+                                        <TooltipContent class="space-y-2 w-[280px] p-3">
+                                            <div class="text-[13px] font-medium break-all">
+                                                {file.name}
+                                            </div>
+                                            <div class="space-y-1 text-xs text-muted-foreground">
+                                                <div class="flex justify-between">
+                                                    <span>Type</span>
+                                                    <span>{getFileExtension(file.name)}</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span>Size</span>
+                                                    <span>{formatFileSize(file.size)}</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span>Status</span>
+                                                    <span>Pending Upload</span>
+                                                </div>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <p class="text-xs text-muted-foreground">
+                                        {formatFileSize(file.size)}
+                                    </p>
+                                </div>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
+                                onclick={() => removeNewFile(index)}
                                 disabled={field.disabled}
-                                title="Delete file"
+                                title="Remove file"
                             >
-                                <TrashIcon class="h-4 w-4" />
+                                <XIcon class="h-4 w-4" />
                             </Button>
-                        </ConfirmPopover>
-                    </div>
-                {/each}
-
-                {#each newFiles as file, index}
-                    <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            <FileIcon 
-                                mimeType={file.type} 
-                                fileName={file.name} 
-                                size={32} 
-                                class="text-muted-foreground" 
-                            />
-                            <div>
-                                <p class="text-sm font-medium">{file.name}</p>
-                                <p class="text-xs text-muted-foreground">
-                                    {formatFileSize(file.size)}
-                                </p>
-                            </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onclick={() => removeNewFile(index)}
-                            disabled={field.disabled}
-                            title="Remove file"
-                        >
-                            <XIcon class="h-4 w-4" />
-                        </Button>
-                    </div>
-                {/each}
+                    {/each}
+                </div>
             </div>
-        </div>
-    {/if}
-</div> 
+        {/if}
+    </div>
+</TooltipProvider> 
