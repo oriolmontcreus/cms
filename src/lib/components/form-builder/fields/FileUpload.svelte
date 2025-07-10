@@ -10,6 +10,7 @@
     import type { UploadedFile } from '@shared/types/file.type';
     import { getContext, onMount } from 'svelte';
     import FileIcon from './FileIcon.svelte';
+    import VideoPreview from './VideoPreview.svelte';
     import type { Writable } from 'svelte/store';
     import {
         Tooltip,
@@ -234,13 +235,11 @@
                                         class="h-32 w-32 object-cover rounded select-none"
                                     />
                                 {:else if isVideo(fileData.mimeType)}
-                                    <video 
+                                    <VideoPreview 
                                         src={getFileUrl(fileData)}
-                                        class="h-32 w-32 object-cover rounded select-none"
-                                        controls
-                                    >
-                                        <track kind="captions">
-                                    </video>
+                                        title={fileData.originalName}
+                                        thumbnailClass="h-32 w-32 object-cover rounded select-none"
+                                    />
                                 {:else}
                                     <FileIcon 
                                         mimeType={fileData.mimeType} 
@@ -312,13 +311,11 @@
                                         class="h-32 w-32 object-cover rounded"
                                     />
                                 {:else if isVideo(file.type)}
-                                    <video 
+                                    <VideoPreview 
                                         src={previewUrls[file.name]}
-                                        class="h-32 w-32 object-cover rounded"
-                                        controls
-                                    >
-                                        <track kind="captions">
-                                    </video>
+                                        title={file.name}
+                                        thumbnailClass="h-32 w-32 object-cover rounded"
+                                    />
                                 {:else}
                                     <FileIcon 
                                         mimeType={file.type} 
