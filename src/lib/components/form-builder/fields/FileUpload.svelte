@@ -61,11 +61,11 @@
     
     // Initialize existing files from prop value
     $: if (value && existingFiles.length === 0) {
-        existingFiles = Array.isArray(value) ? value.filter(file => file.id) : value?.id ? [value] : [];
+        existingFiles = Array.isArray(value) ? value.filter(file => file.id && !filesToDelete.includes(file.id)) : value?.id && !filesToDelete.includes(value.id) ? [value] : [];
     }
 
-    // Update value based on current files
-    $: updateValue(existingFiles, newFiles);
+    // Update value based on current files and excluding deleted files
+    $: updateValue(existingFiles.filter(file => !filesToDelete.includes(file.id)), newFiles);
 
     const updateValue = (existing: UploadedFile[], newFilesList: File[]) => {
         const allFiles = [
@@ -138,8 +138,10 @@
     };
 
     const removeExistingFile = (fileId: string) => {
-        if (!filesToDelete.includes(fileId)) filesToDelete = [...filesToDelete, fileId];
+        filesToDelete = [...filesToDelete, fileId];
         existingFiles = existingFiles.filter(f => f.id !== fileId);
+        // Force update the value to reflect deletion
+        updateValue(existingFiles.filter(file => !filesToDelete.includes(file.id)), newFiles);
     };
 
     const removeNewFile = (index: number) => {
