@@ -58,7 +58,7 @@
             {/if}
             
             <!-- Hover overlay with eye icon -->
-            <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
+            <div class="absolute inset-0 rounded flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                 <IconEye class="h-8 w-8 text-white" />
             </div>
         </button>

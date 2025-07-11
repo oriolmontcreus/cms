@@ -186,7 +186,7 @@
 
         <div
             class={cn(
-                "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+                "border-2 border-dashed bg-background dark:bg-input/30 rounded-lg p-6 text-center transition-colors",
                 isDragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25",
                 field.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
             )}
@@ -250,11 +250,11 @@
                                 <div class="min-w-0 flex-1">
                                     <Tooltip>
                                         <TooltipTrigger class="block w-full text-left">
-                                            <p class="text-sm font-medium truncate">
+                                            <p class="text-sm font-medium truncate cursor-help">
                                                 {fileData.originalName}
                                             </p>
                                         </TooltipTrigger>
-                                        <TooltipContent class="space-y-2 w-[280px] p-3">
+                                        <TooltipContent class="space-y-2 w-[280px] shadow-md dark:shadow-none p-3 bg-background border border-border rounded-md">
                                             <div class="text-[13px] font-medium break-all">
                                                 {fileData.originalName}
                                             </div>
