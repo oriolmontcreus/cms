@@ -8,7 +8,7 @@ export class FileController {
     
     const files: File[] = [];
     
-    for (const [key, value] of Object.entries(body)) {
+    for (const [_, value] of Object.entries(body)) {
       if (value instanceof File) {
         files.push(value);
       } else if (Array.isArray(value)) {
@@ -18,9 +18,7 @@ export class FileController {
       }
     }
 
-    if (files.length === 0) {
-      throw new BadRequest("No files found in request");
-    }
+    if (files.length === 0) throw new BadRequest("No files found in request");
 
     const uploadedFiles = await fileService.uploadFiles(files);
     
@@ -34,14 +32,10 @@ export class FileController {
   async delete(c: Context) {
     const body = await c.req.json();
     
-    const { fileNames, fileIds } = body;
-    
-    // Accept either fileNames or fileIds
-    const filesToDelete = fileNames || fileIds;
-    
-    if (!filesToDelete || !Array.isArray(filesToDelete)) throw new BadRequest("fileNames or fileIds array is required");
+    const { fileIds } = body;
+    if (!fileIds || !Array.isArray(fileIds)) throw new BadRequest("No File IDs provided");
 
-    const result = await fileService.deleteFiles(filesToDelete);
+    const result = await fileService.deleteFiles(fileIds);
     
     const hasErrors = result.errors.length > 0;
     const statusCode = hasErrors ? (result.deletedFiles.length > 0 ? 207 : 400) : 200;
