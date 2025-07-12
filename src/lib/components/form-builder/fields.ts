@@ -172,6 +172,21 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    schema(items: SchemaItem[]): this {
+        this.field.schema = items;
+        return this;
+    }
+
+    grid(columns: number): this {
+        this.field.grid = columns;
+        return this;
+    }
+
+    contained(isContained: boolean = true): this {
+        this.field.contained = isContained;
+        return this;
+    }
+
     toJSON(): FormField { return this.field;}
     get type(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }
@@ -189,6 +204,7 @@ export const Toggle = (name: string) => new FieldBuilder('toggle', name);
 export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 export const FileInput = (name: string) => new FieldBuilder('file', name);
+export const Repeatable = (name: string) => new FieldBuilder('repeatable', name);
 
 class TabBuilderImpl implements ITabBuilder {
     private tab: Tab;

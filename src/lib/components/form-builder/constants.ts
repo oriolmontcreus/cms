@@ -29,8 +29,11 @@ export const CSS_CLASSES = {
     COMPONENT_TITLE: 'text-lg font-semibold',
     FIELD_CONTAINER: 'space-y-6',
     FIELD_CONTAINER_WITH_MARGIN: 'space-y-6 mb-6',
-    FLEX_COLUMN_GAP: 'flex flex-col gap-8',
+    FLEX_COLUMN_GAP: 'flex flex-col gap-4',
+    GRID_CONTAINER: 'grid gap-4',
     TABS_CONTAINER: 'w-full',
-    TABS_LIST: 'grid w-full overflow-hidden',
-    TABS_CONTENT: 'mt-6'
+    TABS_LIST: 'flex flex-wrap gap-2',
+    TABS_CONTENT: 'mt-6',
+    LABEL: 'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+    HELPER_TEXT: 'text-sm text-muted-foreground mt-1'
 } as const; 

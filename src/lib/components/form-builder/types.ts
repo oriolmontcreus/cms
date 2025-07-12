@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file' | 'repeatable';
 
 export type PrefixSuffix = string | any; // Can be either a string or an icon component
 
@@ -109,6 +109,10 @@ export interface FormField {
     // File upload specific options
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
+    // Repeatable specific options
+    schema?: SchemaItem[]; // For repeatable fields - the schema to repeat
+    grid?: number; // For repeatable fields - number of columns in the grid
+    contained?: boolean; // For repeatable fields - whether to show items in a container
     // Layout properties
     columnSpan?: number; // For grid layout - how many columns this field should span
     tab?: string; // Tab name this field belongs to

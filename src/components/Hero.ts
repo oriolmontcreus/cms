@@ -1,14 +1,13 @@
 import SettingsIcon from '@lucide/svelte/icons/settings';
 import PaletteIcon from '@lucide/svelte/icons/palette';
-import TypeIcon from '@lucide/svelte/icons/type';
 import WrenchIcon from '@lucide/svelte/icons/wrench';
-import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileInput } from '@/lib/components/form-builder/fields';
+import LayersIcon from '@lucide/svelte/icons/layers';
+import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileInput, Repeatable } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 
 export const HeroComponent: Component = {
     name: 'Hero',
     schema: [
-        // Persistent field at the top
         TextInput('title')
             .label('Hero Title')
             .required()
@@ -43,18 +42,6 @@ export const HeroComponent: Component = {
                         )
                     ]),
 
-                TabField('content')
-                    .label('Content')
-                    .icon(TypeIcon)
-                    .schema([
-                        GridContainer(1, 6).add(
-                            TextInput('description')
-                                .label('Description')
-                                .placeholder('Enter hero description')
-                                .helperText('Brief description of your hero section')
-                        )
-                    ]),
-
                 TabField('styling')
                     .label('Styling Options')
                     .icon(PaletteIcon)
@@ -84,6 +71,37 @@ export const HeroComponent: Component = {
                                 .helperText('Automatically save changes')
                                 .disabled()
                         )
+                    ]),
+
+                TabField('features')
+                    .label('Feature Cards')
+                    .icon(LayersIcon)
+                    .schema([
+                        Repeatable('featureCards')
+                            .label('Feature Cards')
+                            .helperText('Add feature cards to display in the hero section')
+                            .grid(2)
+                            .contained()
+                            .schema([
+                                TextInput('title')
+                                    .label('Card Title')
+                                    .required()
+                                    .placeholder('Enter card title'),
+                                
+                                TextInput('subtitle')
+                                    .label('Card Subtitle')
+                                    .placeholder('Enter card subtitle'),
+
+                                FileInput('icon')
+                                    .label('Card Icon')
+                                    .helperText('Upload an icon for this feature card')
+                                    .allowedMimeTypes(['image/svg+xml', 'image/png'])
+                                    .maxFileSize(100, 'kb'),
+
+                                ColorPicker('accentColor')
+                                    .label('Accent Color')
+                                    .helperText('Choose an accent color for this card')
+                            ])
                     ])
             ])
             .activeTab('basic')
