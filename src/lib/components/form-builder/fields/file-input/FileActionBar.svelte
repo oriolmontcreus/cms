@@ -3,7 +3,9 @@
     import { Button } from '@components/ui/button';
     import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
     import ConfirmPopover from '@components/ConfirmPopover.svelte';
-    import TrashIcon from '@lucide/svelte/icons/trash';
+    import TrashIcon from '@tabler/icons-svelte/icons/trash';
+    import InfoCircleIcon from '@tabler/icons-svelte/icons/info-circle';
+    import ExternalLinkIcon from '@tabler/icons-svelte/icons/external-link';
     import { getFileUrl } from '@/services/file.service';
 
     export let fileData: UploadedFile;
@@ -31,20 +33,18 @@
     };
 </script>
 
-<div class="flex-shrink-0 flex gap-1">
+<div class="inline-flex -space-x-px rounded-lg rtl:space-x-reverse w-fit">
     <Popover>
         <PopoverTrigger>
             <Button
+                class="rounded-none shadow-none first:rounded-s-md focus-visible:z-10"
                 variant="outline"
-                size="sm"
+                size="icon"
                 {disabled}
                 title="File information"
+                aria-label="File information"
             >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4"/>
-                    <path d="M12 8h.01"/>
-                </svg>
+                <InfoCircleIcon size={16} aria-hidden="true" />
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-[280px] p-3">
@@ -71,17 +71,15 @@
     </Popover>
     
     <Button
+        class="rounded-none shadow-none focus-visible:z-10"
         variant="outline"
-        size="sm"
+        size="icon"
         {disabled}
         title="Open file"
+        aria-label="Open file"
         onclick={() => window.open(getFileUrl(fileData), '_blank')}
     >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15,3 21,3 21,9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-        </svg>
+        <ExternalLinkIcon size={16} aria-hidden="true" />
     </Button>
     
     <ConfirmPopover
@@ -94,13 +92,14 @@
         {disabled}
     >
         <Button
+            class="rounded-none shadow-none last:rounded-e-md focus-visible:z-10 hover:text-destructive hover:dark:bg-destructive/10 hover:bg-destructive/20"
             variant="outline"
-            size="sm"
-            class="hover:text-destructive hover:dark:bg-destructive/10 hover:bg-destructive/20"
+            size="icon"
             {disabled}
             title="Delete file"
+            aria-label="Delete file"
         >
-            <TrashIcon class="h-4 w-4" />
+            <TrashIcon size={16} aria-hidden="true" />
         </Button>
     </ConfirmPopover>
 </div> 

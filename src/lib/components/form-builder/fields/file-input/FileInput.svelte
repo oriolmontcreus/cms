@@ -221,7 +221,7 @@
                 </h4>
                 <div class="space-y-2">
                     {#each existingFiles as fileData}
-                        <div class="flex flex-col gap-3 p-4 bg-muted rounded-lg lg:p-6">
+                        <div class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6">
                             <div class="flex-shrink-0 w-full sm:w-auto">
                                 {#if isImage(fileData.mimeType)}
                                     <img 
@@ -265,7 +265,7 @@
                     {/each}
 
                     {#each newFiles as file, index}
-                        <div class="flex flex-col gap-3 p-4 bg-muted rounded-lg sm:flex-row sm:items-center sm:p-3">
+                        <div class="flex flex-col gap-3 p-4 bg-background rounded-lg sm:flex-row sm:items-center sm:p-3">
                             <div class="flex-shrink-0 w-full sm:w-auto">
                                 {#if isImage(file.type)}
                                     <img 
