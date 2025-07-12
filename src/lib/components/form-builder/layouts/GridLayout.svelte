@@ -7,7 +7,6 @@
     export let formData: Record<string, any>;
     export let componentId: string;
     export let activeTab: string | undefined = undefined;
-    export let formBuilderContext: any;
 
     const columns = layout.columns || 2;
     const gap = layout.gap || 4;
@@ -44,7 +43,6 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
-                    {formBuilderContext}
                 />
             </div>
         {/each}

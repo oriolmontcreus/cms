@@ -5,10 +5,10 @@
     import { handleDeleteFiles } from '@/services/file.service';
     import type { Component } from '@shared/types/pages.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
-    import { initializeFormData } from './utils/formHelpers';
-    import { getAllFields } from './utils/formHelpers';
+    import { initializeFormData, getAllFields, collectFilesForDeletion, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
+    import { setContext } from 'svelte';
 
     export let config: PageConfig;
     export let slug: string;
@@ -19,40 +19,14 @@
 
     const filesToDelete = writable<string[]>([]);
 
-    function collectFilesForDeletion(itemData: any) {
-        const fileIds: string[] = [];
-        
-        function extractFileIds(obj: any) {
-            if (!obj || typeof obj !== 'object') return;
-            
-            for (const value of Object.values(obj)) {
-                if (value && typeof value === 'object') {
-                    if ('id' in value && 'originalName' in value && typeof value.id === 'string') {
-                        fileIds.push(value.id);
-                    }
-                    else if (Array.isArray(value)) {
-                        value.forEach(item => {
-                            if (item && typeof item === 'object' && 'id' in item && 'originalName' in item && typeof item.id === 'string') {
-                                fileIds.push(item.id);
-                            } else {
-                                extractFileIds(item);
-                            }
-                        });
-                    }
-                    // Recursively check nested objects
-                    else {
-                        extractFileIds(value);
-                    }
-                }
-            }
+    const formBuilderContext: FormBuilderContext = {
+        collectFilesForDeletion: (itemData: any) => {
+            collectFilesForDeletion(itemData, (fileIds: string[]) => {
+                filesToDelete.update(current => [...current, ...fileIds]);
+            });
         }
-        
-        extractFileIds(itemData);
-        
-        if (fileIds.length > 0) {
-            filesToDelete.update(current => [...current, ...fileIds]);
-        }
-    }
+    };
+    setContext('formBuilder', formBuilderContext);
 
     async function handleSubmit() {
         try {
@@ -100,11 +74,6 @@
             isSubmitting = false;
         }
     }
-
-    // Make functions available to child components
-    $: formBuilderContext = {
-        collectFilesForDeletion
-    };
 </script>
 
 <form class={CSS_CLASSES.FORM_CONTAINER} on:submit|preventDefault={handleSubmit}>
@@ -112,7 +81,6 @@
         <ComponentRenderer 
             {componentInstance} 
             {formData}
-            {formBuilderContext}
         />
     {/each}
 

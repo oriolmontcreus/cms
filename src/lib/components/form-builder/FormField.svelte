@@ -20,7 +20,6 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: any = undefined;
-    export let formBuilderContext: any;
 </script>
 
 <div class="space-y-2">
@@ -56,6 +55,6 @@
     {:else if field.type === 'file'}
         <FileInput {field} {fieldId} bind:value />
     {:else if field.type === 'repeatable'}
-        <RepeatableField {field} {fieldId} bind:value {formBuilderContext} />
+        <RepeatableField {field} {fieldId} bind:value />
     {/if}
 </div> 

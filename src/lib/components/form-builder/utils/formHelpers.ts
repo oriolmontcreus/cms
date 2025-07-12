@@ -1,6 +1,40 @@
 import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData } from '../types';
 import type { Component } from '@shared/types/pages.type';
-import { SCHEMA_TYPES, FIELD_TYPES, DEFAULT_VALUES } from '../constants';
+import { SCHEMA_TYPES, DEFAULT_VALUES } from '../constants';
+
+export interface FormBuilderContext {
+    collectFilesForDeletion: (itemData: any) => void;
+}
+
+export function collectFilesForDeletion(itemData: any, addToQueue: (fileIds: string[]) => void) {
+    const fileIds: string[] = [];
+    
+    function extractFileIds(obj: any) {
+        if (!obj || typeof obj !== 'object') return;
+        
+        for (const value of Object.values(obj)) {
+            if (value && typeof value === 'object') {
+                if ('id' in value && 'originalName' in value && typeof value.id === 'string') {
+                    fileIds.push(value.id);
+                }
+                else if (Array.isArray(value)) {
+                    value.forEach(item => {
+                        if (item && typeof item === 'object' && 'id' in item && 'originalName' in item && typeof item.id === 'string') {
+                            fileIds.push(item.id);
+                        } else {
+                            extractFileIds(item);
+                        }
+                    });
+                }
+                else {
+                    extractFileIds(value);
+                }
+            }
+        }
+    }
+    extractFileIds(itemData);
+    if (fileIds.length > 0) addToQueue(fileIds);
+}
 
 export function convertToFormField(item: any): FormField | null {
     if (item && typeof item === 'object' && 'toJSON' in item && typeof item.toJSON === 'function') {
@@ -34,9 +68,6 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
     if (schema.type === SCHEMA_TYPES.TABS) return schema.tabs.flatMap(tab => tab.schema);
     return [];
 }
-
-
-
 
 export function usesMixedSchema(component: any): boolean {
     if (!Array.isArray(component.schema)) return false;

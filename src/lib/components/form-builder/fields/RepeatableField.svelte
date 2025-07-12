@@ -7,11 +7,15 @@
     import DefaultRenderer from '../components/DefaultRenderer.svelte';
     import { CSS_CLASSES } from '../constants';
     import { cn } from '$lib/utils';
+    import { getContext } from 'svelte';
+    import type { FormBuilderContext } from '../utils/formHelpers';
 
     export let field: FormField;
     export let fieldId: string;
     export let value: any[] = [];
-    export let formBuilderContext: any;
+
+    // Get context with proper typing
+    const formBuilderContext = getContext<FormBuilderContext>('formBuilder');
 
     // Initialize empty array if no value
     $: if (!Array.isArray(value)) {
@@ -40,10 +44,13 @@
     }
 
     function removeItem(index: number) {
+        // Before removing the item, collect any files for deletion
         const itemToRemove = value[index];
         if (itemToRemove && formBuilderContext?.collectFilesForDeletion) {
             formBuilderContext.collectFilesForDeletion(itemToRemove);
         }
+        
+        // Remove the item from the array
         value = value.filter((_, i) => i !== index);
     }
 </script>
@@ -72,7 +79,6 @@
                             schema={field.schema || []}
                             componentId={`${fieldId}-${index}`}
                             bind:formData={value[index]}
-                            {formBuilderContext}
                         />
                     </CardContent>
                 </Card>
@@ -89,7 +95,6 @@
                         schema={field.schema || []}
                         componentId={`${fieldId}-${index}`}
                         bind:formData={value[index]}
-                        {formBuilderContext}
                     />
                 </div>
             {/if}

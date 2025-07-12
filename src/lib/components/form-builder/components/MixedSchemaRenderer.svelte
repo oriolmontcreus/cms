@@ -12,7 +12,6 @@
     export let activeTab: string;
     export let componentId: string;
     export let formData: Record<string, any>;
-    export let formBuilderContext: any;
     
     $: allFields = getAllFields(schema);
     $: groupedFields = groupFieldsByTab(allFields, tabs, schema);
@@ -37,7 +36,6 @@
                                         {field}
                                         fieldId="{componentId}-{field.name}"
                                         bind:value={formData[field.name]}
-                                        {formBuilderContext}
                                     />
                                 {/each}
                                 
@@ -48,7 +46,6 @@
                                             {formData}
                                             {componentId}
                                             activeTab={tab.name}
-                                            {formBuilderContext}
                                         />
                                     {/if}
                                 {/each}
@@ -63,7 +60,6 @@
                 {formData}
                 {componentId}
                 activeTab={undefined}
-                {formBuilderContext}
             />
         {:else if isFormField(item) && !convertToFormField(item)?.tab}
             {@const field = convertToFormField(item)}
@@ -72,7 +68,6 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
-                    {formBuilderContext}
                 />
             {/if}
         {/if}
