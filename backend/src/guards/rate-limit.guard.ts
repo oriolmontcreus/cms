@@ -17,18 +17,13 @@ function getClientIP(c: Context): string {
     "forwarded",
     "x-client-ip",
   ];
-
-  // Try to get IP from headers
   for (const header of headers) {
     const value = c.req.header(header);
     if (value) {
-      // Handle comma-separated IPs (e.g. x-forwarded-for can have multiple)
       const ip = value.split(",")[0].trim();
       if (ip) return ip;
     }
   }
-
-  // Fallback to remote address from request if available
   return "unknown";
 }
 
@@ -37,11 +32,8 @@ function getClientIP(c: Context): string {
  * Uses user ID if authenticated, falls back to IP address
  */
 function getIdentifier(c: Context): string {
-  // Try to get user from context (set by auth middleware)
   const user = c.get("user") as User | undefined;
   if (user?._id) return `user:${user._id}`;
-
-  // Fall back to IP address
   return `ip:${getClientIP(c)}`;
 }
 
@@ -119,8 +111,6 @@ export function withRateLimit(
         log("INFO", `Rate limit exceeded for ${identifier} on ${path}`);
         throw err;
       }
-
-      // If Redis fails, log error but continue to handler
       log("ERROR", `Rate limit check failed: ${err}`);
       return handler(c, next);
     }
