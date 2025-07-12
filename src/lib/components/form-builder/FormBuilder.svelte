@@ -7,6 +7,7 @@
     import ComponentRenderer from './components/ComponentRenderer.svelte';
     import { initializeFormData } from './utils/formHelpers';
     import { getAllFields } from './utils/formHelpers';
+    import { processFileUploads } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { setContext } from 'svelte';
     import { writable } from 'svelte/store';
@@ -36,11 +37,10 @@
             
             for (const componentInstance of config.components) {
                 const allFields = getAllFields(componentInstance.component.schema);
-                const fileFields = allFields.filter(field => field.type === 'file');
                 const colorFields = allFields.filter(field => field.type === 'color');
                 
                 // Validate and clean form data
-                const componentFormData = { ...processedFormData[componentInstance.id] };
+                let componentFormData = { ...processedFormData[componentInstance.id] };
                 
                 // Ensure color fields only contain valid color strings
                 for (const field of colorFields) {
@@ -51,46 +51,15 @@
                     }
                 }
                 
-                if (fileFields.length > 0) {
-                    // Process each file field
-                    for (const field of fileFields) {
-                        const key = `${componentInstance.id}-${field.name}`;
-                        const fileState = currentFileState[key];
-                        
-                        if (fileState) {
-                            const { pendingFiles, filesToDelete } = fileState;
-                            const currentValue = componentFormData[field.name];
-                            
-                            // Delete files marked for deletion
-                            if (filesToDelete.length > 0) {
-                                await handleDeleteFiles(filesToDelete);
-                            }
-                            
-                            // Upload new files
-                            let uploadedFiles: any[] = [];
-                            if (pendingFiles.length > 0) {
-                                const newUploadedFiles = await handleUploadFiles(pendingFiles);
-                                if (newUploadedFiles) {
-                                    uploadedFiles = newUploadedFiles;
-                                }
-                            }
-                            
-                            // Combine existing files (not deleted) with newly uploaded files
-                            const existingFiles = Array.isArray(currentValue) 
-                                ? currentValue.filter((file: any) => file.id && !filesToDelete.includes(file.id))
-                                : (currentValue && currentValue.id && !filesToDelete.includes(currentValue.id) ? [currentValue] : []);
-                            
-                            const allFiles = [...existingFiles, ...uploadedFiles];
-                            
-                            // Update form data
-                            if (field.multiple) {
-                                componentFormData[field.name] = allFiles.length > 0 ? allFiles : null;
-                            } else {
-                                componentFormData[field.name] = allFiles.length > 0 ? allFiles[0] : null;
-                            }
-                        }
-                    }
-                }
+                // Process file uploads recursively (including nested fields in RepeatableField)
+                componentFormData = await processFileUploads(
+                    componentInstance.component.schema,
+                    componentInstance.id,
+                    componentFormData,
+                    currentFileState,
+                    handleUploadFiles,
+                    handleDeleteFiles
+                );
                 
                 processedFormData[componentInstance.id] = componentFormData;
             }

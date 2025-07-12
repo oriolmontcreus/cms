@@ -35,6 +35,50 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
     return [];
 }
 
+// New function to recursively find all file fields including those in RepeatableField
+export function getAllFileFields(schema: Layout | SchemaItem[]): FormField[] {
+    const allFields: FormField[] = [];
+    
+    const processSchema = (items: SchemaItem[] | Layout) => {
+        const schemaItems = Array.isArray(items) ? items : [items];
+        
+        for (const item of schemaItems) {
+            if (item && typeof item === 'object' && 'type' in item) {
+                if (item.type === SCHEMA_TYPES.GRID) {
+                    processSchema(item.schema || []);
+                } else if (item.type === SCHEMA_TYPES.TABS_CONTAINER) {
+                    const tabsContainer = item as TabsContainer;
+                    tabsContainer.tabs.forEach(tab => processSchema(tab.schema));
+                } else {
+                    const field = convertToFormField(item);
+                    if (field) {
+                        if (field.type === 'file') {
+                            allFields.push(field);
+                        } else if (field.type === 'repeatable' && field.schema) {
+                            // Recursively process RepeatableField schema
+                            const nestedFileFields = getAllFileFields(field.schema);
+                            allFields.push(...nestedFileFields);
+                        }
+                    }
+                }
+            } else {
+                const field = convertToFormField(item);
+                if (field) {
+                    if (field.type === 'file') {
+                        allFields.push(field);
+                    } else if (field.type === 'repeatable' && field.schema) {
+                        // Recursively process RepeatableField schema
+                        const nestedFileFields = getAllFileFields(field.schema);
+                        allFields.push(...nestedFileFields);
+                    }
+                }
+            }
+        }
+    };
+    
+    processSchema(schema);
+    return allFields;
+}
 
 
 export function usesMixedSchema(component: any): boolean {
@@ -151,4 +195,150 @@ function getDefaultValue(field: FormField) {
     }
 
     return defaultValueMap.get(field.type) ?? DEFAULT_VALUES.EMPTY_STRING;
+} 
+
+// New function to recursively process file uploads for nested fields
+export async function processFileUploads(
+    schema: Layout | SchemaItem[],
+    componentId: string,
+    formData: Record<string, any>,
+    fileUploadState: Record<string, { pendingFiles: File[]; filesToDelete: string[] }>,
+    uploadFiles: (files: File[]) => Promise<any[] | null>,
+    deleteFiles: (fileIds: string[]) => Promise<boolean>
+): Promise<Record<string, any>> {
+    const processedFormData = { ...formData };
+    
+    const processSchemaRecursively = async (
+        items: SchemaItem[] | Layout,
+        currentFormData: Record<string, any>,
+        fieldIdPrefix: string
+    ): Promise<Record<string, any>> => {
+        const schemaItems = Array.isArray(items) ? items : [items];
+        const updatedFormData = { ...currentFormData };
+        
+        for (const item of schemaItems) {
+            if (item && typeof item === 'object' && 'type' in item) {
+                if (item.type === SCHEMA_TYPES.GRID) {
+                    await processSchemaRecursively(item.schema || [], updatedFormData, fieldIdPrefix);
+                } else if (item.type === SCHEMA_TYPES.TABS_CONTAINER) {
+                    const tabsContainer = item as TabsContainer;
+                    for (const tab of tabsContainer.tabs) {
+                        await processSchemaRecursively(tab.schema, updatedFormData, fieldIdPrefix);
+                    }
+                } else {
+                    const field = convertToFormField(item);
+                    if (field) {
+                        if (field.type === 'file') {
+                            const fieldId = `${fieldIdPrefix}-${field.name}`;
+                            const fileState = fileUploadState[fieldId];
+                            
+                            if (fileState) {
+                                const { pendingFiles, filesToDelete } = fileState;
+                                const currentValue = updatedFormData[field.name];
+                                
+                                // Delete files marked for deletion
+                                if (filesToDelete.length > 0) {
+                                    await deleteFiles(filesToDelete);
+                                }
+                                
+                                // Upload new files
+                                let uploadedFiles: any[] = [];
+                                if (pendingFiles.length > 0) {
+                                    const newUploadedFiles = await uploadFiles(pendingFiles);
+                                    if (newUploadedFiles) {
+                                        uploadedFiles = newUploadedFiles;
+                                    }
+                                }
+                                
+                                // Combine existing files (not deleted) with newly uploaded files
+                                const existingFiles = Array.isArray(currentValue) 
+                                    ? currentValue.filter((file: any) => file.id && !filesToDelete.includes(file.id))
+                                    : (currentValue && currentValue.id && !filesToDelete.includes(currentValue.id) ? [currentValue] : []);
+                                
+                                const allFiles = [...existingFiles, ...uploadedFiles];
+                                
+                                // Update form data
+                                if (field.multiple) {
+                                    updatedFormData[field.name] = allFiles.length > 0 ? allFiles : null;
+                                } else {
+                                    updatedFormData[field.name] = allFiles.length > 0 ? allFiles[0] : null;
+                                }
+                            }
+                        } else if (field.type === 'repeatable' && field.schema) {
+                            // Process RepeatableField items
+                            const repeatableValue = updatedFormData[field.name];
+                            if (Array.isArray(repeatableValue)) {
+                                for (let i = 0; i < repeatableValue.length; i++) {
+                                    const itemFieldIdPrefix = `${fieldIdPrefix}-${field.name}-${i}`;
+                                    repeatableValue[i] = await processSchemaRecursively(
+                                        field.schema,
+                                        repeatableValue[i] || {},
+                                        itemFieldIdPrefix
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                const field = convertToFormField(item);
+                if (field) {
+                    if (field.type === 'file') {
+                        const fieldId = `${fieldIdPrefix}-${field.name}`;
+                        const fileState = fileUploadState[fieldId];
+                        
+                        if (fileState) {
+                            const { pendingFiles, filesToDelete } = fileState;
+                            const currentValue = updatedFormData[field.name];
+                            
+                            // Delete files marked for deletion
+                            if (filesToDelete.length > 0) {
+                                await deleteFiles(filesToDelete);
+                            }
+                            
+                            // Upload new files
+                            let uploadedFiles: any[] = [];
+                            if (pendingFiles.length > 0) {
+                                const newUploadedFiles = await uploadFiles(pendingFiles);
+                                if (newUploadedFiles) {
+                                    uploadedFiles = newUploadedFiles;
+                                }
+                            }
+                            
+                            // Combine existing files (not deleted) with newly uploaded files
+                            const existingFiles = Array.isArray(currentValue) 
+                                ? currentValue.filter((file: any) => file.id && !filesToDelete.includes(file.id))
+                                : (currentValue && currentValue.id && !filesToDelete.includes(currentValue.id) ? [currentValue] : []);
+                            
+                            const allFiles = [...existingFiles, ...uploadedFiles];
+                            
+                            // Update form data
+                            if (field.multiple) {
+                                updatedFormData[field.name] = allFiles.length > 0 ? allFiles : null;
+                            } else {
+                                updatedFormData[field.name] = allFiles.length > 0 ? allFiles[0] : null;
+                            }
+                        }
+                    } else if (field.type === 'repeatable' && field.schema) {
+                        // Process RepeatableField items
+                        const repeatableValue = updatedFormData[field.name];
+                        if (Array.isArray(repeatableValue)) {
+                            for (let i = 0; i < repeatableValue.length; i++) {
+                                const itemFieldIdPrefix = `${fieldIdPrefix}-${field.name}-${i}`;
+                                repeatableValue[i] = await processSchemaRecursively(
+                                    field.schema,
+                                    repeatableValue[i] || {},
+                                    itemFieldIdPrefix
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return updatedFormData;
+    };
+    
+    return await processSchemaRecursively(schema, processedFormData, componentId);
 } 

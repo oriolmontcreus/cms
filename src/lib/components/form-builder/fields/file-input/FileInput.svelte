@@ -216,9 +216,6 @@
 
         {#if existingFiles.length > 0 || newFiles.length > 0}
             <div class="space-y-2">
-                <h4 class="text-sm font-medium">
-                    {field.multiple ? 'Files' : 'File'}
-                </h4>
                 <div class="space-y-2">
                     {#each existingFiles as fileData}
                         <div class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6">
