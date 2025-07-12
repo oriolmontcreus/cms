@@ -1,5 +1,9 @@
 <script lang="ts">
     import type { FormField } from './types';
+    import { Label } from '@components/ui/label';
+    import { CSS_CLASSES } from './constants';
+    
+    // Import all field components
     import TextInput from './fields/TextInput.svelte';
     import TextareaInput from './fields/TextareaInput.svelte';
     import NumberInput from './fields/NumberInput.svelte';
@@ -12,12 +16,11 @@
     import RichEditor from './fields/RichEditor.svelte';
     import FileInput from './fields/file-input/FileInput.svelte';
     import RepeatableField from './fields/RepeatableField.svelte';
-    import { Label } from '@components/ui/label';
-    import { CSS_CLASSES } from './constants';
 
     export let field: FormField;
     export let fieldId: string;
     export let value: any = undefined;
+    export let formBuilderContext: any;
 </script>
 
 <div class="space-y-2">
@@ -53,6 +56,6 @@
     {:else if field.type === 'file'}
         <FileInput {field} {fieldId} bind:value />
     {:else if field.type === 'repeatable'}
-        <RepeatableField {field} {fieldId} bind:value />
+        <RepeatableField {field} {fieldId} bind:value {formBuilderContext} />
     {/if}
 </div> 

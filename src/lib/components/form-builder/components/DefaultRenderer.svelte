@@ -7,6 +7,7 @@
     export let schema: SchemaItem[];
     export let componentId: string;
     export let formData: Record<string, any>;
+    export let formBuilderContext: any;
 </script>
 
 <div class={CSS_CLASSES.FLEX_COLUMN_GAP}>
@@ -18,6 +19,7 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
+                    {formBuilderContext}
                 />
             {/if}
         {/if}

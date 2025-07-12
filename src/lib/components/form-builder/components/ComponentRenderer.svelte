@@ -14,6 +14,7 @@
     
     export let componentInstance: any;
     export let formData: FormData;
+    export let formBuilderContext: any;
 </script>
 
 <div class={CSS_CLASSES.COMPONENT_CONTAINER}>
@@ -27,6 +28,7 @@
             {schema}
             componentId={componentInstance.id}
             formData={formData[componentInstance.id]}
+            {formBuilderContext}
         />
     
     {:else if usesMixedSchema(componentInstance.component)}
@@ -39,6 +41,7 @@
             {activeTab}
             componentId={componentInstance.id}
             formData={formData[componentInstance.id]}
+            {formBuilderContext}
         />
     
     {:else if !Array.isArray(componentInstance.component.schema)}
@@ -47,12 +50,14 @@
                 layout={componentInstance.component.schema}
                 formData={formData[componentInstance.id]}
                 componentId={componentInstance.id}
+                {formBuilderContext}
             />
         {:else if componentInstance.component.schema.type === SCHEMA_TYPES.TABS}
             <TabsLayout 
                 layout={componentInstance.component.schema}
                 formData={formData[componentInstance.id]}
                 componentId={componentInstance.id}
+                {formBuilderContext}
             />
         {/if}
     
@@ -61,6 +66,7 @@
             schema={componentInstance.component.schema}
             componentId={componentInstance.id}
             formData={formData[componentInstance.id]}
+            {formBuilderContext}
         />
     {/if}
 </div> 

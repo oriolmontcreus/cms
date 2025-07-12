@@ -2,11 +2,13 @@
     import type { PageConfig, FormData } from './types';
     import { Button } from '@components/ui/button';
     import { handleUpdateComponents } from '@/services/page.service';
+    import { handleDeleteFiles } from '@/services/file.service';
     import type { Component } from '@shared/types/pages.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
     import { initializeFormData } from './utils/formHelpers';
     import { getAllFields } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
+    import { writable } from 'svelte/store';
 
     export let config: PageConfig;
     export let slug: string;
@@ -14,6 +16,43 @@
 
     let formData: FormData = initializeFormData(config.components, components);
     let isSubmitting = false;
+
+    const filesToDelete = writable<string[]>([]);
+
+    function collectFilesForDeletion(itemData: any) {
+        const fileIds: string[] = [];
+        
+        function extractFileIds(obj: any) {
+            if (!obj || typeof obj !== 'object') return;
+            
+            for (const value of Object.values(obj)) {
+                if (value && typeof value === 'object') {
+                    if ('id' in value && 'originalName' in value && typeof value.id === 'string') {
+                        fileIds.push(value.id);
+                    }
+                    else if (Array.isArray(value)) {
+                        value.forEach(item => {
+                            if (item && typeof item === 'object' && 'id' in item && 'originalName' in item && typeof item.id === 'string') {
+                                fileIds.push(item.id);
+                            } else {
+                                extractFileIds(item);
+                            }
+                        });
+                    }
+                    // Recursively check nested objects
+                    else {
+                        extractFileIds(value);
+                    }
+                }
+            }
+        }
+        
+        extractFileIds(itemData);
+        
+        if (fileIds.length > 0) {
+            filesToDelete.update(current => [...current, ...fileIds]);
+        }
+    }
 
     async function handleSubmit() {
         try {
@@ -43,7 +82,17 @@
                 };
             });
             
+            // Save form data first
             await handleUpdateComponents(slug, updatedComponents);
+            
+            // After successful save, delete all files marked for deletion
+            const fileIdsToDelete = $filesToDelete;
+            
+            if (fileIdsToDelete.length > 0) {
+                await handleDeleteFiles(fileIdsToDelete);
+                // Clear the deletion queue after successful deletion
+                filesToDelete.set([]);
+            }
             
         } catch (error) {
             console.error('Error saving components:', error);
@@ -51,13 +100,19 @@
             isSubmitting = false;
         }
     }
+
+    // Make functions available to child components
+    $: formBuilderContext = {
+        collectFilesForDeletion
+    };
 </script>
 
 <form class={CSS_CLASSES.FORM_CONTAINER} on:submit|preventDefault={handleSubmit}>
     {#each config.components as componentInstance (componentInstance.id)}
         <ComponentRenderer 
             {componentInstance} 
-            {formData} 
+            {formData}
+            {formBuilderContext}
         />
     {/each}
 

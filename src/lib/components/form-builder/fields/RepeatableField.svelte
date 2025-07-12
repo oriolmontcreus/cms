@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Button } from '@/lib/components/ui/button';
     import { Card, CardContent } from '@/lib/components/ui/card';
-    import PlusIcon from '@lucide/svelte/icons/plus';
-    import TrashIcon from '@lucide/svelte/icons/trash';
+    import PlusIcon from '@tabler/icons-svelte/icons/plus';
+    import TrashIcon from '@tabler/icons-svelte/icons/trash';
     import type { FormField } from '../types';
     import DefaultRenderer from '../components/DefaultRenderer.svelte';
     import { CSS_CLASSES } from '../constants';
@@ -11,6 +11,7 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: any[] = [];
+    export let formBuilderContext: any;
 
     // Initialize empty array if no value
     $: if (!Array.isArray(value)) {
@@ -39,6 +40,10 @@
     }
 
     function removeItem(index: number) {
+        const itemToRemove = value[index];
+        if (itemToRemove && formBuilderContext?.collectFilesForDeletion) {
+            formBuilderContext.collectFilesForDeletion(itemToRemove);
+        }
         value = value.filter((_, i) => i !== index);
     }
 </script>
@@ -67,6 +72,7 @@
                             schema={field.schema || []}
                             componentId={`${fieldId}-${index}`}
                             bind:formData={value[index]}
+                            {formBuilderContext}
                         />
                     </CardContent>
                 </Card>
@@ -83,6 +89,7 @@
                         schema={field.schema || []}
                         componentId={`${fieldId}-${index}`}
                         bind:formData={value[index]}
+                        {formBuilderContext}
                     />
                 </div>
             {/if}

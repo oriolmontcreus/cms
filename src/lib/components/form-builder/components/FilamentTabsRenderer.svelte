@@ -10,6 +10,7 @@
     export let schema: SchemaItem[];
     export let componentId: string;
     export let formData: Record<string, any>;
+    export let formBuilderContext: any;
 </script>
 
 <div class="space-y-6">
@@ -36,12 +37,14 @@
                                             field={renderedItem.field}
                                             fieldId="{componentId}-{renderedItem.field.name}"
                                             bind:value={formData[renderedItem.field.name]}
+                                            {formBuilderContext}
                                         />
                                     {:else if renderedItem.type === 'grid'}
                                         <GridLayout 
                                             layout={renderedItem.layout}
                                             {formData}
                                             {componentId}
+                                            {formBuilderContext}
                                         />
                                     {/if}
                                 {/if}
@@ -57,6 +60,7 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
+                    {formBuilderContext}
                 />
             {/if}
         {:else if item && typeof item === 'object' && 'type' in item && item.type === SCHEMA_TYPES.GRID}
@@ -64,6 +68,7 @@
                 layout={item}
                 {formData}
                 {componentId}
+                {formBuilderContext}
             />
         {/if}
     {/each}

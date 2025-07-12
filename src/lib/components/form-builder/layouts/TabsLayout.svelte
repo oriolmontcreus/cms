@@ -6,6 +6,7 @@
     export let layout: TabsLayout;
     export let formData: Record<string, any>;
     export let componentId: string;
+    export let formBuilderContext: any;
 
     // Get the default tab (either specified activeTab or first tab)
     $: defaultTab = layout.activeTab !== undefined 
@@ -33,6 +34,7 @@
                         {field}
                         fieldId="{componentId}-{field.name}"
                         bind:value={formData[field.name]}
+                        {formBuilderContext}
                     />
                 {/each}
             </div>
