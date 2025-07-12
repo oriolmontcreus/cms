@@ -12,34 +12,47 @@
     import RichEditor from './fields/RichEditor.svelte';
     import FileInput from './fields/file-input/FileInput.svelte';
     import RepeatableField from './fields/RepeatableField.svelte';
+    import { Label } from '@components/ui/label';
+    import { CSS_CLASSES } from './constants';
 
     export let field: FormField;
     export let fieldId: string;
     export let value: any = undefined;
 </script>
 
-{#if field.type === 'text'}
-    <TextInput {field} {fieldId} bind:value />
-{:else if field.type === 'textarea'}
-    <TextareaInput {field} {fieldId} bind:value />
-{:else if field.type === 'number'}
-    <NumberInput {field} {fieldId} bind:value />
-{:else if field.type === 'date'}
-    <DatePicker {field} {fieldId} bind:value />
-{:else if field.type === 'dateRange'}
-    <DateRangePicker {field} {fieldId} bind:value />
-{:else if field.type === 'select'}
-    <SelectInput {field} {fieldId} bind:value />
-{:else if field.type === 'email'}
-    <EmailInput {field} {fieldId} bind:value />
-{:else if field.type === 'toggle'}
-    <ToggleInput {field} {fieldId} bind:value />
-{:else if field.type === 'color'}
-    <ColorPicker {field} {fieldId} bind:value />
-{:else if field.type === 'richtext'}
-    <RichEditor {field} {fieldId} bind:value />
-{:else if field.type === 'file'}
-    <FileInput {field} {fieldId} bind:value />
-{:else if field.type === 'repeatable'}
-    <RepeatableField {field} {fieldId} bind:value />
-{/if} 
+<div class="space-y-2">
+    {#if field.type !== 'toggle'}
+        <div>
+            <Label for={fieldId} class={CSS_CLASSES.LABEL}>{field.label}</Label>
+            {#if field.helperText}
+                <p class={CSS_CLASSES.HELPER_TEXT}>{field.helperText}</p>
+            {/if}
+        </div>
+    {/if}
+
+    {#if field.type === 'text'}
+        <TextInput {field} {fieldId} bind:value />
+    {:else if field.type === 'textarea'}
+        <TextareaInput {field} {fieldId} bind:value />
+    {:else if field.type === 'number'}
+        <NumberInput {field} {fieldId} bind:value />
+    {:else if field.type === 'date'}
+        <DatePicker {field} {fieldId} bind:value />
+    {:else if field.type === 'dateRange'}
+        <DateRangePicker {field} {fieldId} bind:value />
+    {:else if field.type === 'select'}
+        <SelectInput {field} {fieldId} bind:value />
+    {:else if field.type === 'email'}
+        <EmailInput {field} {fieldId} bind:value />
+    {:else if field.type === 'toggle'}
+        <ToggleInput {field} {fieldId} bind:value />
+    {:else if field.type === 'color'}
+        <ColorPicker {field} {fieldId} bind:value />
+    {:else if field.type === 'richtext'}
+        <RichEditor {field} {fieldId} bind:value />
+    {:else if field.type === 'file'}
+        <FileInput {field} {fieldId} bind:value />
+    {:else if field.type === 'repeatable'}
+        <RepeatableField {field} {fieldId} bind:value />
+    {/if}
+</div> 

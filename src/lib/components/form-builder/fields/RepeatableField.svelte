@@ -27,12 +27,6 @@
 
 <div class="space-y-4">
     <div class="flex items-center justify-between">
-        <div>
-            <label for={fieldId} class={CSS_CLASSES.LABEL}>{field.label}</label>
-            {#if field.helperText}
-                <p class={CSS_CLASSES.HELPER_TEXT}>{field.helperText}</p>
-            {/if}
-        </div>
         <Button type="button" variant="outline" onclick={addItem}>
             <PlusIcon class="w-4 h-4 mr-2" />
             Add Item
