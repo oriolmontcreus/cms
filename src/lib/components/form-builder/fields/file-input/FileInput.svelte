@@ -292,7 +292,7 @@
                                     disabled={field.disabled}
                                 >
                                     <Button
-                                        variant="ghost"
+                                        variant="ghostDestructive"
                                         size="sm"
                                         disabled={field.disabled}
                                         title="Delete file"
