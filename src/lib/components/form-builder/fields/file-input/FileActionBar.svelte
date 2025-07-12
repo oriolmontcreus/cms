@@ -37,7 +37,7 @@
     <Popover>
         <PopoverTrigger>
             <Button
-                class="rounded-none shadow-none first:rounded-s-md focus-visible:z-10"
+                class="rounded-none shadow-none first:rounded-s-md focus-visible:z-10 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20"
                 variant="outline"
                 size="icon"
                 {disabled}
@@ -71,7 +71,7 @@
     </Popover>
     
     <Button
-        class="rounded-none shadow-none focus-visible:z-10"
+        class="rounded-none shadow-none focus-visible:z-10 text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-950/20"
         variant="outline"
         size="icon"
         {disabled}
@@ -92,7 +92,7 @@
         {disabled}
     >
         <Button
-            class="rounded-none shadow-none last:rounded-e-md focus-visible:z-10 hover:text-destructive hover:dark:bg-destructive/10 hover:bg-destructive/20"
+            class="rounded-none shadow-none last:rounded-e-md focus-visible:z-10 text-red-600 hover:text-red-700 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/20"
             variant="outline"
             size="icon"
             {disabled}
