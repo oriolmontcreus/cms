@@ -6,11 +6,12 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { useRoutes } from '@/src/routes/useRoutes.js'
 import { connectMongoose } from './config/mongoose.config.js'
 import { errorHandler } from '@/lib/errorHandler.js'
+import { FRONTEND_URL } from '@shared/env.js'
 
 const app = new Hono()
 
 app.use('*', cors({
-    origin: ['http://localhost:5173'],
+    origin: [FRONTEND_URL],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control'],
     exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],

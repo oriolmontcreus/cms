@@ -7,7 +7,7 @@ import { get } from "svelte/store";
 
 const root = "/auth";
 
-//region routes
+//region Routes
 export async function login(email: string, password: string): Promise<void> {
     const { data } = await api.post<User>(`${root}/login`, { email, password });
     loggedUser.set(data);

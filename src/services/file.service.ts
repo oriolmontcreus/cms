@@ -2,24 +2,17 @@ import { api } from "@/lib/utils/api";
 import { safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "./toast.service";
 import type { UploadedFile } from "@shared/types/file.type";
+import { BACKEND_URL } from "@shared/env";
 
 const root = "/files";
 
-// Update utility function to get file URL
+//region Routes
 export function getFileUrl(file: UploadedFile): string {
-    // If the file path is already a full URL, return it
     if (file.path.startsWith('http://') || file.path.startsWith('https://')) {
         return file.path;
     }
-    
-    // Extract just the filename from the path
     const filename = file.path.split('/').pop() || file.fileName;
-    
-    // Get the base URL without the /api prefix
-    const baseUrl = api.defaults.baseURL?.replace('/api', '') || '';
-    
-    // Construct the URL to the uploads directory
-    return `${baseUrl}/${filename}`;
+    return `${BACKEND_URL}/${filename}`;
 }
 
 export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {
@@ -46,7 +39,10 @@ export async function deleteFiles(fileIds: string[]): Promise<boolean> {
 
     return response.data.success;
 }
+//endregion
 
+
+//region Handlers
 export async function handleUploadFiles(files: File[]): Promise<UploadedFile[] | null> {
     const [uploadedFiles, err] = await safeFetch(uploadFiles(files));
     if (!uploadedFiles) {
@@ -54,15 +50,6 @@ export async function handleUploadFiles(files: File[]): Promise<UploadedFile[] |
         return null;
     }
     return uploadedFiles;
-}
-
-export async function handleUploadSingleFile(file: File): Promise<UploadedFile | null> {
-    const [uploadedFiles, err] = await safeFetch(uploadFiles([file]));
-    if (!uploadedFiles) {
-        errorToast('Failed to upload file');
-        return null;
-    }
-    return uploadedFiles[0];
 }
 
 export async function handleDeleteFiles(fileIds: string[]): Promise<boolean> {
@@ -129,3 +116,4 @@ export async function processFileUploads(formData: Record<string, any>, fileFiel
     
     return processedFormData;
 }
+//endregion
