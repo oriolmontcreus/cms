@@ -10,12 +10,10 @@
     import { getContext, onMount } from 'svelte';
     import FileIcon from '../FileIcon.svelte';
     import VideoPreview from './VideoPreview.svelte';
+    import FileActionBar from './FileActionBar.svelte';
     import type { Writable } from 'svelte/store';
     import {
-        Tooltip,
-        TooltipContent,
-        TooltipProvider,
-        TooltipTrigger
+        TooltipProvider
     } from '@components/ui/tooltip';
     import { getFileUrl } from '@/services/file.service';
     import { errorToast } from '@/services/toast.service';
@@ -223,7 +221,7 @@
                 </h4>
                 <div class="space-y-2">
                     {#each existingFiles as fileData}
-                        <div class="flex flex-col gap-3 p-4 bg-muted rounded-lg sm:flex-row sm:items-center sm:p-3">
+                        <div class="flex flex-col gap-3 p-4 bg-muted rounded-lg lg:p-6">
                             <div class="flex-shrink-0 w-full sm:w-auto">
                                 {#if isImage(fileData.mimeType)}
                                     <img 
@@ -237,7 +235,7 @@
                                     <VideoPreview 
                                         src={getFileUrl(fileData)}
                                         title={fileData.originalName}
-                                        thumbnailClass="w-full h-48 object-cover rounded-lg select-none sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28"
+                                        thumbnailClass="w-full object-cover rounded-lg select-none"
                                     />
                                 {:else}
                                     <div class="flex justify-center sm:justify-start">
@@ -251,56 +249,18 @@
                                 {/if}
                             </div>
                             <div class="min-w-0 flex-1 space-y-1">
-                                <Tooltip>
-                                    <TooltipTrigger class="block w-full text-left">
-                                        <p class="text-sm font-medium truncate cursor-help">
-                                            {fileData.originalName}
-                                        </p>
-                                    </TooltipTrigger>
-                                    <TooltipContent class="space-y-2 w-[280px] shadow-md dark:shadow-none p-3 bg-background border border-border rounded-md">
-                                        <div class="text-[13px] font-medium break-all">
-                                            {fileData.originalName}
-                                        </div>
-                                        <div class="space-y-1 text-xs text-muted-foreground">
-                                            <div class="flex justify-between">
-                                                <span>Type</span>
-                                                <span>{getFileExtension(fileData.originalName)}</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span>Size</span>
-                                                <span>{formatFileSize(fileData.size)}</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span>Uploaded</span>
-                                                <span>{formatDate(new Date(fileData.uploadedAt))}</span>
-                                            </div>
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
+                                <p class="text-sm font-medium truncate">
+                                    {fileData.originalName}
+                                </p>
                                 <p class="text-xs text-muted-foreground">
                                     {formatFileSize(fileData.size)}
                                 </p>
                             </div>
-                            <div class="flex-shrink-0 flex justify-end sm:justify-center">
-                                <ConfirmPopover
-                                    title="Confirm file deletion"
-                                    description="Are you sure you want to delete this file? This action cannot be undone."
-                                    confirmText="Delete"
-                                    cancelText="Cancel"
-                                    variant="destructive"
-                                    onConfirm={() => removeExistingFile(fileData.id)}
-                                    disabled={field.disabled}
-                                >
-                                    <Button
-                                        variant="ghostDestructive"
-                                        size="sm"
-                                        disabled={field.disabled}
-                                        title="Delete file"
-                                    >
-                                        <TrashIcon class="h-4 w-4" />
-                                    </Button>
-                                </ConfirmPopover>
-                            </div>
+                            <FileActionBar
+                                fileData={fileData}
+                                disabled={field.disabled}
+                                onDelete={() => removeExistingFile(fileData.id)}
+                            />
                         </div>
                     {/each}
 
@@ -331,37 +291,14 @@
                                 {/if}
                             </div>
                             <div class="min-w-0 flex-1 space-y-1">
-                                <Tooltip>
-                                    <TooltipTrigger class="block w-full text-left">
-                                        <p class="text-sm font-medium truncate">
-                                            {file.name}
-                                        </p>
-                                    </TooltipTrigger>
-                                    <TooltipContent class="space-y-2 w-[280px] p-3">
-                                        <div class="text-[13px] font-medium break-all">
-                                            {file.name}
-                                        </div>
-                                        <div class="space-y-1 text-xs text-muted-foreground">
-                                            <div class="flex justify-between">
-                                                <span>Type</span>
-                                                <span>{getFileExtension(file.name)}</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span>Size</span>
-                                                <span>{formatFileSize(file.size)}</span>
-                                            </div>
-                                            <div class="flex justify-between">
-                                                <span>Status</span>
-                                                <span>Pending Upload</span>
-                                            </div>
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
+                                <p class="text-sm font-medium truncate">
+                                    {file.name}
+                                </p>
                                 <p class="text-xs text-muted-foreground">
                                     {formatFileSize(file.size)}
                                 </p>
                             </div>
-                            <div class="flex-shrink-0 flex justify-end sm:justify-center">
+                            <div class="flex-shrink-0 flex justify-end">
                                 <Button
                                     variant="ghost"
                                     size="sm"
