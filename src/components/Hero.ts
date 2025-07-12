@@ -80,8 +80,8 @@ export const HeroComponent: Component = {
                         Repeatable('featureCards')
                             .label('Feature Cards')
                             .helperText('Add feature cards to display in the hero section')
-                            .grid(2)
                             .contained()
+                            .responsiveGrid(2, 4, { sm: 1, md: 2 })
                             .schema([
                                 TextInput('title')
                                     .label('Card Title')

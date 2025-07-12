@@ -6,6 +6,7 @@
     import type { FormField } from '../types';
     import DefaultRenderer from '../components/DefaultRenderer.svelte';
     import { CSS_CLASSES } from '../constants';
+    import { cn } from '$lib/utils';
 
     export let field: FormField;
     export let fieldId: string;
@@ -15,6 +16,23 @@
     $: if (!Array.isArray(value)) {
         value = [];
     }
+
+    // Responsive grid configuration
+    $: gridConfig = field.responsiveGrid;
+    $: hasGrid = !!gridConfig;
+    $: columns = gridConfig?.columns || 2;
+    $: gap = gridConfig?.gap || 4;
+    $: responsive = gridConfig?.responsive;
+
+    $: gridClasses = hasGrid ? cn(
+        'grid',
+        'grid-cols-1',
+        responsive?.sm && `sm:grid-cols-${responsive.sm}`,
+        responsive?.md && `md:grid-cols-${responsive.md}`,
+        responsive?.lg && `lg:grid-cols-${responsive.lg}`,
+        !responsive && `md:grid-cols-${columns}`,
+        `gap-${gap}`
+    ) : 'space-y-4';
 
     function addItem() {
         value = [...value, {}];
@@ -33,7 +51,7 @@
         </Button>
     </div>
 
-    <div class="space-y-4" class:grid={field.grid} style={field.grid ? `grid-template-columns: repeat(${field.grid}, minmax(0, 1fr)); gap: 1rem;` : ''}>
+    <div class={gridClasses}>
         {#each value as item, index (index)}
             {#if field.contained}
                 <Card>

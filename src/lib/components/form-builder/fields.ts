@@ -177,13 +177,21 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
-    grid(columns: number): this {
-        this.field.grid = columns;
+    contained(isContained: boolean = true): this {
+        this.field.contained = isContained;
         return this;
     }
 
-    contained(isContained: boolean = true): this {
-        this.field.contained = isContained;
+    responsiveGrid(
+        columns: number = 2,
+        gap: number = 4,
+        responsive?: { sm?: number; md?: number; lg?: number }
+    ): this {
+        this.field.responsiveGrid = {
+            columns,
+            gap,
+            responsive
+        };
         return this;
     }
 

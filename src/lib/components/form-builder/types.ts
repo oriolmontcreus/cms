@@ -111,8 +111,16 @@ export interface FormField {
     maxFileSize?: number; // For file fields - maximum file size in bytes
     // Repeatable specific options
     schema?: SchemaItem[]; // For repeatable fields - the schema to repeat
-    grid?: number; // For repeatable fields - number of columns in the grid
     contained?: boolean; // For repeatable fields - whether to show items in a container
+    responsiveGrid?: {
+        columns?: number; // Number of columns (1-12, default: 2)
+        gap?: number; // Gap between grid items (1-8, default: 4)
+        responsive?: {
+            sm?: number; // Columns on small screens
+            md?: number; // Columns on medium screens
+            lg?: number; // Columns on large screens
+        };
+    }; // For repeatable fields - responsive grid configuration
     // Layout properties
     columnSpan?: number; // For grid layout - how many columns this field should span
     tab?: string; // Tab name this field belongs to
@@ -154,6 +162,7 @@ export interface FieldBuilder {
     maxFileSize(size: number): FieldBuilder;
     columnSpan(span: number): FieldBuilder;
     tab(tabName: string): FieldBuilder;
+    responsiveGrid(columns?: number, gap?: number, responsive?: { sm?: number; md?: number; lg?: number }): FieldBuilder;
 }
 
 // Schema item can be either a field, field builder, tabs container, or grid layout
