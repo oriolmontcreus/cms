@@ -187,7 +187,7 @@
         <div
             class={cn(
                 "border-2 border-dashed bg-background dark:bg-input/30 rounded-lg p-6 text-center transition-colors",
-                isDragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25",
+                isDragOver ? "border-primary bg-primary/10 dark:bg-primary/20" : "border-muted-foreground/25",
                 field.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
             )}
             on:drop={handleDrop}
