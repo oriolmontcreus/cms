@@ -76,7 +76,7 @@ export async function updateComponents(slug: string, components: Component[]): P
 }
 //endregion
 
-//region handlers
+//region Handlers
 export async function handleGetPages(): Promise<Page[]> {
     const [data, err] = await safeFetch(getPages());
     if (err) errorToast('Error loading pages.');
