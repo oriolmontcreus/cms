@@ -4,19 +4,19 @@ import BadRequest from "@/errors/BadRequest.js";
 import AlreadyExists from "@/errors/AlreadyExists.js";
 import { User } from "@shared/types/user.type.js";
 import {
-  getCookie,
   setCookie,
   deleteCookie,
 } from 'hono/cookie'
 import { SESSION_COOKIE, ENV, Environment } from "@/constants/env.js";
 
 export class AuthController {
+
   async login(c: Context) {
+
     const { email, password } = await c.req.json();
     if (!email || !password) {
       throw new BadRequest("Email and password are required");
     }
-
     const { token, user } = await authService.login(email, password);
 
     const cookieOptions = {

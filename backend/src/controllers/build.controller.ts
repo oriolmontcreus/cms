@@ -10,10 +10,10 @@ const execAsync = promisify(exec);
 export class BuildController {
     static async triggerBuild(c: Context) {
         const projectRoot = path.join(process.cwd(), '../../');
-        const astroPath = path.join(projectRoot, 'astro-site');
+        const sitePath = path.join(projectRoot, 'site');
         
         console.log('🚀 Starting production build...');
-        console.log('Building in:', astroPath);
+        console.log('Building in:', sitePath);
         
         // Get pages count for logging
         const pages = await PageService.getPages();
@@ -21,7 +21,7 @@ export class BuildController {
         
         // Run the Astro build (JSON file is already up to date)
         const { stdout, stderr } = await execAsync('npm run build', {
-            cwd: astroPath,
+            cwd: sitePath,
             env: {
                 ...process.env,
                 NODE_ENV: 'production'

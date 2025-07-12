@@ -8,7 +8,7 @@ import { SITE_DIRECTORY_NAME } from "@shared/env";
 //region Local data helpers
 async function getExistingPagesData(): Promise<Page[]> {
     try {
-        // Import the pages.json data directly
+        //TODO: clean up this import
         const pagesData = await import(`../../../${SITE_DIRECTORY_NAME}/src/data/pages.json`);
         return pagesData.default || [];
     } catch (error) {
@@ -71,14 +71,7 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
 }
 
 export async function updateComponents(slug: string, components: Component[]): Promise<Page> {
-    // Still need API for writing to pages.json file
     const { data } = await api.put<Page>(`/pages/${slug}/components`, { components });
-    return data;
-}
-
-export async function updateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page> {
-    // Still need API for writing to pages.json file
-    const { data } = await api.put<Page>(`/pages/${slug}/components/${instanceId}`, { formData });
     return data;
 }
 //endregion
@@ -101,15 +94,6 @@ export async function handleUpdateComponents(slug: string, components: Component
         loading: 'Updating components...',
         success: () => `Components updated successfully.`,
         error: 'Error updating components. Please try again.'
-    });
-    return err ? null : data;
-}
-
-export async function handleUpdateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page | null> {
-    const [data, err] = await fetchWithToast(updateComponentFormData(slug, instanceId, formData), {
-        loading: 'Updating component...',
-        success: () => `Component updated successfully.`,
-        error: 'Error updating component. Please try again.'
     });
     return err ? null : data;
 }
