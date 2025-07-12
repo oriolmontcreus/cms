@@ -20,6 +20,23 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: any = undefined;
+
+    const FIELD_COMPONENTS: Record<string, any> = {
+        'text': TextInput,
+        'textarea': TextareaInput,
+        'number': NumberInput,
+        'date': DatePicker,
+        'dateRange': DateRangePicker,
+        'select': SelectInput,
+        'email': EmailInput,
+        'toggle': ToggleInput,
+        'color': ColorPicker,
+        'richtext': RichEditor,
+        'file': FileInput,
+        'repeatable': RepeatableField
+    };
+
+    $: FieldComponent = FIELD_COMPONENTS[field.type];
 </script>
 
 <div class="space-y-2">
@@ -32,29 +49,11 @@
         </div>
     {/if}
 
-    {#if field.type === 'text'}
-        <TextInput {field} {fieldId} bind:value />
-    {:else if field.type === 'textarea'}
-        <TextareaInput {field} {fieldId} bind:value />
-    {:else if field.type === 'number'}
-        <NumberInput {field} {fieldId} bind:value />
-    {:else if field.type === 'date'}
-        <DatePicker {field} {fieldId} bind:value />
-    {:else if field.type === 'dateRange'}
-        <DateRangePicker {field} {fieldId} bind:value />
-    {:else if field.type === 'select'}
-        <SelectInput {field} {fieldId} bind:value />
-    {:else if field.type === 'email'}
-        <EmailInput {field} {fieldId} bind:value />
-    {:else if field.type === 'toggle'}
-        <ToggleInput {field} {fieldId} bind:value />
-    {:else if field.type === 'color'}
-        <ColorPicker {field} {fieldId} bind:value />
-    {:else if field.type === 'richtext'}
-        <RichEditor {field} {fieldId} bind:value />
-    {:else if field.type === 'file'}
-        <FileInput {field} {fieldId} bind:value />
-    {:else if field.type === 'repeatable'}
-        <RepeatableField {field} {fieldId} bind:value />
+    {#if FieldComponent}
+        <svelte:component this={FieldComponent} {field} {fieldId} bind:value />
+    {:else}
+        <div class="text-red-500 text-sm">
+            Unknown field type: {field.type}
+        </div>
     {/if}
 </div> 
