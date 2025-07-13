@@ -19,7 +19,7 @@
 
     let formData: FormData = initializeFormData(config.components, components);
     let translationData: TranslationData = initializeTranslationData(config.components, components, SITE_LOCALES);
-    let isSubmitting = false;
+    export let isSubmitting = false;
     
     // Ensure translation data is properly initialized for repeatable fields
     $: {
@@ -132,7 +132,7 @@
         return result;
     }
 
-    async function handleSubmit() {
+    export async function handleSubmit() {
         try {
             isSubmitting = true;
             
@@ -239,18 +239,14 @@
     }
 </script>
 
-<form class={CSS_CLASSES.FORM_CONTAINER} on:submit|preventDefault={handleSubmit} novalidate>
-        {#each config.components as componentInstance (componentInstance.id)}
-            <ComponentRenderer 
-                {componentInstance} 
-                {formData}
-                {translationMode}
-                {translationData}
-                locales={SITE_LOCALES}
-            />
+<div class={CSS_CLASSES.FORM_CONTAINER}>
+    {#each config.components as componentInstance (componentInstance.id)}
+        <ComponentRenderer 
+            {componentInstance} 
+            {formData}
+            {translationMode}
+            {translationData}
+            locales={SITE_LOCALES}
+        />
     {/each}
-
-    <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : 'Save Changes'}
-    </Button>
-</form> 
+</div> 

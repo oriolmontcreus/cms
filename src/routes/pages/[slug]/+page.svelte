@@ -9,13 +9,14 @@
     import { safeFetch } from "@/lib/utils/safeFetch";
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import { Button } from "$lib/components/ui/button";
-    import { IconLanguage, IconEdit } from "@tabler/icons-svelte";
+    import { IconLanguage, IconEdit, IconDeviceFloppy } from "@tabler/icons-svelte";
 
     let pageData: Page | null = null;
     let config: PageConfig | null = null;   
     let loading = true;
     let error: string | null = null;
     let translationMode = false;
+    let formBuilderRef: any = null;
 
     onMount(async () => {
             loading = true;
@@ -32,19 +33,32 @@
 </script>
 
 <SiteHeader title={config?.title || 'Page'}>
-    <Button
-        variant="outline"
-        size="sm"
-        onclick={() => translationMode = !translationMode}
-    >
-        {#if translationMode}
-            <IconEdit class="h-4 w-4 mr-2" />
-            Content Mode
-        {:else}
-            <IconLanguage class="h-4 w-4 mr-2" />
-            Translation Mode
+    <div class="flex items-center gap-2">
+        <Button
+            variant="outline"
+            size="sm"
+            onclick={() => translationMode = !translationMode}
+        >
+            {#if translationMode}
+                <IconEdit class="h-4 w-4 mr-2" />
+                Content Mode
+            {:else}
+                <IconLanguage class="h-4 w-4 mr-2" />
+                Translation Mode
+            {/if}
+        </Button>
+        
+        {#if config && pageData}
+            <Button
+                type="button"
+                size="sm"
+                onclick={() => formBuilderRef?.handleSubmit()}
+                disabled={formBuilderRef?.isSubmitting}
+            >
+                <IconDeviceFloppy class="size-4" />
+            </Button>
         {/if}
-    </Button>
+    </div>
 </SiteHeader>
 <div class="flex flex-1 flex-col overflow-hidden">
     <ScrollArea class="@container/main flex flex-1 flex-col gap-2 max-h-[calc(100dvh-80px)]">
@@ -61,6 +75,7 @@
                 {:else if config && pageData}
                     <div class="max-w-4xl mx-auto">
                         <FormBuilder 
+                            bind:this={formBuilderRef}
                             {config} 
                             slug={pageData.slug} 
                             components={pageData.components}
