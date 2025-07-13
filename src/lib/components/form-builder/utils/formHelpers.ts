@@ -187,6 +187,8 @@ export function initializeTranslationData(
             const translatableFields = allFields.filter(field => field.translatable);
             
             translatableFields.forEach(field => {
+                if (field.type === 'repeatable') return;
+                
                 const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[field.name];
                 
                 if (existingTranslation !== undefined) {
@@ -201,6 +203,37 @@ export function initializeTranslationData(
                     translationData[componentInstance.id][locale.code][field.name] = getDefaultValue(field);
                 }
             });
+            
+            // Handle repeatable fields separately
+            const repeatableFields = getAllFields(componentInstance.component.schema).filter(field => field.type === 'repeatable');
+            repeatableFields.forEach(repeatableField => {
+                const repeatableItems = existingComponent?.formData?.[repeatableField.name] || [];
+                const translatableNestedFields = getAllFields(repeatableField.schema || []).filter(f => f.translatable);
+                
+                repeatableItems.forEach((item: any, itemIndex: number) => {
+                    const key = `${repeatableField.name}_${itemIndex}`;
+                    
+                    translatableNestedFields.forEach(nestedField => {
+                        if (locale.code === CMS_LOCALE) {
+                            // For default locale, we don't store in translation data, it's in content mode
+                            return;
+                        }
+                        
+                        // Check if translation exists in the saved format (array structure)
+                        const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[repeatableField.name]?.[itemIndex]?.[nestedField.name];
+                        
+                        if (!translationData[componentInstance.id][locale.code][key]) {
+                            translationData[componentInstance.id][locale.code][key] = {};
+                        }
+                        
+                        if (existingTranslation !== undefined) {
+                            translationData[componentInstance.id][locale.code][key][nestedField.name] = existingTranslation;
+                        } else {
+                            translationData[componentInstance.id][locale.code][key][nestedField.name] = getDefaultValue(nestedField);
+                        }
+                    });
+                });
+            });
         });
     });
     
@@ -210,6 +243,17 @@ export function initializeTranslationData(
 export function getTranslatableFields(schema: Layout | SchemaItem[]): FormField[] {
     const allFields = getAllFields(schema);
     return allFields.filter(field => field.translatable === true);
+}
+
+export function getRepeatableFieldsWithTranslatableContent(schema: Layout | SchemaItem[]): FormField[] {
+    const allFields = getAllFields(schema);
+    return allFields.filter(field => {
+        if (field.type === 'repeatable' && field.schema) {
+            const nestedTranslatableFields = getAllFields(field.schema).filter(f => f.translatable === true);
+            return nestedTranslatableFields.length > 0;
+        }
+        return false;
+    });
 }
 
 function getDefaultValue(field: FormField) {

@@ -32,6 +32,7 @@
             {componentInstance}
             {translationData}
             {locales}
+            {formData}
         />
     {:else if !translationMode}
         {#if usesFilamentTabs(componentInstance.component)}

@@ -6,7 +6,7 @@
     import type { Component } from '@shared/types/pages.type';
     import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
-    import { initializeFormData, initializeTranslationData, getAllFields, collectFilesForDeletion, getTranslatableFields, type FormBuilderContext } from './utils/formHelpers';
+    import { initializeFormData, initializeTranslationData, getAllFields, collectFilesForDeletion, getTranslatableFields, getRepeatableFieldsWithTranslatableContent, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
@@ -21,8 +21,46 @@
     let translationData: TranslationData = initializeTranslationData(config.components, components, SITE_LOCALES);
     let isSubmitting = false;
     
+    // Ensure translation data is properly initialized for repeatable fields
+    $: {
+        config.components.forEach(componentInstance => {
+            const repeatableFields = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
+            
+            repeatableFields.forEach(repeatableField => {
+                const repeatableItems = formData[componentInstance.id]?.[repeatableField.name] || [];
+                const translatableNestedFields = getAllFields(repeatableField.schema || []).filter(f => f.translatable);
+                
+                SITE_LOCALES.forEach(locale => {
+                    if (locale.code !== CMS_LOCALE) {
+                        repeatableItems.forEach((item: any, itemIndex: number) => {
+                            const key = `${repeatableField.name}_${itemIndex}`;
+                            
+                            if (!translationData[componentInstance.id]) {
+                                translationData[componentInstance.id] = {};
+                            }
+                            if (!translationData[componentInstance.id][locale.code]) {
+                                translationData[componentInstance.id][locale.code] = {};
+                            }
+                            if (!translationData[componentInstance.id][locale.code][key]) {
+                                translationData[componentInstance.id][locale.code][key] = {};
+                            }
+                            
+                            translatableNestedFields.forEach(nestedField => {
+                                if (translationData[componentInstance.id][locale.code][key][nestedField.name] === undefined) {
+                                    translationData[componentInstance.id][locale.code][key][nestedField.name] = '';
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    }
+    
     $: totalTranslatableFields = config.components.reduce((total, comp) => {
-        return total + getTranslatableFields(comp.component.schema).length;
+        const regularFields = getTranslatableFields(comp.component.schema).length;
+        const repeatableFields = getRepeatableFieldsWithTranslatableContent(comp.component.schema).length;
+        return total + regularFields + repeatableFields;
     }, 0);
 
     // Sync content mode values to default locale for translatable fields
@@ -143,7 +181,41 @@
                 const processedTranslationData: any = {};
                 if (translationData[componentInstance.id]) {
                     for (const [locale, localeData] of Object.entries(translationData[componentInstance.id])) {
-                        processedTranslationData[locale] = await uploadPendingFiles(localeData);
+                        processedTranslationData[locale] = {};
+                        
+                        // Handle regular translatable fields
+                        const regularFields = getTranslatableFields(componentInstance.component.schema);
+                        for (const field of regularFields) {
+                            if (localeData[field.name] !== undefined) {
+                                processedTranslationData[locale][field.name] = await uploadPendingFiles(localeData[field.name]);
+                            }
+                        }
+                        
+                        // Handle repeatable field translations
+                        const repeatableFields = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
+                        for (const repeatableField of repeatableFields) {
+                            const repeatableItems = formData[componentInstance.id]?.[repeatableField.name] || [];
+                            const translatableNestedFields = getAllFields(repeatableField.schema || []).filter(f => f.translatable);
+                            
+                            for (let itemIndex = 0; itemIndex < repeatableItems.length; itemIndex++) {
+                                const key = `${repeatableField.name}_${itemIndex}`;
+                                if (localeData[key]) {
+                                    if (!processedTranslationData[locale][repeatableField.name]) {
+                                        processedTranslationData[locale][repeatableField.name] = [];
+                                    }
+                                    if (!processedTranslationData[locale][repeatableField.name][itemIndex]) {
+                                        processedTranslationData[locale][repeatableField.name][itemIndex] = {};
+                                    }
+                                    
+                                    for (const nestedField of translatableNestedFields) {
+                                        if (localeData[key][nestedField.name] !== undefined) {
+                                            processedTranslationData[locale][repeatableField.name][itemIndex][nestedField.name] = 
+                                                await uploadPendingFiles(localeData[key][nestedField.name]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -175,7 +247,7 @@
     }
 </script>
 
-<form class={CSS_CLASSES.FORM_CONTAINER} on:submit|preventDefault={handleSubmit}>
+<form class={CSS_CLASSES.FORM_CONTAINER} on:submit|preventDefault={handleSubmit} novalidate>
     {#if translationMode && totalTranslatableFields === 0}
         <div class="text-center py-8">
             <div class="text-muted-foreground mb-2">No translatable fields found</div>

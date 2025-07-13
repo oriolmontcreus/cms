@@ -93,7 +93,8 @@ export const HeroComponent: Component = {
                                 
                                 TextInput('subtitle')
                                     .label('Card Subtitle')
-                                    .placeholder('Enter card subtitle'),
+                                    .placeholder('Enter card subtitle')
+                                    .translatable(),
 
                                 FileInput('icon')
                                     .label('Card Icon')
