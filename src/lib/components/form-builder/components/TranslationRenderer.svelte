@@ -11,9 +11,20 @@
     export let locales: readonly { code: string; name: string; }[];
     export let formData: FormData;
     
-    $: regularTranslatableFields = getTranslatableFields(componentInstance.component.schema);
-    $: repeatableFieldsWithTranslatableContent = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
-    $: hasTranslatableContent = regularTranslatableFields.length > 0 || repeatableFieldsWithTranslatableContent.length > 0;
+    // Add execution counter
+    let reactiveExecutionCount = 0;
+
+    // Declare variables before using them in reactive statement
+    let regularTranslatableFields: any[] = [];
+    let repeatableFieldsWithTranslatableContent: any[] = [];
+    let hasTranslatableContent = false;
+
+    $: {
+        console.log('[TranslationRenderer] Reactive computations executed', ++reactiveExecutionCount);
+        regularTranslatableFields = getTranslatableFields(componentInstance.component.schema);
+        repeatableFieldsWithTranslatableContent = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
+        hasTranslatableContent = regularTranslatableFields.length > 0 || repeatableFieldsWithTranslatableContent.length > 0;
+    }
     
     let activeLocale = locales[0]?.code || '';
     

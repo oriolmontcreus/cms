@@ -20,9 +20,13 @@
     let formData: FormData = initializeFormData(config.components, components);
     let translationData: TranslationData = initializeTranslationData(config.components, components, SITE_LOCALES);
     export let isSubmitting = false;
-    
+
+    // Add execution counter
+    let reactiveExecutionCount = 0;
+
     // Ensure translation data is properly initialized for repeatable fields
     $: {
+        console.log('[FormBuilder] Reactive block #1 executed', ++reactiveExecutionCount);
         config.components.forEach(componentInstance => {
             const repeatableFields = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
             
@@ -57,6 +61,7 @@
         });
     }
     $: {
+        console.log('[FormBuilder] Reactive block #2 executed', ++reactiveExecutionCount);
         if (!translationMode) {
             // Only sync when in content mode to avoid conflicts
             config.components.forEach(componentInstance => {
@@ -89,6 +94,7 @@
     setContext('formBuilder', formBuilderContext);
 
     async function uploadPendingFiles(data: any, fieldConfig?: any): Promise<any> {
+        console.log('[FormBuilder] uploadPendingFiles called');
         if (!data || typeof data !== 'object') return data;
         
         if (data instanceof File) {
@@ -133,6 +139,7 @@
     }
 
     export async function handleSubmit() {
+        console.log('[FormBuilder] handleSubmit called');
         try {
             isSubmitting = true;
             

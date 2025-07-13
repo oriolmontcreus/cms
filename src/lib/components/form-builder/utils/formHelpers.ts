@@ -8,6 +8,7 @@ export interface FormBuilderContext {
 }
 
 export function collectFilesForDeletion(itemData: any, addToQueue: (fileIds: string[]) => void) {
+    console.log('[formHelpers] collectFilesForDeletion called');
     const fileIds: string[] = [];
     
     function extractFileIds(obj: any) {
@@ -48,6 +49,7 @@ export function convertToFormField(item: any): FormField | null {
 }
 
 export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
+    console.log('[formHelpers] getAllFields called');
     if (Array.isArray(schema)) {
         return schema
             .flatMap(item => {
@@ -71,11 +73,13 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
 }
 
 export function usesMixedSchema(component: any): boolean {
+    console.log('[formHelpers] usesMixedSchema called');
     if (!Array.isArray(component.schema)) return false;
     return component.schema.some((item: any) => item.type === SCHEMA_TYPES.TABS_SELECTOR);
 }
 
 export function usesFilamentTabs(component: any): boolean {
+    console.log('[formHelpers] usesFilamentTabs called');
     if (!Array.isArray(component.schema)) return false;
     return component.schema.some((item: any) => item.type === SCHEMA_TYPES.TABS_CONTAINER);
 }
@@ -89,6 +93,7 @@ export function isTabsContainer(item: SchemaItem): item is TabsContainer {
 }
 
 export function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[], schema: any[]): Record<string, FormField[]> {
+    console.log('[formHelpers] groupFieldsByTab called');
     const tabFields: Record<string, FormField[]> = {};
 
     tabs.forEach(tab => {
@@ -148,6 +153,7 @@ export function renderSchemaItem(item: SchemaItem, componentId: string, activeTa
 }
 
 export function initializeFormData(components: any[], existingComponents: Component[]): FormData {
+    console.log('[formHelpers] initializeFormData called');
     const formData: FormData = {};
     
     components.forEach(componentInstance => {
@@ -174,6 +180,7 @@ export function initializeTranslationData(
     existingComponents: Component[], 
     locales: readonly { code: string; name: string; }[]
 ): TranslationData {
+    console.log('[formHelpers] initializeTranslationData called');
     const translationData: TranslationData = {};
     
     components.forEach(componentInstance => {
@@ -241,11 +248,13 @@ export function initializeTranslationData(
 }
 
 export function getTranslatableFields(schema: Layout | SchemaItem[]): FormField[] {
+    console.log('[formHelpers] getTranslatableFields called');
     const allFields = getAllFields(schema);
     return allFields.filter(field => field.translatable === true);
 }
 
 export function getRepeatableFieldsWithTranslatableContent(schema: Layout | SchemaItem[]): FormField[] {
+    console.log('[formHelpers] getRepeatableFieldsWithTranslatableContent called');
     const allFields = getAllFields(schema);
     return allFields.filter(field => {
         if (field.type === 'repeatable' && field.schema) {
