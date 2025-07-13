@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { UploadedFile, UploadedFileWithDeletionFlag } from '@shared/types/file.type';
+    import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import { Button } from '@components/ui/button';
     import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
     import ConfirmPopover from '@components/ConfirmPopover.svelte';
@@ -14,8 +14,7 @@
     export let disabled = false;
     export let onDelete: () => void;
 
-    // Check if this is a pending file (File object) vs uploaded file (UploadedFile)
-    $: isPendingFile = !fileData.id; // Empty id means it's a pending file
+    $: isPendingFile = !fileData.id;
     $: isMarkedForDeletion = fileData._markedForDeletion;
 
     const formatFileSize = (bytes: number): string => {
@@ -37,6 +36,14 @@
             timeStyle: 'short'
         }).format(date);
     };
+
+    const buttonClasses = {
+        info: "text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20",
+        open: "text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-950/20",
+        cancel: "text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950/20",
+        undo: "text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20",
+        delete: "text-red-600 hover:text-red-700 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/20"
+    };
 </script>
 
 <div class="inline-flex -space-x-px rounded-lg rtl:space-x-reverse w-fit">
@@ -44,7 +51,7 @@
         <Popover>
             <PopoverTrigger>
                 <Button
-                    class="rounded-none shadow-none first:rounded-s-md focus-visible:z-10 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20"
+                    class="rounded-none shadow-none first:rounded-s-md focus-visible:z-10 {buttonClasses.info}"
                     variant="outline"
                     size="icon"
                     {disabled}
@@ -78,7 +85,7 @@
         </Popover>
         
         <Button
-            class="rounded-none shadow-none focus-visible:z-10 text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-950/20"
+            class="rounded-none shadow-none focus-visible:z-10 {buttonClasses.open}"
             variant="outline"
             size="icon"
             {disabled}
@@ -92,7 +99,7 @@
     
     {#if isPendingFile}
         <Button
-            class="shadow-none rounded-md focus-visible:z-10 text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950/20"
+            class="shadow-none rounded-md focus-visible:z-10 {buttonClasses.cancel}"
             variant="outline"
             size="icon"
             {disabled}
@@ -104,7 +111,7 @@
         </Button>
     {:else if isMarkedForDeletion}
         <Button
-            class="shadow-none rounded-md focus-visible:z-10 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20"
+            class="shadow-none rounded-md focus-visible:z-10 {buttonClasses.undo}"
             variant="outline"
             size="icon"
             {disabled}
@@ -125,7 +132,7 @@
             {disabled}
         >
             <Button
-                class="rounded-none shadow-none last:rounded-e-md focus-visible:z-10 text-red-600 hover:text-red-700 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/20"
+                class="rounded-none shadow-none last:rounded-e-md focus-visible:z-10 {buttonClasses.delete}"
                 variant="outline"
                 size="icon"
                 {disabled}

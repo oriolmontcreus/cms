@@ -29,26 +29,21 @@
     };
     setContext('formBuilder', formBuilderContext);
 
-    // Helper function to find and upload File objects in form data
     async function uploadPendingFiles(data: any, fieldConfig?: any): Promise<any> {
         if (!data || typeof data !== 'object') return data;
         
         if (data instanceof File) {
-            // Upload single file
             const uploadedFiles = await handleUploadFiles([data]);
             return uploadedFiles?.[0] || null;
         }
         
         if (Array.isArray(data)) {
-            // Handle arrays - upload any File objects and collect files marked for deletion
             const result = [];
             for (const item of data) {
                 if (item && (item as UploadedFileWithDeletionFlag)._markedForDeletion) {
-                    // Collect file for deletion
                     if ((item as UploadedFileWithDeletionFlag).id) {
                         filesToDelete.update(current => [...current, (item as UploadedFileWithDeletionFlag).id]);
                     }
-                    // Don't include in result
                 } else if (item instanceof File) {
                     const uploadedFiles = await handleUploadFiles([item]);
                     if (uploadedFiles?.[0]) result.push(uploadedFiles[0]);
@@ -59,18 +54,14 @@
             return result.length > 0 ? result : null;
         }
         
-        // Handle objects recursively
         const result: any = {};
         for (const [key, value] of Object.entries(data)) {
-            // Check if this is a file field and handle single file replacement
             if (value instanceof File) {
-                // For single files, delete the existing file first if it exists
                 const existingValue = formData[fieldConfig?.componentId]?.[key];
                 if (existingValue && existingValue.id && !Array.isArray(existingValue)) {
                     await handleDeleteFiles([existingValue.id]);
                 }
             } else if (value && (value as UploadedFileWithDeletionFlag)._markedForDeletion) {
-                // Handle single file marked for deletion
                 if ((value as UploadedFileWithDeletionFlag).id) {
                     filesToDelete.update(current => [...current, (value as UploadedFileWithDeletionFlag).id]);
                 }
@@ -86,7 +77,6 @@
         try {
             isSubmitting = true;
             
-            // Upload any pending files in the form data
             const processedFormData = { ...formData };
             for (const componentId of Object.keys(processedFormData)) {
                 processedFormData[componentId] = await uploadPendingFiles(
@@ -99,10 +89,8 @@
                 const allFields = getAllFields(componentInstance.component.schema);
                 const colorFields = allFields.filter(field => field.type === 'color');
                 
-                // Validate and clean form data
                 let componentFormData = { ...processedFormData[componentInstance.id] };
                 
-                // Ensure color fields only contain valid color strings
                 for (const field of colorFields) {
                     const value = componentFormData[field.name];
                     if (value && typeof value !== 'string') {
@@ -119,15 +107,12 @@
                 };
             });
             
-            // Save form data
             await handleUpdateComponents(slug, updatedComponents);
             
-            // After successful save, delete all files marked for deletion
             const fileIdsToDelete = $filesToDelete;
             
             if (fileIdsToDelete.length > 0) {
                 await handleDeleteFiles(fileIdsToDelete);
-                // Clear the deletion queue after successful deletion
                 filesToDelete.set([]);
             }
             

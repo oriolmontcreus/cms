@@ -1,16 +1,14 @@
 <script lang="ts">
     import type { FormField } from '../../types';
-    import { Button } from '@components/ui/button';
     import { cn } from '$lib/utils';
-    import XIcon from '@tabler/icons-svelte/icons/x';
     import UploadIcon from '@tabler/icons-svelte/icons/upload';
-    import type { UploadedFile, UploadedFileWithDeletionFlag } from '@shared/types/file.type';
+    import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import { onMount } from 'svelte';
     import FileIcon from '../FileIcon.svelte';
     import VideoPreview from './VideoPreview.svelte';
     import FileActionBar from './FileActionBar.svelte';
     import { TooltipProvider } from '@components/ui/tooltip';
-    import { getFileUrl, handleDeleteFiles } from '@/services/file.service';
+    import { getFileUrl } from '@/services/file.service';
     import { errorToast } from '@/services/toast.service';
 
     export let field: FormField;
@@ -24,13 +22,8 @@
     const isImage = (mimeType: string) => mimeType.startsWith('image/');
     const isVideo = (mimeType: string) => mimeType.startsWith('video/');
     const isFile = (item: any): item is File => item instanceof File;
-    const isUploadedFile = (item: any): item is UploadedFileWithDeletionFlag => item && typeof item === 'object' && 'id' in item;
 
-    // Get current files as array for display
     $: currentFiles = Array.isArray(value) ? value : (value ? [value] : []);
-    
-    // Show all files including those marked for deletion (FileActionBar will handle the visual state)
-    $: displayFiles = currentFiles;
 
     const validateFile = (file: File): string | null => {
         if (field.allowedMimeTypes?.length && !field.allowedMimeTypes.includes(file.type)) {
@@ -63,11 +56,7 @@
         isProcessing = true;
         
         try {
-            if (field.multiple) {
-                value = [...currentFiles, ...validFiles];
-            } else {
-                value = validFiles[0];
-            }
+            value = field.multiple ? [...currentFiles, ...validFiles] : validFiles[0];
         } finally {
             isProcessing = false;
         }
@@ -86,47 +75,32 @@
         if (files?.length) processFiles(Array.from(files));
     };
 
-    const handleDragOver = (event: DragEvent) => {
-        event.preventDefault();
-        isDragOver = true;
-    };
-
-    const removeFile = async (fileToRemove: File | UploadedFileWithDeletionFlag) => {
+    const removeFile = (fileToRemove: File | UploadedFileWithDeletionFlag) => {
         if (isProcessing) return;
 
         isProcessing = true;
         
         try {
             if (isFile(fileToRemove)) {
-                // Remove from pending files
+                value = field.multiple 
+                    ? currentFiles.filter(f => f !== fileToRemove) || null
+                    : null;
+            } else {
+                const isMarkedForDeletion = fileToRemove._markedForDeletion;
+                
                 if (field.multiple) {
-                    const updatedFiles = currentFiles.filter(f => f !== fileToRemove);
-                    value = updatedFiles.length > 0 ? updatedFiles : null;
+                    const updatedFiles = currentFiles.map(f => 
+                        f === fileToRemove 
+                            ? isMarkedForDeletion 
+                                ? { ...f, _markedForDeletion: undefined }
+                                : { ...f, _markedForDeletion: true }
+                            : f
+                    );
+                    value = updatedFiles;
                 } else {
-                    value = null;
-                }
-            } else if (isUploadedFile(fileToRemove)) {
-                if (fileToRemove._markedForDeletion) {
-                    // Undo deletion - remove the _markedForDeletion flag
-                    if (field.multiple) {
-                        const updatedFiles = currentFiles.map(f => 
-                            f === fileToRemove ? { ...f, _markedForDeletion: undefined } : f
-                        );
-                        value = updatedFiles;
-                    } else {
-                        const { _markedForDeletion, ...cleanFile } = fileToRemove;
-                        value = cleanFile;
-                    }
-                } else {
-                    // Mark uploaded file for deletion instead of deleting immediately
-                    if (field.multiple) {
-                        const updatedFiles = currentFiles.map(f => 
-                            f === fileToRemove ? { ...f, _markedForDeletion: true } : f
-                        );
-                        value = updatedFiles;
-                    } else {
-                        value = { ...fileToRemove, _markedForDeletion: true };
-                    }
+                    value = isMarkedForDeletion
+                        ? (({ _markedForDeletion, ...rest }) => rest)(fileToRemove)
+                        : { ...fileToRemove, _markedForDeletion: true };
                 }
             }
         } finally {
@@ -142,43 +116,20 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const getDisplayFileUrl = (file: File | UploadedFileWithDeletionFlag): string => {
-        if (isFile(file)) {
-            return URL.createObjectURL(file);
-        }
-        return getFileUrl(file);
-    };
+    const getFileData = (file: File | UploadedFileWithDeletionFlag) => ({
+        url: isFile(file) ? URL.createObjectURL(file) : getFileUrl(file),
+        name: isFile(file) ? file.name : file.originalName || file.fileName,
+        size: file.size,
+        mimeType: isFile(file) ? file.type : file.mimeType
+    });
 
-    const getFileName = (file: File | UploadedFileWithDeletionFlag): string => {
-        if (isFile(file)) {
-            return file.name;
-        }
-        return file.originalName || file.fileName;
-    };
-
-    const getFileSize = (file: File | UploadedFileWithDeletionFlag): number => {
-        return file.size;
-    };
-
-    const getMimeType = (file: File | UploadedFileWithDeletionFlag): string => {
-        if (isFile(file)) {
-            return file.type;
-        }
-        return file.mimeType;
-    };
-
-    // Clean up object URLs on destroy
     onMount(() => {
         return () => {
-            if (Array.isArray(value)) {
-                value.forEach(file => {
-                    if (isFile(file)) {
-                        URL.revokeObjectURL(getDisplayFileUrl(file));
-                    }
-                });
-            } else if (value && isFile(value)) {
-                URL.revokeObjectURL(getDisplayFileUrl(value));
-            }
+            currentFiles.forEach(file => {
+                if (isFile(file)) {
+                    URL.revokeObjectURL(getFileData(file).url);
+                }
+            });
         };
     });
 </script>
@@ -203,7 +154,7 @@
                 field.disabled || isProcessing ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
             )}
             on:drop={handleDrop}
-            on:dragover={handleDragOver}
+            on:dragover={(e) => { e.preventDefault(); isDragOver = true; }}
             on:dragleave={() => isDragOver = false}
             on:click={() => !isProcessing && fileInput?.click()}
             role="button"
@@ -228,63 +179,66 @@
             </div>
         </div>
 
-        {#if displayFiles.length > 0}
+        {#if currentFiles.length > 0}
             <div class="space-y-2">
-                {#each displayFiles as fileData}
-                    <div class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6 {isFile(fileData) ? 'border border-dashed border-yellow-500' : isUploadedFile(fileData) && fileData._markedForDeletion ? 'border border-dashed border-red-500' : ''}">
-                        {#if isFile(fileData)}
+                {#each currentFiles as fileData}
+                    {@const { url, name, size, mimeType } = getFileData(fileData)}
+                    {@const isPending = isFile(fileData)}
+                    {@const isMarkedForDeletion = !isPending && fileData._markedForDeletion}
+                    
+                    <div class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6 {isPending ? 'border border-dashed border-yellow-500' : isMarkedForDeletion ? 'border border-dashed border-red-500' : ''}">
+                        {#if isPending}
                             <div class="flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400">
                                 <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
                                 Pending upload
                             </div>
-                        {:else if isUploadedFile(fileData) && fileData._markedForDeletion}
+                        {:else if isMarkedForDeletion}
                             <div class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
                                 <div class="w-2 h-2 bg-red-500 rounded-full"></div>
                                 Marked for deletion
                             </div>
                         {/if}
+                        
                         <div class="flex-shrink-0 w-full sm:w-auto">
-                            {#if isImage(getMimeType(fileData))}
+                            {#if isImage(mimeType)}
                                 <img 
-                                    src={getDisplayFileUrl(fileData)}
+                                    src={url}
                                     loading="lazy"
                                     draggable={false}
-                                    alt={getFileName(fileData)}
+                                    alt={name}
                                     class="w-full h-48 object-cover rounded-lg select-none sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28"
                                 />
-                            {:else if isVideo(getMimeType(fileData))}
+                            {:else if isVideo(mimeType)}
                                 <VideoPreview 
-                                    src={getDisplayFileUrl(fileData)}
-                                    title={getFileName(fileData)}
+                                    src={url}
+                                    title={name}
                                     thumbnailClass="w-full object-cover rounded-lg select-none"
                                 />
                             {:else}
                                 <div class="flex justify-center sm:justify-start">
                                     <FileIcon 
-                                        mimeType={getMimeType(fileData)} 
-                                        fileName={getFileName(fileData)} 
+                                        mimeType={mimeType} 
+                                        fileName={name} 
                                         size={32} 
                                         class="text-muted-foreground" 
                                     />
                                 </div>
                             {/if}
                         </div>
+                        
                         <div class="min-w-0 flex-1 space-y-1">
-                            <p class="text-sm font-medium truncate">
-                                {getFileName(fileData)}
-                            </p>
-                            <p class="text-xs text-muted-foreground">
-                                {formatFileSize(getFileSize(fileData))}
-                            </p>
+                            <p class="text-sm font-medium truncate">{name}</p>
+                            <p class="text-xs text-muted-foreground">{formatFileSize(size)}</p>
                         </div>
+                        
                         <FileActionBar
-                            fileData={isFile(fileData) ? { 
+                            fileData={isPending ? { 
                                 id: '', 
-                                originalName: fileData.name, 
-                                fileName: fileData.name, 
-                                mimeType: fileData.type, 
-                                size: fileData.size,
-                                path: getDisplayFileUrl(fileData), 
+                                originalName: name, 
+                                fileName: name, 
+                                mimeType, 
+                                size,
+                                path: url, 
                                 uploadedAt: new Date() 
                             } : fileData}
                             disabled={field.disabled || isProcessing}
