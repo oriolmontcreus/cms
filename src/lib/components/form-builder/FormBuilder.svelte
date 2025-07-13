@@ -6,7 +6,7 @@
     import type { Component } from '@shared/types/pages.type';
     import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
-    import { initializeFormData, initializeTranslationData, collectFilesForDeletion } from './utils/formHelpers';
+    import { initializeFormData, initializeTranslationData, collectFilesForDeletion, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
@@ -77,49 +77,91 @@
         });
     }
 
-    async function uploadPendingFiles(data: any, fieldConfig?: any): Promise<any> {
-        console.log('[FormBuilder] uploadPendingFiles called');
+    // Helper function to collect all files that need to be uploaded
+    function collectPendingFiles(data: any): File[] {
+        const files: File[] = [];
+        
+        function traverse(value: any) {
+            if (!value || typeof value !== 'object') return;
+            
+            if (value instanceof File) {
+                files.push(value);
+                return;
+            }
+            
+            if (Array.isArray(value)) {
+                value.forEach(item => traverse(item));
+                return;
+            }
+            
+            Object.values(value).forEach(val => traverse(val));
+        }
+        
+        traverse(data);
+        return files;
+    }
+
+    // Helper function to mark files for deletion
+    function markFilesForDeletion(data: any) {
+        function traverse(value: any) {
+            if (!value || typeof value !== 'object') return;
+            
+            if ((value as UploadedFileWithDeletionFlag)._markedForDeletion && (value as UploadedFileWithDeletionFlag).id) {
+                filesToDelete.update(current => [...current, (value as UploadedFileWithDeletionFlag).id]);
+                return;
+            }
+            
+            if (Array.isArray(value)) {
+                value.forEach(item => traverse(item));
+                return;
+            }
+            
+            Object.values(value).forEach(val => traverse(val));
+        }
+        
+        traverse(data);
+    }
+
+    // Helper function to replace file references in data
+    function replaceFileReferences(data: any, fileMap: Map<File, any>): any {
         if (!data || typeof data !== 'object') return data;
         
         if (data instanceof File) {
-            const uploadedFiles = await handleUploadFiles([data]);
-            return uploadedFiles?.[0] || null;
+            return fileMap.get(data) || null;
         }
         
         if (Array.isArray(data)) {
-            const result = [];
-            for (const item of data) {
-                if (item && (item as UploadedFileWithDeletionFlag)._markedForDeletion) {
-                    if ((item as UploadedFileWithDeletionFlag).id) {
-                        filesToDelete.update(current => [...current, (item as UploadedFileWithDeletionFlag).id]);
-                    }
-                } else if (item instanceof File) {
-                    const uploadedFiles = await handleUploadFiles([item]);
-                    if (uploadedFiles?.[0]) result.push(uploadedFiles[0]);
-                } else {
-                    result.push(await uploadPendingFiles(item));
-                }
-            }
-            return result.length > 0 ? result : null;
+            return data.map(item => replaceFileReferences(item, fileMap));
         }
         
         const result: any = {};
         for (const [key, value] of Object.entries(data)) {
-            if (value instanceof File) {
-                const existingValue = formData[fieldConfig?.componentId]?.[key];
-                if (existingValue && existingValue.id && !Array.isArray(existingValue)) {
-                    await handleDeleteFiles([existingValue.id]);
-                }
-            } else if (value && (value as UploadedFileWithDeletionFlag)._markedForDeletion) {
-                if ((value as UploadedFileWithDeletionFlag).id) {
-                    filesToDelete.update(current => [...current, (value as UploadedFileWithDeletionFlag).id]);
-                }
+            if ((value as UploadedFileWithDeletionFlag)?._markedForDeletion) {
                 result[key] = null;
-                continue;
+            } else {
+                result[key] = replaceFileReferences(value, fileMap);
             }
-            result[key] = await uploadPendingFiles(value);
         }
         return result;
+    }
+
+    async function uploadPendingFiles(data: any): Promise<any> {
+        console.log('[FormBuilder] uploadPendingFiles called');
+        
+        // Step 1: Collect all files that need to be uploaded
+        const pendingFiles = collectPendingFiles(data);
+        
+        // Step 2: Mark files for deletion
+        markFilesForDeletion(data);
+        
+        // Step 3: Upload all files in a single batch
+        const uploadedFiles = pendingFiles.length > 0 ? (await handleUploadFiles(pendingFiles) || []) : [];
+        
+        // Step 4: Create a map of original files to their uploaded versions
+        const fileMap = new Map(pendingFiles.map((file, index) => [file, uploadedFiles[index]]));
+        
+        // Step 5: Replace all file references in the data structure
+        return replaceFileReferences(data, fileMap);
     }
 
     export async function handleSubmit() {
@@ -127,12 +169,10 @@
         try {
             isSubmitting = true;
             
+            // Process all form data at once
             const processedFormData = { ...formData };
             for (const componentId of Object.keys(processedFormData)) {
-                processedFormData[componentId] = await uploadPendingFiles(
-                    processedFormData[componentId], 
-                    { componentId }
-                );
+                processedFormData[componentId] = await uploadPendingFiles(processedFormData[componentId]);
             }
             
             const updatedComponents = await Promise.all(config.components.map(async componentInstance => ({
