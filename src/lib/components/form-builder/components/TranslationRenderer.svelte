@@ -22,14 +22,6 @@
 
 {#if hasTranslatableContent}
     <div class="border rounded-lg p-4 bg-muted/30">
-        <div class="flex items-center gap-2 mb-4">
-            <h4 class="text-sm font-medium text-muted-foreground">
-                {componentInstance.displayName || componentInstance.component.name}
-            </h4>
-            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                {regularTranslatableFields.length + repeatableFieldsWithTranslatableContent.length} translatable field{(regularTranslatableFields.length + repeatableFieldsWithTranslatableContent.length) === 1 ? '' : 's'}
-            </span>
-        </div>
         
         <Tabs bind:value={activeLocale} class="w-full">
             <TabsList class="grid w-full grid-cols-{locales.length} mb-4">

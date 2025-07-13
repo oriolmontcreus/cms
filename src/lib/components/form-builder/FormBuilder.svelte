@@ -56,14 +56,6 @@
             });
         });
     }
-    
-    $: totalTranslatableFields = config.components.reduce((total, comp) => {
-        const regularFields = getTranslatableFields(comp.component.schema).length;
-        const repeatableFields = getRepeatableFieldsWithTranslatableContent(comp.component.schema).length;
-        return total + regularFields + repeatableFields;
-    }, 0);
-
-    // Sync content mode values to default locale for translatable fields
     $: {
         if (!translationMode) {
             // Only sync when in content mode to avoid conflicts
@@ -248,14 +240,6 @@
 </script>
 
 <form class={CSS_CLASSES.FORM_CONTAINER} on:submit|preventDefault={handleSubmit} novalidate>
-    {#if translationMode && totalTranslatableFields === 0}
-        <div class="text-center py-8">
-            <div class="text-muted-foreground mb-2">No translatable fields found</div>
-            <p class="text-sm text-muted-foreground">
-                Add the <code class="bg-muted px-1 rounded">.translatable()</code> method to fields you want to translate.
-            </p>
-        </div>
-    {:else}
         {#each config.components as componentInstance (componentInstance.id)}
             <ComponentRenderer 
                 {componentInstance} 
@@ -264,8 +248,7 @@
                 {translationData}
                 locales={SITE_LOCALES}
             />
-        {/each}
-    {/if}
+    {/each}
 
     <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Saving...' : 'Save Changes'}
