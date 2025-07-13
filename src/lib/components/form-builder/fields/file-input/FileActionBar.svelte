@@ -1,20 +1,22 @@
 <script lang="ts">
-    import type { UploadedFile } from '@shared/types/file.type';
+    import type { UploadedFile, UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import { Button } from '@components/ui/button';
     import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
     import ConfirmPopover from '@components/ConfirmPopover.svelte';
     import TrashIcon from '@tabler/icons-svelte/icons/trash';
     import XIcon from '@tabler/icons-svelte/icons/x';
+    import UndoIcon from '@tabler/icons-svelte/icons/arrow-back-up';
     import InfoCircleIcon from '@tabler/icons-svelte/icons/info-circle';
     import ExternalLinkIcon from '@tabler/icons-svelte/icons/external-link';
     import { getFileUrl } from '@/services/file.service';
 
-    export let fileData: UploadedFile;
+    export let fileData: UploadedFileWithDeletionFlag;
     export let disabled = false;
     export let onDelete: () => void;
 
     // Check if this is a pending file (File object) vs uploaded file (UploadedFile)
-    $: isPendingFile = fileData instanceof File || !fileData.id;
+    $: isPendingFile = !fileData.id; // Empty id means it's a pending file
+    $: isMarkedForDeletion = fileData._markedForDeletion;
 
     const formatFileSize = (bytes: number): string => {
         if (bytes === 0) return '0 Bytes';
@@ -38,7 +40,7 @@
 </script>
 
 <div class="inline-flex -space-x-px rounded-lg rtl:space-x-reverse w-fit">
-    {#if !isPendingFile}
+    {#if !isPendingFile && !isMarkedForDeletion}
         <Popover>
             <PopoverTrigger>
                 <Button
@@ -99,6 +101,18 @@
             onclick={onDelete}
         >
             <XIcon size={16} aria-hidden="true" />
+        </Button>
+    {:else if isMarkedForDeletion}
+        <Button
+            class="shadow-none rounded-md focus-visible:z-10 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/20"
+            variant="outline"
+            size="icon"
+            {disabled}
+            title="Undo delete"
+            aria-label="Undo delete"
+            onclick={onDelete}
+        >
+            <UndoIcon size={16} aria-hidden="true" />
         </Button>
     {:else}
         <ConfirmPopover

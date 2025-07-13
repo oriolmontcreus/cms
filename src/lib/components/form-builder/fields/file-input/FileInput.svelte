@@ -4,7 +4,7 @@
     import { cn } from '$lib/utils';
     import XIcon from '@tabler/icons-svelte/icons/x';
     import UploadIcon from '@tabler/icons-svelte/icons/upload';
-    import type { UploadedFile } from '@shared/types/file.type';
+    import type { UploadedFile, UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import { onMount } from 'svelte';
     import FileIcon from '../FileIcon.svelte';
     import VideoPreview from './VideoPreview.svelte';
@@ -24,10 +24,13 @@
     const isImage = (mimeType: string) => mimeType.startsWith('image/');
     const isVideo = (mimeType: string) => mimeType.startsWith('video/');
     const isFile = (item: any): item is File => item instanceof File;
-    const isUploadedFile = (item: any): item is UploadedFile => item && typeof item === 'object' && 'id' in item;
+    const isUploadedFile = (item: any): item is UploadedFileWithDeletionFlag => item && typeof item === 'object' && 'id' in item;
 
     // Get current files as array for display
     $: currentFiles = Array.isArray(value) ? value : (value ? [value] : []);
+    
+    // Show all files including those marked for deletion (FileActionBar will handle the visual state)
+    $: displayFiles = currentFiles;
 
     const validateFile = (file: File): string | null => {
         if (field.allowedMimeTypes?.length && !field.allowedMimeTypes.includes(file.type)) {
@@ -88,7 +91,7 @@
         isDragOver = true;
     };
 
-    const removeFile = async (fileToRemove: any) => {
+    const removeFile = async (fileToRemove: File | UploadedFileWithDeletionFlag) => {
         if (isProcessing) return;
 
         isProcessing = true;
@@ -103,16 +106,27 @@
                     value = null;
                 }
             } else if (isUploadedFile(fileToRemove)) {
-                // Remove from uploaded files and delete from server
-                if (fileToRemove.id) {
-                    await handleDeleteFiles([fileToRemove.id]);
-                }
-                
-                if (field.multiple) {
-                    const updatedFiles = currentFiles.filter(f => f !== fileToRemove);
-                    value = updatedFiles.length > 0 ? updatedFiles : null;
+                if (fileToRemove._markedForDeletion) {
+                    // Undo deletion - remove the _markedForDeletion flag
+                    if (field.multiple) {
+                        const updatedFiles = currentFiles.map(f => 
+                            f === fileToRemove ? { ...f, _markedForDeletion: undefined } : f
+                        );
+                        value = updatedFiles;
+                    } else {
+                        const { _markedForDeletion, ...cleanFile } = fileToRemove;
+                        value = cleanFile;
+                    }
                 } else {
-                    value = null;
+                    // Mark uploaded file for deletion instead of deleting immediately
+                    if (field.multiple) {
+                        const updatedFiles = currentFiles.map(f => 
+                            f === fileToRemove ? { ...f, _markedForDeletion: true } : f
+                        );
+                        value = updatedFiles;
+                    } else {
+                        value = { ...fileToRemove, _markedForDeletion: true };
+                    }
                 }
             }
         } finally {
@@ -128,25 +142,25 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const getDisplayFileUrl = (file: any): string => {
+    const getDisplayFileUrl = (file: File | UploadedFileWithDeletionFlag): string => {
         if (isFile(file)) {
             return URL.createObjectURL(file);
         }
         return getFileUrl(file);
     };
 
-    const getFileName = (file: any): string => {
+    const getFileName = (file: File | UploadedFileWithDeletionFlag): string => {
         if (isFile(file)) {
             return file.name;
         }
         return file.originalName || file.fileName;
     };
 
-    const getFileSize = (file: any): number => {
+    const getFileSize = (file: File | UploadedFileWithDeletionFlag): number => {
         return file.size;
     };
 
-    const getMimeType = (file: any): string => {
+    const getMimeType = (file: File | UploadedFileWithDeletionFlag): string => {
         if (isFile(file)) {
             return file.type;
         }
@@ -214,14 +228,19 @@
             </div>
         </div>
 
-        {#if currentFiles.length > 0}
+        {#if displayFiles.length > 0}
             <div class="space-y-2">
-                {#each currentFiles as fileData}
-                    <div class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6 {isFile(fileData) ? 'border border-dashed border-yellow-500' : ''}">
+                {#each displayFiles as fileData}
+                    <div class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6 {isFile(fileData) ? 'border border-dashed border-yellow-500' : isUploadedFile(fileData) && fileData._markedForDeletion ? 'border border-dashed border-red-500' : ''}">
                         {#if isFile(fileData)}
                             <div class="flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400">
                                 <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
                                 Pending upload
+                            </div>
+                        {:else if isUploadedFile(fileData) && fileData._markedForDeletion}
+                            <div class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                Marked for deletion
                             </div>
                         {/if}
                         <div class="flex-shrink-0 w-full sm:w-auto">
@@ -259,7 +278,15 @@
                             </p>
                         </div>
                         <FileActionBar
-                            fileData={isFile(fileData) ? { ...fileData, originalName: fileData.name, fileName: fileData.name, mimeType: fileData.type, path: getDisplayFileUrl(fileData), uploadedAt: new Date() } : fileData}
+                            fileData={isFile(fileData) ? { 
+                                id: '', 
+                                originalName: fileData.name, 
+                                fileName: fileData.name, 
+                                mimeType: fileData.type, 
+                                size: fileData.size,
+                                path: getDisplayFileUrl(fileData), 
+                                uploadedAt: new Date() 
+                            } : fileData}
                             disabled={field.disabled || isProcessing}
                             onDelete={() => removeFile(fileData)}
                         />

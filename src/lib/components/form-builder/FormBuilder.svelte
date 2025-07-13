@@ -4,6 +4,7 @@
     import { handleUpdateComponents } from '@/services/page.service';
     import { handleDeleteFiles, handleUploadFiles } from '@/services/file.service';
     import type { Component } from '@shared/types/pages.type';
+    import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
     import { initializeFormData, getAllFields, collectFilesForDeletion, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
@@ -39,10 +40,16 @@
         }
         
         if (Array.isArray(data)) {
-            // Handle arrays - upload any File objects
+            // Handle arrays - upload any File objects and collect files marked for deletion
             const result = [];
             for (const item of data) {
-                if (item instanceof File) {
+                if (item && (item as UploadedFileWithDeletionFlag)._markedForDeletion) {
+                    // Collect file for deletion
+                    if ((item as UploadedFileWithDeletionFlag).id) {
+                        filesToDelete.update(current => [...current, (item as UploadedFileWithDeletionFlag).id]);
+                    }
+                    // Don't include in result
+                } else if (item instanceof File) {
                     const uploadedFiles = await handleUploadFiles([item]);
                     if (uploadedFiles?.[0]) result.push(uploadedFiles[0]);
                 } else {
@@ -62,6 +69,13 @@
                 if (existingValue && existingValue.id && !Array.isArray(existingValue)) {
                     await handleDeleteFiles([existingValue.id]);
                 }
+            } else if (value && (value as UploadedFileWithDeletionFlag)._markedForDeletion) {
+                // Handle single file marked for deletion
+                if ((value as UploadedFileWithDeletionFlag).id) {
+                    filesToDelete.update(current => [...current, (value as UploadedFileWithDeletionFlag).id]);
+                }
+                result[key] = null;
+                continue;
             }
             result[key] = await uploadPendingFiles(value);
         }
