@@ -124,6 +124,8 @@ export interface FormField {
     // Layout properties
     columnSpan?: number; // For grid layout - how many columns this field should span
     tab?: string; // Tab name this field belongs to
+    // Translation properties
+    translatable?: boolean; // Whether this field supports translations
 }
 
 // Type for FieldBuilder instances (for better type checking)
@@ -163,6 +165,7 @@ export interface FieldBuilder {
     columnSpan(span: number): FieldBuilder;
     tab(tabName: string): FieldBuilder;
     responsiveGrid(columns?: number, gap?: number, responsive?: { sm?: number; md?: number; lg?: number }): FieldBuilder;
+    translatable(isTranslatable?: boolean): FieldBuilder;
 }
 
 // Schema item can be either a field, field builder, tabs container, or grid layout
@@ -192,5 +195,13 @@ export interface PageConfig {
 export interface FormData {
     [componentId: string]: {
         [fieldName: string]: any;
+    };
+}
+
+export interface TranslationData {
+    [componentId: string]: {
+        [locale: string]: {
+            [fieldName: string]: any;
+        };
     };
 } 

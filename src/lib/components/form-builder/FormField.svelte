@@ -20,6 +20,7 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: any = undefined;
+    export let compact: boolean = false;
 
     const FIELD_COMPONENTS: Record<string, any> = {
         'text': TextInput,
@@ -39,11 +40,13 @@
     $: FieldComponent = FIELD_COMPONENTS[field.type];
 </script>
 
-<div class="space-y-2">
+<div class={compact ? "space-y-1" : "space-y-2"}>
     {#if field.type !== 'toggle'}
         <div>
-            <Label for={fieldId} class={CSS_CLASSES.LABEL}>{field.label}</Label>
-            {#if field.helperText}
+            <Label for={fieldId} class={compact ? "text-xs font-medium" : CSS_CLASSES.LABEL}>
+                {field.label}
+            </Label>
+            {#if field.helperText && !compact}
                 <p class={CSS_CLASSES.HELPER_TEXT}>{field.helperText}</p>
             {/if}
         </div>

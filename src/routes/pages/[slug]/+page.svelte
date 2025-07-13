@@ -8,11 +8,14 @@
     import SiteHeader from '$lib/components/site-header.svelte';
     import { safeFetch } from "@/lib/utils/safeFetch";
     import { ScrollArea } from "$lib/components/ui/scroll-area";
+    import { Button } from "$lib/components/ui/button";
+    import { IconLanguage, IconEdit } from "@tabler/icons-svelte";
 
     let pageData: Page | null = null;
     let config: PageConfig | null = null;   
     let loading = true;
     let error: string | null = null;
+    let translationMode = false;
 
     onMount(async () => {
             loading = true;
@@ -28,7 +31,21 @@
     });
 </script>
 
-<SiteHeader title={config?.title || 'Page'} />
+<SiteHeader title={config?.title || 'Page'}>
+    <Button
+        variant="outline"
+        size="sm"
+        onclick={() => translationMode = !translationMode}
+    >
+        {#if translationMode}
+            <IconEdit class="h-4 w-4 mr-2" />
+            Content Mode
+        {:else}
+            <IconLanguage class="h-4 w-4 mr-2" />
+            Translation Mode
+        {/if}
+    </Button>
+</SiteHeader>
 <div class="flex flex-1 flex-col overflow-hidden">
     <ScrollArea class="@container/main flex flex-1 flex-col gap-2 max-h-[calc(100dvh-80px)]">
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -47,6 +64,7 @@
                             {config} 
                             slug={pageData.slug} 
                             components={pageData.components}
+                            {translationMode}
                         />
                     </div>
                 {:else}

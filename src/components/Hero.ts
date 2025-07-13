@@ -14,7 +14,8 @@ export const HeroComponent: Component = {
             .min(3)
             .max(100)
             .placeholder('Enter the hero title')
-            .helperText('This field is always visible regardless of the active tab'),
+            .helperText('This field is always visible regardless of the active tab')
+            .translatable(),
         Tabs('hero-tabs')
             .tabs([
                 TabField('basic')
@@ -32,7 +33,8 @@ export const HeroComponent: Component = {
                             TextInput('subtitle')
                                 .label('Subtitle')
                                 .placeholder('Enter a subtitle')
-                                .helperText('Appears below the main title'),
+                                .helperText('Appears below the main title')
+                                .translatable(),
 
                             FileInput('image')
                                 .label('Image')
@@ -86,7 +88,8 @@ export const HeroComponent: Component = {
                                 TextInput('title')
                                     .label('Card Title')
                                     .required()
-                                    .placeholder('Enter card title'),
+                                    .placeholder('Enter card title')
+                                    .translatable(),
                                 
                                 TextInput('subtitle')
                                     .label('Card Subtitle')

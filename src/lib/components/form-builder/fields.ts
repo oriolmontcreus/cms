@@ -172,6 +172,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    translatable(isTranslatable: boolean = true): this {
+        this.field.translatable = isTranslatable;
+        return this;
+    }
+
     schema(items: SchemaItem[]): this {
         this.field.schema = items;
         return this;

@@ -1,6 +1,7 @@
-import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData } from '../types';
+import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData, TranslationData } from '../types';
 import type { Component } from '@shared/types/pages.type';
 import { SCHEMA_TYPES, DEFAULT_VALUES } from '../constants';
+import { CMS_LOCALE } from '@shared/env';
 
 export interface FormBuilderContext {
     collectFilesForDeletion: (itemData: any) => void;
@@ -166,6 +167,49 @@ export function initializeFormData(components: any[], existingComponents: Compon
     });
     
     return formData;
+}
+
+export function initializeTranslationData(
+    components: any[], 
+    existingComponents: Component[], 
+    locales: readonly { code: string; name: string; }[]
+): TranslationData {
+    const translationData: TranslationData = {};
+    
+    components.forEach(componentInstance => {
+        translationData[componentInstance.id] = {};
+        const existingComponent = existingComponents.find(c => c.instanceId === componentInstance.id);
+        
+        locales.forEach(locale => {
+            translationData[componentInstance.id][locale.code] = {};
+            
+            const allFields = getAllFields(componentInstance.component.schema);
+            const translatableFields = allFields.filter(field => field.translatable);
+            
+            translatableFields.forEach(field => {
+                const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[field.name];
+                
+                if (existingTranslation !== undefined) {
+                    // Use existing translation if available
+                    translationData[componentInstance.id][locale.code][field.name] = existingTranslation;
+                } else if (locale.code === CMS_LOCALE) {
+                    // For default locale, use the current content mode value
+                    const contentModeValue = existingComponent?.formData?.[field.name];
+                    translationData[componentInstance.id][locale.code][field.name] = contentModeValue !== undefined ? contentModeValue : getDefaultValue(field);
+                } else {
+                    // For other locales, use default value
+                    translationData[componentInstance.id][locale.code][field.name] = getDefaultValue(field);
+                }
+            });
+        });
+    });
+    
+    return translationData;
+}
+
+export function getTranslatableFields(schema: Layout | SchemaItem[]): FormField[] {
+    const allFields = getAllFields(schema);
+    return allFields.filter(field => field.translatable === true);
 }
 
 function getDefaultValue(field: FormField) {
