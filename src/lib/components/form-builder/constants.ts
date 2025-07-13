@@ -26,7 +26,7 @@ export const DEFAULT_VALUES = {
 export const CSS_CLASSES = {
     FORM_CONTAINER: 'space-y-8',
     COMPONENT_CONTAINER: 'space-y-6 p-2 sm:p-6 sm:border rounded-lg bg-card/50 dark:bg-card/20',
-    COMPONENT_TITLE: 'text-lg font-semibold',
+    COMPONENT_TITLE: 'text-lg font-light text-muted-foreground',
     FIELD_CONTAINER: 'space-y-6',
     FIELD_CONTAINER_WITH_MARGIN: 'space-y-6 mb-6',
     FLEX_COLUMN_GAP: 'flex flex-col gap-4',

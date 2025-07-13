@@ -8,7 +8,7 @@ export const config: PageConfig = {
         {
             component: HeroComponent,
             id: "hero-main",
-            displayName: "Main Hero Section"
+            displayName: "HERO SECTION"
         }
     ]
 };
