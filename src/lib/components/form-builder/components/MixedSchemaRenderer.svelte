@@ -61,7 +61,7 @@
                 {componentId}
                 activeTab={undefined}
             />
-        {:else if isFormField(item) && !convertToFormField(item)?.tab}
+        {:else if isFormField(item)}
             {@const field = convertToFormField(item)}
             {#if field}
                 <FormFieldComponent 
