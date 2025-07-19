@@ -187,7 +187,22 @@ export function initializeTranslationData(
                         translationData[componentInstance.id][locale.code][key] = {};
                         
                         nestedTranslatableFields.forEach(nestedField => {
-                            const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[repeatableField.name]?.[itemIndex]?.[nestedField.name];
+                            // Try to get existing translation from array format first, then fall back to indexed format
+                            let existingTranslation;
+                            const existingTranslations = existingComponent?.formData?.translations?.[locale.code];
+                            
+                            if (existingTranslations) {
+                                // Try array format first (new format)
+                                if (Array.isArray(existingTranslations[repeatableField.name]) && 
+                                    existingTranslations[repeatableField.name][itemIndex]) {
+                                    existingTranslation = existingTranslations[repeatableField.name][itemIndex][nestedField.name];
+                                }
+                                // Fall back to indexed format (old format) 
+                                else if (existingTranslations[key]) {
+                                    existingTranslation = existingTranslations[key][nestedField.name];
+                                }
+                            }
+                            
                             translationData[componentInstance.id][locale.code][key][nestedField.name] = 
                                 existingTranslation !== undefined ? existingTranslation : getDefaultValue(nestedField);
                         });
@@ -401,6 +416,64 @@ export function filterFieldsByMode(fields: FormField[], mode: RenderMode): FormF
     
     // Translation mode - only translatable fields
     return fields.filter(field => field.translatable === true);
+}
+
+/**
+ * Converts translation data with indexed keys back to proper array structure for saving
+ */
+export function convertTranslationDataForSaving(
+    translationData: TranslationData,
+    componentInstance: any
+): TranslationData {
+    const convertedData: TranslationData = {};
+    const { repeatableFields } = getOrCreateComponentAnalysis(componentInstance.component);
+    
+    Object.entries(translationData).forEach(([componentId, locales]) => {
+        convertedData[componentId] = {};
+        
+        Object.entries(locales).forEach(([locale, translations]) => {
+            convertedData[componentId][locale] = {};
+            
+            // Separate regular fields from repeatable field indexed keys
+            const regularTranslations: Record<string, any> = {};
+            const repeatableTranslations: Record<string, Record<number, any>> = {};
+            
+            Object.entries(translations).forEach(([key, value]) => {
+                // Check if this is an indexed repeatable field key (e.g., "featureCards_0")
+                const repeatableField = repeatableFields.find(rf => key.startsWith(`${rf.name}_`));
+                
+                if (repeatableField) {
+                    const index = parseInt(key.split('_').pop() || '0');
+                    
+                    if (!repeatableTranslations[repeatableField.name]) {
+                        repeatableTranslations[repeatableField.name] = {};
+                    }
+                    
+                    repeatableTranslations[repeatableField.name][index] = value;
+                } else {
+                    // Regular field translation
+                    regularTranslations[key] = value;
+                }
+            });
+            
+            // Add regular translations
+            Object.assign(convertedData[componentId][locale], regularTranslations);
+            
+            // Convert indexed repeatable translations to arrays
+            Object.entries(repeatableTranslations).forEach(([fieldName, indexedItems]) => {
+                const maxIndex = Math.max(...Object.keys(indexedItems).map(Number));
+                const translationArray: any[] = [];
+                
+                for (let i = 0; i <= maxIndex; i++) {
+                    translationArray[i] = indexedItems[i] || {};
+                }
+                
+                convertedData[componentId][locale][fieldName] = translationArray;
+            });
+        });
+    });
+    
+    return convertedData;
 } 
 
  

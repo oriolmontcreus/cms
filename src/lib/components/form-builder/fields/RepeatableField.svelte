@@ -66,12 +66,14 @@
 </script>
 
 <div class="space-y-4">
-    <div class="flex items-center justify-between">
-        <Button type="button" variant="outline" onclick={addItem}>
-            <PlusIcon class="w-4 h-4 mr-2" />
-            Add Item
-        </Button>
-    </div>
+    {#if !isTranslationMode}
+        <div class="flex items-center justify-between">
+            <Button type="button" variant="outline" onclick={addItem}>
+                <PlusIcon class="w-4 h-4 mr-2" />
+                Add Item
+            </Button>
+        </div>
+    {/if}
 
     <div class={gridClasses}>
         {#each value as item, index (index)}

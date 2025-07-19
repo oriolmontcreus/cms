@@ -7,7 +7,7 @@
     import type { Component } from '@/lib/shared/types/pages.type';
     import type { UploadedFileWithDeletionFlag } from '@/lib/shared/types/file.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
-    import { initializeFormData, initializeTranslationData, collectFilesForDeletion, type FormBuilderContext } from './utils/formHelpers';
+    import { initializeFormData, initializeTranslationData, collectFilesForDeletion, convertTranslationDataForSaving, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
@@ -176,15 +176,23 @@
                 processedFormData[componentId] = await uploadPendingFiles(processedFormData[componentId]);
             }
             
-            const updatedComponents = await Promise.all(config.components.map(async componentInstance => ({
-                componentName: componentInstance.component.name,
-                instanceId: componentInstance.id,
-                displayName: componentInstance.displayName || componentInstance.component.name,
-                formData: {
-                    ...processedFormData[componentInstance.id],
-                    translations: translationData[componentInstance.id]
-                }
-            })));
+            const updatedComponents = await Promise.all(config.components.map(async componentInstance => {
+                // Convert translation data to proper structure for saving
+                const convertedTranslations = convertTranslationDataForSaving(
+                    { [componentInstance.id]: translationData[componentInstance.id] || {} },
+                    componentInstance
+                );
+                
+                return {
+                    componentName: componentInstance.component.name,
+                    instanceId: componentInstance.id,
+                    displayName: componentInstance.displayName || componentInstance.component.name,
+                    formData: {
+                        ...processedFormData[componentInstance.id],
+                        translations: convertedTranslations[componentInstance.id] || {}
+                    }
+                };
+            }));
             
             await handleUpdateComponents(slug, updatedComponents);
             
