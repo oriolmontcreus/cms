@@ -15,7 +15,7 @@
     import ColorPicker from "./fields/ColorPicker.svelte";
     import RichEditor from "./fields/RichEditor.svelte";
     import FileInput from "./fields/file-input/FileInput.svelte";
-    import RepeatableField from "./fields/RepeatableField.svelte";
+    import RepeaterField from "./fields/RepeaterField.svelte";
 
     export let field: FormField;
     export let fieldId: string;
@@ -39,7 +39,7 @@
         color: ColorPicker,
         richtext: RichEditor,
         file: FileInput,
-        repeatable: RepeatableField,
+        repeater: RepeaterField,
     };
 
     $: FieldComponent = FIELD_COMPONENTS[field.type];
@@ -58,7 +58,7 @@
     {/if}
 
     {#if FieldComponent}
-        {#if field.type === "repeatable"}
+        {#if field.type === "repeater"}
             <svelte:component
                 this={FieldComponent}
                 {field}

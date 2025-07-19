@@ -2,7 +2,7 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import PaletteIcon from '@lucide/svelte/icons/palette';
 import WrenchIcon from '@lucide/svelte/icons/wrench';
 import LayersIcon from '@lucide/svelte/icons/layers';
-import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileInput, Repeatable } from '@/lib/components/form-builder/fields';
+import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileInput, Repeater } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 
 export const HeroComponent: Component = {
@@ -79,7 +79,7 @@ export const HeroComponent: Component = {
                     .label('Feature Cards')
                     .icon(LayersIcon)
                     .schema([
-                        Repeatable('featureCards')
+                        Repeater('featureCards')
                             .label('Feature Cards')
                             .helperText('Add feature cards to display in the hero section')
                             .contained()

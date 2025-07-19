@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file' | 'repeatable';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file' | 'repeater';
 
 export enum RenderMode {
     CONTENT = 'content',
@@ -114,9 +114,9 @@ export interface FormField {
     // File upload specific options
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
-    // Repeatable specific options
-    schema?: SchemaItem[]; // For repeatable fields - the schema to repeat
-    contained?: boolean; // For repeatable fields - whether to show items in a container
+    // Repeater specific options
+    schema?: SchemaItem[]; // For repeater fields - the schema to repeat
+    contained?: boolean; // For repeater fields - whether to show items in a container
     responsiveGrid?: {
         columns?: number; // Number of columns (1-12, default: 2)
         gap?: number; // Gap between grid items (1-8, default: 4)
@@ -125,7 +125,7 @@ export interface FormField {
             md?: number; // Columns on medium screens
             lg?: number; // Columns on large screens
         };
-    }; // For repeatable fields - responsive grid configuration
+    }; // For repeater fields - responsive grid configuration
     // Layout properties
     columnSpan?: number; // For grid layout - how many columns this field should span
     tab?: string; // Tab name this field belongs to

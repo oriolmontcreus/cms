@@ -200,7 +200,7 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
-    toJSON(): FormField { return this.field;}
+    toJSON(): FormField { return this.field; }
     get type(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }
 }
@@ -217,7 +217,7 @@ export const Toggle = (name: string) => new FieldBuilder('toggle', name);
 export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 export const FileInput = (name: string) => new FieldBuilder('file', name);
-export const Repeatable = (name: string) => new FieldBuilder('repeatable', name);
+export const Repeater = (name: string) => new FieldBuilder('repeater', name);
 
 class TabBuilderImpl implements ITabBuilder {
     private tab: Tab;
@@ -267,7 +267,7 @@ class TabsBuilderImpl implements ITabsBuilder {
     }
 
     tabs(tabsArray: (Tab | ITabBuilder)[]): this {
-        this.tabsContainer.tabs = tabsArray.map(tab => 
+        this.tabsContainer.tabs = tabsArray.map(tab =>
             'toJSON' in tab ? tab.toJSON() : tab
         );
         return this;
@@ -314,7 +314,7 @@ export function defineGrid(
     columns: number = 2,
     gap: number = 4,
     responsive?: { sm?: number; md?: number; lg?: number }
-): { 
+): {
     type: 'grid',
     columns: number,
     gap: number,
@@ -336,7 +336,7 @@ export function GridContainer(
     responsive?: { sm?: number; md?: number; lg?: number }
 ) {
     const grid = defineGrid(columns, gap, responsive);
-    
+
     return {
         ...grid,
         add(...fields: (FormField | FieldBuilder)[]): typeof grid {

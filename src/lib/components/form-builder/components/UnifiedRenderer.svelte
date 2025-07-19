@@ -81,7 +81,7 @@
                 return (item.schema as FormField[]).some(
                     (f) =>
                         f.translatable === true ||
-                        (f.type === "repeatable" &&
+                        (f.type === "repeater" &&
                             f.schema &&
                             hasTranslatableFieldsInSchema(f.schema)),
                 );
@@ -101,7 +101,7 @@
         if (field) {
             if (field.translatable === true) return true;
 
-            if (field.type === "repeatable" && field.schema) {
+            if (field.type === "repeater" && field.schema) {
                 return hasTranslatableFieldsInSchema(field.schema);
             }
         }

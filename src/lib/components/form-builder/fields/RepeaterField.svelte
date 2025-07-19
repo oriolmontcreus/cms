@@ -18,7 +18,7 @@
     export let currentLocale: string = "";
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
-    export let componentId: string = "";
+    export const componentId: string = "";
 
     const formBuilderContext = getContext<FormBuilderContext>("formBuilder");
 
@@ -28,7 +28,7 @@
     }
 
     // In translation mode, we need special handling for non-default locales
-    // Repeatable items in translation mode use indexed keys like "fieldName_0", "fieldName_1", etc.
+    // Repeater items in translation mode use indexed keys like "fieldName_0", "fieldName_1", etc.
     $: translationMode = isTranslationMode
         ? RenderMode.TRANSLATION
         : RenderMode.CONTENT;

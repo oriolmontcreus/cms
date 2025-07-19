@@ -135,7 +135,7 @@
                 translationData[componentInstance.id] = {};
             }
 
-            // Handle repeatable items efficiently
+            // Handle repeater items efficiently
             Object.entries(componentFormData).forEach(([fieldName, items]) => {
                 if (Array.isArray(items)) {
                     items.forEach((item: any, itemIndex: number) => {
