@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TabsLayout } from '../types';
+    import type { TabsLayout, TranslationData } from '../types';
     import { RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
     import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
@@ -9,6 +9,9 @@
     export let formData: Record<string, any>;
     export let componentId: string;
     export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
 
     // Get the default tab (either specified activeTab or first tab)
     $: defaultTab = layout.activeTab !== undefined 

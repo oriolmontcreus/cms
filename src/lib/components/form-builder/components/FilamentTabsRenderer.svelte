@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SchemaItem, FormData } from '../types';
+    import type { SchemaItem, FormData, TranslationData } from '../types';
     import { RenderMode } from '../types';
     import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
     import FormFieldComponent from '../FormField.svelte';
@@ -12,6 +12,9 @@
     export let componentId: string;
     export let formData: Record<string, any>;
     export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
     
     $: filteredSchema = filterSchemaByMode(schema, mode);
 </script>
@@ -47,6 +50,9 @@
                                             {formData}
                                             {componentId}
                                             {mode}
+                                            {currentLocale}
+                                            {isDefaultLocale}
+                                            {translationData}
                                         />
                                     {/if}
                                 {/if}

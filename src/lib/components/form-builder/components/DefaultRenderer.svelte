@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SchemaItem } from '../types';
+    import type { SchemaItem, TranslationData } from '../types';
     import { RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
     import { isFormField, convertToFormField, filterSchemaByMode } from '../utils/formHelpers';
@@ -9,6 +9,9 @@
     export let componentId: string;
     export let formData: Record<string, any>;
     export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
     
     $: filteredSchema = filterSchemaByMode(schema, mode);
 </script>

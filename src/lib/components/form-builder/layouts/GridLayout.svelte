@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { GridLayout } from '../types';
+    import type { GridLayout, TranslationData } from '../types';
     import { RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
     import { filterFieldsByMode } from '../utils/formHelpers';
@@ -10,6 +10,9 @@
     export let componentId: string;
     export let activeTab: string | undefined = undefined;
     export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
 
     const columns = layout.columns || 2;
     const gap = layout.gap || 4;

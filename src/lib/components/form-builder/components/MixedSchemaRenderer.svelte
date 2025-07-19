@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SchemaItem, ComponentTab, FormField } from '../types';
+    import type { SchemaItem, ComponentTab, FormField, TranslationData } from '../types';
     import { RenderMode } from '../types';
     import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
     import FormFieldComponent from '../FormField.svelte';
@@ -14,6 +14,9 @@
     export let componentId: string;
     export let formData: Record<string, any>;
     export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
     
     $: allFields = getAllFields(schema);
     $: filteredFields = filterFieldsByMode(allFields, mode);
@@ -51,6 +54,9 @@
                                             {componentId}
                                             activeTab={tab.name}
                                             {mode}
+                                            {currentLocale}
+                                            {isDefaultLocale}
+                                            {translationData}
                                         />
                                     {/if}
                                 {/each}
@@ -66,6 +72,9 @@
                 {componentId}
                 activeTab={undefined}
                 {mode}
+                {currentLocale}
+                {isDefaultLocale}
+                {translationData}
             />
         {:else if isFormField(item)}
             {@const field = convertToFormField(item)}

@@ -6,6 +6,7 @@
     import DefaultRenderer from './DefaultRenderer.svelte';
     import GridLayout from '../layouts/GridLayout.svelte';
     import TabsLayout from '../layouts/TabsLayout.svelte';
+    import TranslationModeWrapper from './TranslationModeWrapper.svelte';
     import { 
         usesFilamentTabs, 
         usesMixedSchema
@@ -24,7 +25,14 @@
         {componentInstance.displayName || componentInstance.component.name}
     </h3>
     
-    {#if usesFilamentTabs(componentInstance.component)}
+    {#if mode === RenderMode.TRANSLATION}
+        <TranslationModeWrapper 
+            {componentInstance}
+            {formData}
+            {translationData}
+            {locales}
+        />
+    {:else if usesFilamentTabs(componentInstance.component)}
         {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : []}
         <FilamentTabsRenderer 
             {schema}
