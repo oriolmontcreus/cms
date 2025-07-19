@@ -11,12 +11,14 @@
     import type { UploadedFileWithDeletionFlag } from "@/lib/shared/types/file.type";
     import ComponentRenderer from "./components/ComponentRenderer.svelte";
     import {
-        initializeFormData,
-        initializeTranslationData,
         collectFilesForDeletion,
         convertTranslationDataForSaving,
         type FormBuilderContext,
     } from "./utils/formHelpers";
+    import {
+        initializeFormDataOptimized,
+        initializeTranslationDataOptimized,
+    } from "./utils/optimizedSchemaProcessor";
     import { CSS_CLASSES } from "./constants";
     import { writable } from "svelte/store";
     import { setContext, onMount } from "svelte";
@@ -30,8 +32,8 @@
     export let mode: RenderMode = RenderMode.CONTENT;
     export let isSubmitting = false;
 
-    let formData: FormData = initializeFormData(config.components, components);
-    let translationData: TranslationData = initializeTranslationData(
+    let formData: FormData = initializeFormDataOptimized(config.components, components);
+    let translationData: TranslationData = initializeTranslationDataOptimized(
         config.components,
         components,
         SITE_LOCALES,
@@ -109,37 +111,41 @@
     };
     setContext("formBuilder", formBuilderContext);
 
+    // Optimized reactive statement with more selective updates
+    // Only sync when formData actually changes and in content mode
+    let lastFormDataString = '';
     $: if (config.components && formData && mode === RenderMode.CONTENT) {
-        console.log("[FormBuilder] Form data sync executed");
+        const currentFormDataString = JSON.stringify(formData);
+        if (currentFormDataString !== lastFormDataString) {
+            console.log("[FormBuilder] Form data sync executed");
+            lastFormDataString = currentFormDataString;
+            syncTranslationData();
+        }
+    }
+
+    function syncTranslationData() {
         config.components.forEach((componentInstance) => {
-            const repeatableItems = formData[componentInstance.id] || {};
-            Object.entries(repeatableItems).forEach(([fieldName, items]) => {
+            const componentFormData = formData[componentInstance.id] || {};
+            
+            // Initialize component translation data if needed
+            if (!translationData[componentInstance.id]) {
+                translationData[componentInstance.id] = {};
+            }
+
+            // Handle repeatable items efficiently
+            Object.entries(componentFormData).forEach(([fieldName, items]) => {
                 if (Array.isArray(items)) {
                     items.forEach((item: any, itemIndex: number) => {
                         const key = `${fieldName}_${itemIndex}`;
-
+                        
+                        // Initialize locale data in batch
                         SITE_LOCALES.forEach((locale) => {
                             if (locale.code !== CMS_LOCALE) {
-                                if (!translationData[componentInstance.id]) {
-                                    translationData[componentInstance.id] = {};
+                                if (!translationData[componentInstance.id][locale.code]) {
+                                    translationData[componentInstance.id][locale.code] = {};
                                 }
-                                if (
-                                    !translationData[componentInstance.id][
-                                        locale.code
-                                    ]
-                                ) {
-                                    translationData[componentInstance.id][
-                                        locale.code
-                                    ] = {};
-                                }
-                                if (
-                                    !translationData[componentInstance.id][
-                                        locale.code
-                                    ][key]
-                                ) {
-                                    translationData[componentInstance.id][
-                                        locale.code
-                                    ][key] = {};
+                                if (!translationData[componentInstance.id][locale.code][key]) {
+                                    translationData[componentInstance.id][locale.code][key] = {};
                                 }
                             }
                         });
@@ -147,36 +153,27 @@
                 }
             });
 
-            Object.entries(formData[componentInstance.id] || {}).forEach(
-                ([fieldName, value]) => {
-                    if (
-                        translationData[componentInstance.id]?.[CMS_LOCALE]?.[
-                            fieldName
-                        ] !== value
-                    ) {
-                        if (!translationData[componentInstance.id]) {
-                            translationData[componentInstance.id] = {};
-                        }
-                        if (
-                            !translationData[componentInstance.id][CMS_LOCALE]
-                        ) {
-                            translationData[componentInstance.id][CMS_LOCALE] =
-                                {};
-                        }
-                        translationData[componentInstance.id][CMS_LOCALE][
-                            fieldName
-                        ] = value;
-                    }
-                },
-            );
+            // Sync CMS locale data efficiently
+            if (!translationData[componentInstance.id][CMS_LOCALE]) {
+                translationData[componentInstance.id][CMS_LOCALE] = {};
+            }
+            
+            Object.entries(componentFormData).forEach(([fieldName, value]) => {
+                if (translationData[componentInstance.id][CMS_LOCALE][fieldName] !== value) {
+                    translationData[componentInstance.id][CMS_LOCALE][fieldName] = value;
+                }
+            });
         });
     }
 
+    // Optimized file collection using Set for better performance
     function collectPendingFiles(data: any): File[] {
         const files: File[] = [];
+        const visited = new WeakSet();
 
         function traverse(value: any) {
-            if (!value || typeof value !== "object") return;
+            if (!value || typeof value !== "object" || visited.has(value)) return;
+            visited.add(value);
 
             if (value instanceof File) {
                 files.push(value);
@@ -184,11 +181,11 @@
             }
 
             if (Array.isArray(value)) {
-                value.forEach((item) => traverse(item));
+                value.forEach(traverse);
                 return;
             }
 
-            Object.values(value).forEach((val) => traverse(val));
+            Object.values(value).forEach(traverse);
         }
 
         traverse(data);
@@ -196,8 +193,11 @@
     }
 
     function markFilesForDeletion(data: any) {
+        const visited = new WeakSet();
+        
         function traverse(value: any) {
-            if (!value || typeof value !== "object") return;
+            if (!value || typeof value !== "object" || visited.has(value)) return;
+            visited.add(value);
 
             if (
                 (value as UploadedFileWithDeletionFlag)._markedForDeletion &&
@@ -211,11 +211,11 @@
             }
 
             if (Array.isArray(value)) {
-                value.forEach((item) => traverse(item));
+                value.forEach(traverse);
                 return;
             }
 
-            Object.values(value).forEach((val) => traverse(val));
+            Object.values(value).forEach(traverse);
         }
 
         traverse(data);
