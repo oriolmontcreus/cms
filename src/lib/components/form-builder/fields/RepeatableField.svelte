@@ -3,7 +3,8 @@
     import { Card, CardContent } from '@/lib/components/ui/card';
     import PlusIcon from '@tabler/icons-svelte/icons/plus';
     import TrashIcon from '@tabler/icons-svelte/icons/trash';
-    import type { FormField } from '../types';
+    import type { FormField, TranslationData } from '../types';
+    import { RenderMode } from '../types';
     import DefaultRenderer from '../components/DefaultRenderer.svelte';
     import { CSS_CLASSES } from '../constants';
     import { cn } from '$lib/utils';
@@ -13,6 +14,11 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: any[] = [];
+    export let isTranslationMode: boolean = false;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
+    export let componentId: string = '';
 
     // Get context with proper typing
     const formBuilderContext = getContext<FormBuilderContext>('formBuilder');
@@ -21,6 +27,10 @@
     $: if (!Array.isArray(value)) {
         value = [];
     }
+    
+    // In translation mode, we need special handling for non-default locales
+    // Repeatable items in translation mode use indexed keys like "fieldName_0", "fieldName_1", etc.
+    $: translationMode = isTranslationMode ? RenderMode.TRANSLATION : RenderMode.CONTENT;
 
     // Responsive grid configuration
     $: gridConfig = field.responsiveGrid;
@@ -79,6 +89,10 @@
                             schema={field.schema || []}
                             componentId={`${fieldId}-${index}`}
                             bind:formData={value[index]}
+                            mode={translationMode}
+                            {currentLocale}
+                            {isDefaultLocale}
+                            {translationData}
                         />
                     </CardContent>
                 </Card>
@@ -95,6 +109,10 @@
                         schema={field.schema || []}
                         componentId={`${fieldId}-${index}`}
                         bind:formData={value[index]}
+                        mode={translationMode}
+                        {currentLocale}
+                        {isDefaultLocale}
+                        {translationData}
                     />
                 </div>
             {/if}
