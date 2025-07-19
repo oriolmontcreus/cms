@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { SchemaItem, FormData, TranslationData, TabsContainer, FormField } from '../types';
+    import type { SchemaItem, FormData, TranslationData, TabsContainer, FormField, GridLayout as GridLayoutType } from '../types';
     import { RenderMode } from '../types';
     import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
     import FormFieldComponent from '../FormField.svelte';
-    import GridLayout from '../layouts/GridLayout.svelte';
+    import GridLayoutComponent from '../layouts/GridLayout.svelte';
     import ResponsiveTabTrigger from './ResponsiveTabTrigger.svelte';
     import { filterSchemaByModeOptimized } from '../utils/optimizedSchemaProcessor';
     import { convertToFormField } from '../utils/formHelpers';
@@ -82,8 +82,8 @@
                 />
             {/if}
         {:else if isGrid(item)}
-            <GridLayout
-                layout={item}
+            <GridLayoutComponent
+                layout={item as GridLayoutType}
                 {formData}
                 {componentId}
                 {mode}

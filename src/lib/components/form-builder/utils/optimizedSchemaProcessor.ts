@@ -136,7 +136,7 @@ export function processComponentSchema(component: any): ProcessedSchema {
 /**
  * Get default value for field type - optimized with lookup table
  */
-const fieldDefaultValues = new Map([
+const fieldDefaultValues = new Map<string, any>([
     ['number', DEFAULT_VALUES.NULL],
     ['toggle', DEFAULT_VALUES.FALSE],
     ['dateRange', DEFAULT_VALUES.DATE_RANGE],
