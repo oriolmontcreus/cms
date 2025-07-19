@@ -32,7 +32,10 @@
     export let mode: RenderMode = RenderMode.CONTENT;
     export let isSubmitting = false;
 
-    let formData: FormData = initializeFormDataOptimized(config.components, components);
+    let formData: FormData = initializeFormDataOptimized(
+        config.components,
+        components,
+    );
     let translationData: TranslationData = initializeTranslationDataOptimized(
         config.components,
         components,
@@ -113,7 +116,7 @@
 
     // Optimized reactive statement with more selective updates
     // Only sync when formData actually changes and in content mode
-    let lastFormDataString = '';
+    let lastFormDataString = "";
     $: if (config.components && formData && mode === RenderMode.CONTENT) {
         const currentFormDataString = JSON.stringify(formData);
         if (currentFormDataString !== lastFormDataString) {
@@ -126,7 +129,7 @@
     function syncTranslationData() {
         config.components.forEach((componentInstance) => {
             const componentFormData = formData[componentInstance.id] || {};
-            
+
             // Initialize component translation data if needed
             if (!translationData[componentInstance.id]) {
                 translationData[componentInstance.id] = {};
@@ -137,15 +140,27 @@
                 if (Array.isArray(items)) {
                     items.forEach((item: any, itemIndex: number) => {
                         const key = `${fieldName}_${itemIndex}`;
-                        
+
                         // Initialize locale data in batch
                         SITE_LOCALES.forEach((locale) => {
                             if (locale.code !== CMS_LOCALE) {
-                                if (!translationData[componentInstance.id][locale.code]) {
-                                    translationData[componentInstance.id][locale.code] = {};
+                                if (
+                                    !translationData[componentInstance.id][
+                                        locale.code
+                                    ]
+                                ) {
+                                    translationData[componentInstance.id][
+                                        locale.code
+                                    ] = {};
                                 }
-                                if (!translationData[componentInstance.id][locale.code][key]) {
-                                    translationData[componentInstance.id][locale.code][key] = {};
+                                if (
+                                    !translationData[componentInstance.id][
+                                        locale.code
+                                    ][key]
+                                ) {
+                                    translationData[componentInstance.id][
+                                        locale.code
+                                    ][key] = {};
                                 }
                             }
                         });
@@ -157,10 +172,16 @@
             if (!translationData[componentInstance.id][CMS_LOCALE]) {
                 translationData[componentInstance.id][CMS_LOCALE] = {};
             }
-            
+
             Object.entries(componentFormData).forEach(([fieldName, value]) => {
-                if (translationData[componentInstance.id][CMS_LOCALE][fieldName] !== value) {
-                    translationData[componentInstance.id][CMS_LOCALE][fieldName] = value;
+                if (
+                    translationData[componentInstance.id][CMS_LOCALE][
+                        fieldName
+                    ] !== value
+                ) {
+                    translationData[componentInstance.id][CMS_LOCALE][
+                        fieldName
+                    ] = value;
                 }
             });
         });
@@ -172,7 +193,8 @@
         const visited = new WeakSet();
 
         function traverse(value: any) {
-            if (!value || typeof value !== "object" || visited.has(value)) return;
+            if (!value || typeof value !== "object" || visited.has(value))
+                return;
             visited.add(value);
 
             if (value instanceof File) {
@@ -194,9 +216,10 @@
 
     function markFilesForDeletion(data: any) {
         const visited = new WeakSet();
-        
+
         function traverse(value: any) {
-            if (!value || typeof value !== "object" || visited.has(value)) return;
+            if (!value || typeof value !== "object" || visited.has(value))
+                return;
             visited.add(value);
 
             if (
@@ -262,6 +285,7 @@
 
     export async function handleSubmit() {
         console.log("[FormBuilder] handleSubmit called");
+        const originalFormData = { ...formData }; // Backup original form data
         try {
             isSubmitting = true;
 
@@ -271,6 +295,8 @@
                     processedFormData[componentId],
                 );
             }
+
+            formData = { ...processedFormData };
 
             const updatedComponents = await Promise.all(
                 config.components.map(async (componentInstance) => {
@@ -308,6 +334,7 @@
             }
         } catch (error) {
             console.error("Error saving components:", error);
+            formData = originalFormData;
         } finally {
             isSubmitting = false;
         }
