@@ -43,9 +43,6 @@
     };
 
     $: FieldComponent = FIELD_COMPONENTS[field.type];
-    
-    // For translation mode, we need to show compact labels to indicate which field is being translated
-    $: showTranslationLabel = isTranslationMode && field.translatable && !isDefaultLocale;
 </script>
 
 <div class={compact ? "space-y-1" : "space-y-2"}>
@@ -53,9 +50,6 @@
         <div>
             <Label for={fieldId} class={compact ? "text-xs font-medium" : CSS_CLASSES.LABEL}>
                 {field.label}
-                {#if showTranslationLabel}
-                    <span class="ml-2 text-xs text-muted-foreground font-normal">({currentLocale})</span>
-                {/if}
             </Label>
             {#if field.helperText && !compact}
                 <p class={CSS_CLASSES.HELPER_TEXT}>{field.helperText}</p>

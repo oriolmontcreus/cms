@@ -24,10 +24,8 @@
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
 
-    // Optimized schema filtering
     $: filteredSchema = filterSchemaByModeOptimized(schema, mode);
 
-    // Helper functions for type checking - more efficient than repeated checks
     function isFormField(item: any): boolean {
         return convertToFormField(item) !== null;
     }
@@ -60,7 +58,6 @@
         return `item-${index}`;
     }
 
-    // Render field component optimized
     function renderField(field: FormField) {
         return {
             field,

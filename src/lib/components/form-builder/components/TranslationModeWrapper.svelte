@@ -18,7 +18,6 @@
     export let translationData: TranslationData = {};
     export let locales: readonly { code: string; name: string; }[] = [];
     
-    // Check if this component has translatable content
     $: componentAnalysis = getComponentAnalysis(componentInstance.component);
     $: regularTranslatableFields = componentAnalysis.translatableFields;
     $: repeatableFieldsWithTranslatableContent = componentAnalysis.repeatableFields.filter(f => 
@@ -28,34 +27,28 @@
     
     let activeLocale = locales.find(l => l.code !== CMS_LOCALE)?.code || locales[0]?.code || '';
     
-    // Handle locale selection
     function handleLocaleChange(newLocale: string | undefined) {
         if (newLocale) {
             activeLocale = newLocale;
         }
     }
     
-    // Create a reactive proxy formData that handles both regular fields and repeatable field translations
     let localeFormData: Record<string, any> = {};
     
-    // Reactive statement to update locale form data when locale changes
     $: {
         if (activeLocale === CMS_LOCALE) {
             localeFormData = formData[componentInstance.id] || {};
         } else {
-            // For non-default locales, create merged data structure
             const contentData = formData[componentInstance.id] || {};
             const localeTranslationData = translationData[componentInstance.id]?.[activeLocale] || {};
             const mergedData = { ...contentData };
             
-            // Handle regular translatable fields
             regularTranslatableFields.forEach(field => {
                 if (field.type !== 'repeatable' && localeTranslationData[field.name] !== undefined) {
                     mergedData[field.name] = localeTranslationData[field.name];
                 }
             });
             
-            // Handle repeatable fields with special translation keys
             repeatableFieldsWithTranslatableContent.forEach(repeatableField => {
                 const repeatableItems = contentData[repeatableField.name] || [];
                 if (Array.isArray(repeatableItems)) {
@@ -63,7 +56,6 @@
                         const translationKey = `${repeatableField.name}_${itemIndex}`;
                         const itemTranslations = localeTranslationData[translationKey] || {};
                         
-                        // Merge content item with its translations
                         return { ...item, ...itemTranslations };
                     });
                     mergedData[repeatableField.name] = translatedItems;
@@ -74,9 +66,7 @@
         }
     }
     
-    // Reactive statement to sync changes back to translation data for non-default locales
     $: if (activeLocale !== CMS_LOCALE && localeFormData) {
-        // Initialize translation data structure if needed
         if (!translationData[componentInstance.id]) {
             translationData[componentInstance.id] = {};
         }
@@ -86,31 +76,26 @@
         
         const localeTranslationData = translationData[componentInstance.id][activeLocale];
         
-        // Sync regular translatable fields
         regularTranslatableFields.forEach(field => {
             if (field.type !== 'repeatable' && localeFormData[field.name] !== undefined) {
                 localeTranslationData[field.name] = localeFormData[field.name];
             }
         });
         
-        // Sync repeatable fields
         repeatableFieldsWithTranslatableContent.forEach(repeatableField => {
             const repeatableItems = localeFormData[repeatableField.name] || [];
             if (Array.isArray(repeatableItems)) {
                 repeatableItems.forEach((item, itemIndex) => {
                     const translationKey = `${repeatableField.name}_${itemIndex}`;
                     
-                    // Initialize translation structure for this item if needed
                     if (!localeTranslationData[translationKey]) {
                         localeTranslationData[translationKey] = {};
                     }
                     
-                    // Get nested translatable fields from the repeatable field schema
                     const nestedFields = componentAnalysis.allFields.filter(f => 
                         f.name.startsWith(repeatableField.name) && f.translatable === true
                     );
                     
-                    // Sync each translatable field in the item
                     nestedFields.forEach(nestedField => {
                         if (item[nestedField.name] !== undefined) {
                             localeTranslationData[translationKey][nestedField.name] = item[nestedField.name];
@@ -123,60 +108,54 @@
 </script>
 
 {#if hasTranslatableContent}
-    <div class="border rounded-lg p-4 bg-muted/30">
-        <div class="mb-4">
-            <h4 class="text-sm font-medium text-muted-foreground mb-2">Translation Mode</h4>
-            <div class="w-48">
-                <Select 
-                    type="single"
-                    value={activeLocale}
-                    onValueChange={handleLocaleChange}
-                >
-                    <SelectTrigger class="w-full">
-                        {#if activeLocale}
-                            {@const currentLocale = locales.find(l => l.code === activeLocale)}
+    <div class="mb-4">
+        <div class="w-48">
+            <Select 
+                type="single"
+                value={activeLocale}
+                onValueChange={handleLocaleChange}
+            >
+                <SelectTrigger class="w-full">
+                    {#if activeLocale}
+                        {@const currentLocale = locales.find(l => l.code === activeLocale)}
+                        <span class="flex items-center gap-2">
+                            {currentLocale?.name || 'Select Language'}
+                            {#if activeLocale === CMS_LOCALE}
+                                <span class="text-xs opacity-60">(default)</span>
+                            {/if}
+                        </span>
+                    {:else}
+                        <span>Select Language</span>
+                    {/if}
+                </SelectTrigger>
+                <SelectContent>
+                    {#each locales as locale}
+                        <SelectItem value={locale.code} label={locale.name}>
                             <span class="flex items-center gap-2">
-                                {currentLocale?.name || 'Select Language'}
-                                {#if activeLocale === CMS_LOCALE}
+                                {locale.name}
+                                {#if locale.code === CMS_LOCALE}
                                     <span class="text-xs opacity-60">(default)</span>
                                 {/if}
                             </span>
-                        {:else}
-                            <span>Select Language</span>
-                        {/if}
-                    </SelectTrigger>
-                    <SelectContent>
-                        {#each locales as locale}
-                            <SelectItem value={locale.code} label={locale.name}>
-                                <span class="flex items-center gap-2">
-                                    {locale.name}
-                                    {#if locale.code === CMS_LOCALE}
-                                        <span class="text-xs opacity-60">(default)</span>
-                                    {/if}
-                                </span>
-                            </SelectItem>
-                        {/each}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-        
-        <div class="mt-4">
-            <!-- Use UnifiedRenderer for all cases -->
-            {#if componentInstance.component}
-                {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : [componentInstance.component.schema]}
-                <UnifiedRenderer 
-                    {schema}
-                    componentId={componentInstance.id}
-                    bind:formData={localeFormData}
-                    mode={RenderMode.TRANSLATION}
-                    currentLocale={activeLocale}
-                    isDefaultLocale={activeLocale === CMS_LOCALE}
-                    {translationData}
-                />
-            {/if}
+                        </SelectItem>
+                    {/each}
+                </SelectContent>
+            </Select>
         </div>
     </div>
+    
+    {#if componentInstance.component}
+        {@const schema = Array.isArray(componentInstance.component.schema) ? componentInstance.component.schema : [componentInstance.component.schema]}
+        <UnifiedRenderer 
+            {schema}
+            componentId={componentInstance.id}
+            bind:formData={localeFormData}
+            mode={RenderMode.TRANSLATION}
+            currentLocale={activeLocale}
+            isDefaultLocale={activeLocale === CMS_LOCALE}
+            {translationData}
+        />
+    {/if}
 {:else}
     <div class="text-sm text-muted-foreground p-4 border rounded-lg bg-muted/10">
         This component has no translatable fields.
