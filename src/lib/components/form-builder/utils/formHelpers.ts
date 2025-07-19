@@ -346,12 +346,7 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
     
     // Translation mode - filter to only translatable fields
     return schema.filter(item => {
-        const field = convertToFormField(item);
-        if (field) {
-            return field.translatable === true;
-        }
-        
-        // For non-field items like grids, tabs, etc., check if they contain translatable fields
+        // First check for non-field items like grids, tabs, etc.
         if (item && typeof item === 'object' && 'type' in item) {
             if (item.type === SCHEMA_TYPES.GRID && 'schema' in item) {
                 const hasTranslatableFields = (item.schema as FormField[]).some(f => {
@@ -366,18 +361,30 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
                 return hasTranslatableFields;
             }
             if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
-                const hasTranslatableFields = (item as TabsContainer).tabs.some(tab => 
-                    filterSchemaByMode(tab.schema, mode).length > 0
-                );
+                const hasTranslatableFields = (item as TabsContainer).tabs.some(tab => {
+                    const tabFiltered = filterSchemaByMode(tab.schema, mode);
+                    return tabFiltered.length > 0;
+                });
                 return hasTranslatableFields;
             }
         }
         
-        // Check if it's a repeatable field with translatable nested content
-        if (field && field.type === 'repeatable' && field.schema) {
-            const nestedFields = getAllFields(field.schema);
-            const hasTranslatableNestedFields = nestedFields.some(f => f.translatable === true);
-            return hasTranslatableNestedFields;
+        // Then check if it's a form field
+        const field = convertToFormField(item);
+        if (field) {
+            // Check if it's a regular translatable field
+            if (field.translatable === true) {
+                return true;
+            }
+            
+            // Check if it's a repeatable field with translatable nested content
+            if (field.type === 'repeatable' && field.schema) {
+                const nestedFields = getAllFields(field.schema);
+                const hasTranslatableNestedFields = nestedFields.some(f => f.translatable === true);
+                return hasTranslatableNestedFields;
+            }
+            
+            return false;
         }
         
         return false;
