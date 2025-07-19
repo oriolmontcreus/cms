@@ -44,6 +44,13 @@ export function convertToFormField(item: any): FormField | null {
         return item.toJSON();
     }
     if (item && 'name' in item && 'type' in item) {
+        // Exclude structural schema items that are not form fields
+        if (item.type === SCHEMA_TYPES.TABS_CONTAINER || 
+            item.type === SCHEMA_TYPES.GRID || 
+            item.type === SCHEMA_TYPES.TABS || 
+            item.type === SCHEMA_TYPES.TABS_SELECTOR) {
+            return null;
+        }
         return item as FormField;
     }
     return null;
