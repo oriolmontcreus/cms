@@ -43,6 +43,12 @@
                                             field={renderedItem.field}
                                             fieldId="{componentId}-{renderedItem.field.name}"
                                             bind:value={formData[renderedItem.field.name]}
+                                            isTranslationMode={mode === RenderMode.TRANSLATION}
+                                            {currentLocale}
+                                            {isDefaultLocale}
+                                            {translationData}
+                                            {componentId}
+                                            compact={mode === RenderMode.TRANSLATION}
                                         />
                                     {:else if renderedItem.type === 'grid'}
                                         <GridLayout 
@@ -68,6 +74,12 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
+                    isTranslationMode={mode === RenderMode.TRANSLATION}
+                    {currentLocale}
+                    {isDefaultLocale}
+                    {translationData}
+                    {componentId}
+                    compact={mode === RenderMode.TRANSLATION}
                 />
             {/if}
         {:else if item && typeof item === 'object' && 'type' in item && item.type === SCHEMA_TYPES.GRID}

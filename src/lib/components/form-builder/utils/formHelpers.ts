@@ -354,7 +354,15 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
         // For non-field items like grids, tabs, etc., check if they contain translatable fields
         if (item && typeof item === 'object' && 'type' in item) {
             if (item.type === SCHEMA_TYPES.GRID && 'schema' in item) {
-                const hasTranslatableFields = (item.schema as FormField[]).some(f => f.translatable === true);
+                const hasTranslatableFields = (item.schema as FormField[]).some(f => {
+                    if (f.translatable === true) return true;
+                    // Check if it's a repeatable field with translatable nested content
+                    if (f.type === 'repeatable' && f.schema) {
+                        const nestedFields = getAllFields(f.schema);
+                        return nestedFields.some(nf => nf.translatable === true);
+                    }
+                    return false;
+                });
                 return hasTranslatableFields;
             }
             if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
@@ -363,6 +371,13 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
                 );
                 return hasTranslatableFields;
             }
+        }
+        
+        // Check if it's a repeatable field with translatable nested content
+        if (field && field.type === 'repeatable' && field.schema) {
+            const nestedFields = getAllFields(field.schema);
+            const hasTranslatableNestedFields = nestedFields.some(f => f.translatable === true);
+            return hasTranslatableNestedFields;
         }
         
         return false;

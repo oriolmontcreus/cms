@@ -50,6 +50,12 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
+                    isTranslationMode={mode === RenderMode.TRANSLATION}
+                    {currentLocale}
+                    {isDefaultLocale}
+                    {translationData}
+                    {componentId}
+                    compact={mode === RenderMode.TRANSLATION}
                 />
             </div>
         {/each}

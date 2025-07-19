@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { FormField } from './types';
+    import type { FormField, TranslationData } from './types';
     import { Label } from '@components/ui/label';
     import { CSS_CLASSES } from './constants';
     
@@ -21,6 +21,11 @@
     export let fieldId: string;
     export let value: any = undefined;
     export let compact: boolean = false;
+    export let isTranslationMode: boolean = false;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
+    export let componentId: string = '';
 
     const FIELD_COMPONENTS: Record<string, any> = {
         'text': TextInput,
@@ -38,6 +43,9 @@
     };
 
     $: FieldComponent = FIELD_COMPONENTS[field.type];
+    
+    // For translation mode, we need to show compact labels to indicate which field is being translated
+    $: showTranslationLabel = isTranslationMode && field.translatable && !isDefaultLocale;
 </script>
 
 <div class={compact ? "space-y-1" : "space-y-2"}>
@@ -45,6 +53,9 @@
         <div>
             <Label for={fieldId} class={compact ? "text-xs font-medium" : CSS_CLASSES.LABEL}>
                 {field.label}
+                {#if showTranslationLabel}
+                    <span class="ml-2 text-xs text-muted-foreground font-normal">({currentLocale})</span>
+                {/if}
             </Label>
             {#if field.helperText && !compact}
                 <p class={CSS_CLASSES.HELPER_TEXT}>{field.helperText}</p>
@@ -53,7 +64,21 @@
     {/if}
 
     {#if FieldComponent}
-        <svelte:component this={FieldComponent} {field} {fieldId} bind:value />
+        {#if field.type === 'repeatable'}
+            <svelte:component 
+                this={FieldComponent} 
+                {field} 
+                {fieldId} 
+                bind:value 
+                {isTranslationMode}
+                {currentLocale}
+                {isDefaultLocale}
+                {translationData}
+                {componentId}
+            />
+        {:else}
+            <svelte:component this={FieldComponent} {field} {fieldId} bind:value />
+        {/if}
     {:else}
         <div class="text-red-500 text-sm">
             Unknown field type: {field.type}
