@@ -11,7 +11,7 @@
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { Calendar } from "$lib/components/ui/calendar/index.js";
     import * as Popover from "$lib/components/ui/popover/index.js";
-    import { CMS_LOCALE } from "@shared/env";
+    import { CMS_LOCALE } from "@/lib/shared/env";
 
     interface Props {
         field: FormField;

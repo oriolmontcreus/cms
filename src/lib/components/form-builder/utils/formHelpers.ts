@@ -1,7 +1,8 @@
 import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData, TranslationData } from '../types';
-import type { Component } from '@shared/types/pages.type';
+import { RenderMode } from '../types';
+import type { Component } from '@/lib/shared/types/pages.type';
 import { SCHEMA_TYPES, DEFAULT_VALUES } from '../constants';
-import { CMS_LOCALE } from '@shared/env';
+import { CMS_LOCALE } from '@/lib/shared/env';
 
 export interface FormBuilderContext {
     collectFilesForDeletion: (itemData: any) => void;
@@ -186,7 +187,22 @@ export function initializeTranslationData(
                         translationData[componentInstance.id][locale.code][key] = {};
                         
                         nestedTranslatableFields.forEach(nestedField => {
-                            const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[repeatableField.name]?.[itemIndex]?.[nestedField.name];
+                            // Try to get existing translation from array format first, then fall back to indexed format
+                            let existingTranslation;
+                            const existingTranslations = existingComponent?.formData?.translations?.[locale.code];
+                            
+                            if (existingTranslations) {
+                                // Try array format first (new format)
+                                if (Array.isArray(existingTranslations[repeatableField.name]) && 
+                                    existingTranslations[repeatableField.name][itemIndex]) {
+                                    existingTranslation = existingTranslations[repeatableField.name][itemIndex][nestedField.name];
+                                }
+                                // Fall back to indexed format (old format) 
+                                else if (existingTranslations[key]) {
+                                    existingTranslation = existingTranslations[key][nestedField.name];
+                                }
+                            }
+                            
                             translationData[componentInstance.id][locale.code][key][nestedField.name] = 
                                 existingTranslation !== undefined ? existingTranslation : getDefaultValue(nestedField);
                         });
@@ -331,6 +347,133 @@ function getDefaultValue(field: FormField) {
     }
 
     return defaultValueMap.get(field.type) ?? DEFAULT_VALUES.EMPTY_STRING;
+}
+
+/**
+ * Filters schema items based on render mode
+ * In translation mode, only shows fields marked as translatable
+ * In content mode, shows all fields
+ */
+export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
+    if (mode === RenderMode.CONTENT) {
+        return schema;
+    }
+    
+    // Translation mode - filter to only translatable fields
+    return schema.filter(item => {
+        // First check for non-field items like grids, tabs, etc.
+        if (item && typeof item === 'object' && 'type' in item) {
+            if (item.type === SCHEMA_TYPES.GRID && 'schema' in item) {
+                const hasTranslatableFields = (item.schema as FormField[]).some(f => {
+                    if (f.translatable === true) return true;
+                    // Check if it's a repeatable field with translatable nested content
+                    if (f.type === 'repeatable' && f.schema) {
+                        const nestedFields = getAllFields(f.schema);
+                        return nestedFields.some(nf => nf.translatable === true);
+                    }
+                    return false;
+                });
+                return hasTranslatableFields;
+            }
+            if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
+                const hasTranslatableFields = (item as TabsContainer).tabs.some(tab => {
+                    const tabFiltered = filterSchemaByMode(tab.schema, mode);
+                    return tabFiltered.length > 0;
+                });
+                return hasTranslatableFields;
+            }
+        }
+        
+        // Then check if it's a form field
+        const field = convertToFormField(item);
+        if (field) {
+            // Check if it's a regular translatable field
+            if (field.translatable === true) {
+                return true;
+            }
+            
+            // Check if it's a repeatable field with translatable nested content
+            if (field.type === 'repeatable' && field.schema) {
+                const nestedFields = getAllFields(field.schema);
+                const hasTranslatableNestedFields = nestedFields.some(f => f.translatable === true);
+                return hasTranslatableNestedFields;
+            }
+            
+            return false;
+        }
+        
+        return false;
+    });
+}
+
+/**
+ * Filters fields within a grid or container based on render mode
+ */
+export function filterFieldsByMode(fields: FormField[], mode: RenderMode): FormField[] {
+    if (mode === RenderMode.CONTENT) {
+        return fields;
+    }
+    
+    // Translation mode - only translatable fields
+    return fields.filter(field => field.translatable === true);
+}
+
+/**
+ * Converts translation data with indexed keys back to proper array structure for saving
+ */
+export function convertTranslationDataForSaving(
+    translationData: TranslationData,
+    componentInstance: any
+): TranslationData {
+    const convertedData: TranslationData = {};
+    const { repeatableFields } = getOrCreateComponentAnalysis(componentInstance.component);
+    
+    Object.entries(translationData).forEach(([componentId, locales]) => {
+        convertedData[componentId] = {};
+        
+        Object.entries(locales).forEach(([locale, translations]) => {
+            convertedData[componentId][locale] = {};
+            
+            // Separate regular fields from repeatable field indexed keys
+            const regularTranslations: Record<string, any> = {};
+            const repeatableTranslations: Record<string, Record<number, any>> = {};
+            
+            Object.entries(translations).forEach(([key, value]) => {
+                // Check if this is an indexed repeatable field key (e.g., "featureCards_0")
+                const repeatableField = repeatableFields.find(rf => key.startsWith(`${rf.name}_`));
+                
+                if (repeatableField) {
+                    const index = parseInt(key.split('_').pop() || '0');
+                    
+                    if (!repeatableTranslations[repeatableField.name]) {
+                        repeatableTranslations[repeatableField.name] = {};
+                    }
+                    
+                    repeatableTranslations[repeatableField.name][index] = value;
+                } else {
+                    // Regular field translation
+                    regularTranslations[key] = value;
+                }
+            });
+            
+            // Add regular translations
+            Object.assign(convertedData[componentId][locale], regularTranslations);
+            
+            // Convert indexed repeatable translations to arrays
+            Object.entries(repeatableTranslations).forEach(([fieldName, indexedItems]) => {
+                const maxIndex = Math.max(...Object.keys(indexedItems).map(Number));
+                const translationArray: any[] = [];
+                
+                for (let i = 0; i <= maxIndex; i++) {
+                    translationArray[i] = indexedItems[i] || {};
+                }
+                
+                convertedData[componentId][locale][fieldName] = translationArray;
+            });
+        });
+    });
+    
+    return convertedData;
 } 
 
  

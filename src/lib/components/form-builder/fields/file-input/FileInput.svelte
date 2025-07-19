@@ -2,7 +2,7 @@
     import type { FormField } from '../../types';
     import { cn } from '$lib/utils';
     import UploadIcon from '@tabler/icons-svelte/icons/upload';
-    import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
+    import type { UploadedFileWithDeletionFlag } from '@/lib/shared/types/file.type';
     import { onMount } from 'svelte';
     import FileIcon from '../FileIcon.svelte';
     import VideoPreview from './VideoPreview.svelte';

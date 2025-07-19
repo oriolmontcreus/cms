@@ -1,10 +1,11 @@
 <script lang="ts">
-    import type { SchemaItem, ComponentTab, FormField } from '../types';
+    import type { SchemaItem, ComponentTab, FormField, TranslationData } from '../types';
+    import { RenderMode } from '../types';
     import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
     import FormFieldComponent from '../FormField.svelte';
     import GridLayout from '../layouts/GridLayout.svelte';
     import ResponsiveTabTrigger from './ResponsiveTabTrigger.svelte';
-    import { getAllFields, groupFieldsByTab, isFormField, convertToFormField } from '../utils/formHelpers';
+    import { getAllFields, groupFieldsByTab, isFormField, convertToFormField, filterFieldsByMode, filterSchemaByMode } from '../utils/formHelpers';
     import { CSS_CLASSES, SCHEMA_TYPES } from '../constants';
     
     export let schema: SchemaItem[];
@@ -12,13 +13,19 @@
     export let activeTab: string;
     export let componentId: string;
     export let formData: Record<string, any>;
+    export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
     
     $: allFields = getAllFields(schema);
-    $: groupedFields = groupFieldsByTab(allFields, tabs, schema);
+    $: filteredFields = filterFieldsByMode(allFields, mode);
+    $: groupedFields = groupFieldsByTab(filteredFields, tabs, schema);
+    $: filteredSchema = filterSchemaByMode(schema, mode);
 </script>
 
 <div class="space-y-6">
-    {#each schema as item, index (item.type === 'tabs-selector' ? item.id : isFormField(item) ? item.name : `item-${index}`)}
+    {#each filteredSchema as item, index (item.type === 'tabs-selector' ? item.id : isFormField(item) ? item.name : `item-${index}`)}
         {#if item.type === SCHEMA_TYPES.TABS_SELECTOR}
             {#if tabs.length > 0}
                 <Tabs value={activeTab} class={CSS_CLASSES.TABS_CONTAINER}>
@@ -36,16 +43,26 @@
                                         {field}
                                         fieldId="{componentId}-{field.name}"
                                         bind:value={formData[field.name]}
+                                        isTranslationMode={mode === RenderMode.TRANSLATION}
+                                        {currentLocale}
+                                        {isDefaultLocale}
+                                        {translationData}
+                                        {componentId}
+                                        compact={mode === RenderMode.TRANSLATION}
                                     />
                                 {/each}
                                 
-                                {#each schema as item, index}
+                                {#each filteredSchema as item, index}
                                     {#if item.type === SCHEMA_TYPES.GRID}
                                         <GridLayout 
                                             layout={item}
                                             {formData}
                                             {componentId}
                                             activeTab={tab.name}
+                                            {mode}
+                                            {currentLocale}
+                                            {isDefaultLocale}
+                                            {translationData}
                                         />
                                     {/if}
                                 {/each}
@@ -60,6 +77,10 @@
                 {formData}
                 {componentId}
                 activeTab={undefined}
+                {mode}
+                {currentLocale}
+                {isDefaultLocale}
+                {translationData}
             />
         {:else if isFormField(item)}
             {@const field = convertToFormField(item)}
@@ -68,6 +89,12 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
+                    isTranslationMode={mode === RenderMode.TRANSLATION}
+                    {currentLocale}
+                    {isDefaultLocale}
+                    {translationData}
+                    {componentId}
+                    compact={mode === RenderMode.TRANSLATION}
                 />
             {/if}
         {/if}

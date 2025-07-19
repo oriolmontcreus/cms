@@ -2,8 +2,9 @@
     import { page } from '$app/state';
     import FormBuilder from '$lib/components/form-builder/FormBuilder.svelte';
     import type { PageConfig } from '$lib/components/form-builder/types';
+    import { RenderMode } from '$lib/components/form-builder/types';
     import { getPageBySlug } from '@/services/page.service';
-    import type { Page } from '@shared/types/pages.type';
+    import type { Page } from '@/lib/shared/types/pages.type';
     import { onMount } from 'svelte';
     import SiteHeader from '$lib/components/site-header.svelte';
     import { safeFetch } from "@/lib/utils/safeFetch";
@@ -15,7 +16,7 @@
     let config: PageConfig | null = null;   
     let loading = true;
     let error: string | null = null;
-    let translationMode = false;
+    let mode = RenderMode.CONTENT;
     let formBuilderRef: any = null;
 
     onMount(async () => {
@@ -37,9 +38,9 @@
         <Button
             variant="outline"
             size="sm"
-            onclick={() => translationMode = !translationMode}
+            onclick={() => mode = mode === RenderMode.CONTENT ? RenderMode.TRANSLATION : RenderMode.CONTENT}
         >
-            {#if translationMode}
+            {#if mode === RenderMode.TRANSLATION}
                 <IconEdit class="h-4 w-4 mr-2" />
                 Content Mode
             {:else}
@@ -79,7 +80,7 @@
                             {config} 
                             slug={pageData.slug} 
                             components={pageData.components}
-                            {translationMode}
+                            {mode}
                         />
                     </div>
                 {:else}

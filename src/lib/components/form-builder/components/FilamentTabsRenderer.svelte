@@ -1,19 +1,26 @@
 <script lang="ts">
-    import type { SchemaItem, FormData } from '../types';
+    import type { SchemaItem, FormData, TranslationData } from '../types';
+    import { RenderMode } from '../types';
     import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
     import FormFieldComponent from '../FormField.svelte';
     import GridLayout from '../layouts/GridLayout.svelte';
     import ResponsiveTabTrigger from './ResponsiveTabTrigger.svelte';
-    import { isTabsContainer, isFormField, convertToFormField, renderSchemaItem } from '../utils/formHelpers';
+    import { isTabsContainer, isFormField, convertToFormField, renderSchemaItem, filterSchemaByMode } from '../utils/formHelpers';
     import { CSS_CLASSES, SCHEMA_TYPES } from '../constants';
     
     export let schema: SchemaItem[];
     export let componentId: string;
     export let formData: Record<string, any>;
+    export let mode: RenderMode = RenderMode.CONTENT;
+    export let currentLocale: string = '';
+    export let isDefaultLocale: boolean = true;
+    export let translationData: TranslationData = {};
+    
+    $: filteredSchema = filterSchemaByMode(schema, mode);
 </script>
 
 <div class="space-y-6">
-    {#each schema as item, index (isTabsContainer(item) ? item.name : isFormField(item) ? convertToFormField(item)?.name || `item-${index}` : `item-${index}`)}
+    {#each filteredSchema as item, index (isTabsContainer(item) ? item.name : isFormField(item) ? convertToFormField(item)?.name || `item-${index}` : `item-${index}`)}
         {#if isTabsContainer(item)}
             {@const tabsContainer = item}
             {@const defaultTab = tabsContainer.activeTab || tabsContainer.tabs[0]?.name || ''}
@@ -28,7 +35,7 @@
                 {#each tabsContainer.tabs as tab (tab.name)}
                     <TabsContent value={tab.name} class={CSS_CLASSES.TABS_CONTENT}>
                         <div class="space-y-6">
-                            {#each tab.schema as schemaItem}
+                            {#each filterSchemaByMode(tab.schema, mode) as schemaItem}
                                 {@const renderedItem = renderSchemaItem(schemaItem, componentId)}
                                 {#if renderedItem}
                                     {#if renderedItem.type === 'field'}
@@ -36,12 +43,22 @@
                                             field={renderedItem.field}
                                             fieldId="{componentId}-{renderedItem.field.name}"
                                             bind:value={formData[renderedItem.field.name]}
+                                            isTranslationMode={mode === RenderMode.TRANSLATION}
+                                            {currentLocale}
+                                            {isDefaultLocale}
+                                            {translationData}
+                                            {componentId}
+                                            compact={mode === RenderMode.TRANSLATION}
                                         />
                                     {:else if renderedItem.type === 'grid'}
                                         <GridLayout 
                                             layout={renderedItem.layout}
                                             {formData}
                                             {componentId}
+                                            {mode}
+                                            {currentLocale}
+                                            {isDefaultLocale}
+                                            {translationData}
                                         />
                                     {/if}
                                 {/if}
@@ -57,6 +74,12 @@
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
+                    isTranslationMode={mode === RenderMode.TRANSLATION}
+                    {currentLocale}
+                    {isDefaultLocale}
+                    {translationData}
+                    {componentId}
+                    compact={mode === RenderMode.TRANSLATION}
                 />
             {/if}
         {:else if item && typeof item === 'object' && 'type' in item && item.type === SCHEMA_TYPES.GRID}
@@ -64,6 +87,7 @@
                 layout={item}
                 {formData}
                 {componentId}
+                {mode}
             />
         {/if}
     {/each}
