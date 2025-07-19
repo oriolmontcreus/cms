@@ -284,3 +284,6 @@ export {
     FileInputOptimized as FileInput,
     RepeatableOptimized as Repeatable
 };
+
+// Re-export existing components that don't need optimization
+export { Tabs, TabField, GridContainer } from './fields';
