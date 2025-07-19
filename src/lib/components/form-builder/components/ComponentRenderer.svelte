@@ -30,7 +30,6 @@
     onkeydown={isCollapsed ? (e) => (e.key === 'Enter' || e.key === ' ') && onToggleCollapse() : undefined}
     aria-label={isCollapsed ? 'Click to expand component' : undefined}
 >
-    <!-- Collapsible Header -->
     <div class="flex items-center justify-between">
         <h3 class={CSS_CLASSES.COMPONENT_TITLE}>
             {componentInstance.displayName || componentInstance.component.name}
@@ -50,7 +49,6 @@
         {/if}
     </div>
     
-    <!-- Collapsible Content with Animation -->
     <div class="overflow-hidden transition-all duration-300 ease-in-out {isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[2000px] opacity-100'}">
         <div>
             {#if mode === RenderMode.TRANSLATION}

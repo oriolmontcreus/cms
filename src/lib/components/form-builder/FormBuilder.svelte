@@ -20,37 +20,30 @@
     export let mode: RenderMode = RenderMode.CONTENT;
     export let isSubmitting = false;
 
-    // Initialize data once on component creation
     let formData: FormData = initializeFormData(config.components, components);
     let translationData: TranslationData = initializeTranslationData(config.components, components, SITE_LOCALES);
 
-    // Collapse state management
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
-
-    // Load collapse state from localStorage
     onMount(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 componentCollapseState = JSON.parse(saved);
             }
-            // Set default collapsed state for new components
             config.components.forEach(comp => {
                 if (!(comp.id in componentCollapseState)) {
-                    componentCollapseState[comp.id] = true; // Default: collapsed
+                    componentCollapseState[comp.id] = true;
                 }
             });
         } catch (error) {
             console.warn('Failed to load component collapse state:', error);
-            // Default all components to collapsed
             config.components.forEach(comp => {
                 componentCollapseState[comp.id] = true;
             });
         }
     });
 
-    // Save collapse state to localStorage
     function saveCollapseState() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(componentCollapseState));
@@ -59,13 +52,11 @@
         }
     }
 
-    // Toggle individual component collapse state
     function toggleComponentCollapse(componentId: string) {
         componentCollapseState[componentId] = !componentCollapseState[componentId];
         saveCollapseState();
     }
 
-    // Collapse all components
     function collapseAll() {
         config.components.forEach(comp => {
             componentCollapseState[comp.id] = true;
@@ -73,7 +64,6 @@
         saveCollapseState();
     }
 
-    // Expand all components
     function expandAll() {
         config.components.forEach(comp => {
             componentCollapseState[comp.id] = false;
@@ -92,18 +82,15 @@
     };
     setContext('formBuilder', formBuilderContext);
 
-    // Single reactive statement to handle all form data updates
     $: if (config.components && formData && mode === RenderMode.CONTENT) {
         console.log('[FormBuilder] Form data sync executed');
         config.components.forEach(componentInstance => {
-            // Handle repeatable fields translations
             const repeatableItems = formData[componentInstance.id] || {};
             Object.entries(repeatableItems).forEach(([fieldName, items]) => {
                 if (Array.isArray(items)) {
                     items.forEach((item: any, itemIndex: number) => {
                         const key = `${fieldName}_${itemIndex}`;
                         
-                        // Initialize translation data structure if needed
                         SITE_LOCALES.forEach(locale => {
                             if (locale.code !== CMS_LOCALE) {
                                 if (!translationData[componentInstance.id]) {
@@ -121,7 +108,6 @@
                 }
             });
 
-            // Sync content mode values to default locale translations
             Object.entries(formData[componentInstance.id] || {}).forEach(([fieldName, value]) => {
                 if (translationData[componentInstance.id]?.[CMS_LOCALE]?.[fieldName] !== value) {
                     if (!translationData[componentInstance.id]) {
@@ -136,7 +122,6 @@
         });
     }
 
-    // Helper function to collect all files that need to be uploaded
     function collectPendingFiles(data: any): File[] {
         const files: File[] = [];
         
@@ -160,7 +145,6 @@
         return files;
     }
 
-    // Helper function to mark files for deletion
     function markFilesForDeletion(data: any) {
         function traverse(value: any) {
             if (!value || typeof value !== 'object') return;
@@ -181,7 +165,6 @@
         traverse(data);
     }
 
-    // Helper function to replace file references in data
     function replaceFileReferences(data: any, fileMap: Map<File, any>): any {
         if (!data || typeof data !== 'object') return data;
         
@@ -207,19 +190,12 @@
     async function uploadPendingFiles(data: any): Promise<any> {
         console.log('[FormBuilder] uploadPendingFiles called');
         
-        // Step 1: Collect all files that need to be uploaded
         const pendingFiles = collectPendingFiles(data);
-        
-        // Step 2: Mark files for deletion
         markFilesForDeletion(data);
         
-        // Step 3: Upload all files in a single batch
         const uploadedFiles = pendingFiles.length > 0 ? (await handleUploadFiles(pendingFiles) || []) : [];
-        
-        // Step 4: Create a map of original files to their uploaded versions
         const fileMap = new Map(pendingFiles.map((file, index) => [file, uploadedFiles[index]]));
         
-        // Step 5: Replace all file references in the data structure
         return replaceFileReferences(data, fileMap);
     }
 
@@ -228,14 +204,12 @@
         try {
             isSubmitting = true;
             
-            // Process all form data at once
             const processedFormData = { ...formData };
             for (const componentId of Object.keys(processedFormData)) {
                 processedFormData[componentId] = await uploadPendingFiles(processedFormData[componentId]);
             }
             
             const updatedComponents = await Promise.all(config.components.map(async componentInstance => {
-                // Convert translation data to proper structure for saving
                 const convertedTranslations = convertTranslationDataForSaving(
                     { [componentInstance.id]: translationData[componentInstance.id] || {} },
                     componentInstance
@@ -269,7 +243,6 @@
 </script>
 
 <div class={CSS_CLASSES.FORM_CONTAINER}>
-    <!-- Collapse/Expand Controls -->
     <div class="flex gap-2 mb-4">
         <Button
             variant="outline"
