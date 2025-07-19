@@ -11,7 +11,8 @@
         usesFilamentTabs, 
         usesMixedSchema,
         getTranslatableFields,
-        getRepeatableFieldsWithTranslatableContent
+        getRepeatableFieldsWithTranslatableContent,
+        getAllFields
     } from '../utils/formHelpers';
     import { CSS_CLASSES, SCHEMA_TYPES } from '../constants';
     import { CMS_LOCALE } from '@/lib/shared/env';
@@ -35,41 +36,89 @@
         }
     }
     
-    // Create a proxy formData that handles both regular fields and repeatable field translations
-    function getFormDataForLocale(locale: string) {
-        if (locale === CMS_LOCALE) {
-            return formData[componentInstance.id] || {};
+    // Create a reactive proxy formData that handles both regular fields and repeatable field translations
+    let localeFormData: Record<string, any> = {};
+    
+    // Reactive statement to update locale form data when locale changes
+    $: {
+        if (activeLocale === CMS_LOCALE) {
+            localeFormData = formData[componentInstance.id] || {};
+        } else {
+            // For non-default locales, create merged data structure
+            const contentData = formData[componentInstance.id] || {};
+            const localeTranslationData = translationData[componentInstance.id]?.[activeLocale] || {};
+            const mergedData = { ...contentData };
+            
+            // Handle regular translatable fields
+            regularTranslatableFields.forEach(field => {
+                if (field.type !== 'repeatable' && localeTranslationData[field.name] !== undefined) {
+                    mergedData[field.name] = localeTranslationData[field.name];
+                }
+            });
+            
+            // Handle repeatable fields with special translation keys
+            repeatableFieldsWithTranslatableContent.forEach(repeatableField => {
+                const repeatableItems = contentData[repeatableField.name] || [];
+                if (Array.isArray(repeatableItems)) {
+                    const translatedItems = repeatableItems.map((item, itemIndex) => {
+                        const translationKey = `${repeatableField.name}_${itemIndex}`;
+                        const itemTranslations = localeTranslationData[translationKey] || {};
+                        
+                        // Merge content item with its translations
+                        return { ...item, ...itemTranslations };
+                    });
+                    mergedData[repeatableField.name] = translatedItems;
+                }
+            });
+            
+            localeFormData = mergedData;
+        }
+    }
+    
+    // Reactive statement to sync changes back to translation data for non-default locales
+    $: if (activeLocale !== CMS_LOCALE && localeFormData) {
+        // Initialize translation data structure if needed
+        if (!translationData[componentInstance.id]) {
+            translationData[componentInstance.id] = {};
+        }
+        if (!translationData[componentInstance.id][activeLocale]) {
+            translationData[componentInstance.id][activeLocale] = {};
         }
         
-        // For non-default locales, we need to create a merged data structure
-        // that combines content data (for structure) with translation data (for values)
-        const contentData = formData[componentInstance.id] || {};
-        const localeTranslationData = translationData[componentInstance.id]?.[locale] || {};
-        const mergedData = { ...contentData };
+        const localeTranslationData = translationData[componentInstance.id][activeLocale];
         
-        // Handle regular translatable fields
+        // Sync regular translatable fields
         regularTranslatableFields.forEach(field => {
-            if (field.type !== 'repeatable' && localeTranslationData[field.name] !== undefined) {
-                mergedData[field.name] = localeTranslationData[field.name];
+            if (field.type !== 'repeatable' && localeFormData[field.name] !== undefined) {
+                localeTranslationData[field.name] = localeFormData[field.name];
             }
         });
         
-        // Handle repeatable fields with special translation keys
+        // Sync repeatable fields
         repeatableFieldsWithTranslatableContent.forEach(repeatableField => {
-            const repeatableItems = contentData[repeatableField.name] || [];
+            const repeatableItems = localeFormData[repeatableField.name] || [];
             if (Array.isArray(repeatableItems)) {
-                const translatedItems = repeatableItems.map((item, itemIndex) => {
+                repeatableItems.forEach((item, itemIndex) => {
                     const translationKey = `${repeatableField.name}_${itemIndex}`;
-                    const itemTranslations = localeTranslationData[translationKey] || {};
                     
-                    // Merge content item with its translations
-                    return { ...item, ...itemTranslations };
+                    // Initialize translation structure for this item if needed
+                    if (!localeTranslationData[translationKey]) {
+                        localeTranslationData[translationKey] = {};
+                    }
+                    
+                    // Get nested translatable fields from the repeatable field schema
+                    const nestedFields = repeatableField.schema ? getAllFields(repeatableField.schema) : [];
+                    const nestedTranslatableFields = nestedFields.filter(f => f.translatable === true);
+                    
+                    // Sync each translatable field in the item
+                    nestedTranslatableFields.forEach(nestedField => {
+                        if (item[nestedField.name] !== undefined) {
+                            localeTranslationData[translationKey][nestedField.name] = item[nestedField.name];
+                        }
+                    });
                 });
-                mergedData[repeatableField.name] = translatedItems;
             }
         });
-        
-        return mergedData;
     }
 </script>
 
@@ -119,7 +168,7 @@
                 <FilamentTabsRenderer 
                     {schema}
                     componentId={componentInstance.id}
-                    formData={getFormDataForLocale(activeLocale)}
+                    bind:formData={localeFormData}
                     mode={RenderMode.TRANSLATION}
                     currentLocale={activeLocale}
                     isDefaultLocale={activeLocale === CMS_LOCALE}
@@ -135,7 +184,7 @@
                     {tabs}
                     {activeTab}
                     componentId={componentInstance.id}
-                    formData={getFormDataForLocale(activeLocale)}
+                    bind:formData={localeFormData}
                     mode={RenderMode.TRANSLATION}
                     currentLocale={activeLocale}
                     isDefaultLocale={activeLocale === CMS_LOCALE}
@@ -146,7 +195,7 @@
                 {#if componentInstance.component.schema.type === SCHEMA_TYPES.GRID}
                     <GridLayout 
                         layout={componentInstance.component.schema}
-                        formData={getFormDataForLocale(activeLocale)}
+                        bind:formData={localeFormData}
                         componentId={componentInstance.id}
                         mode={RenderMode.TRANSLATION}
                         currentLocale={activeLocale}
@@ -156,7 +205,7 @@
                 {:else if componentInstance.component.schema.type === SCHEMA_TYPES.TABS}
                     <TabsLayout 
                         layout={componentInstance.component.schema}
-                        formData={getFormDataForLocale(activeLocale)}
+                        bind:formData={localeFormData}
                         componentId={componentInstance.id}
                         mode={RenderMode.TRANSLATION}
                         currentLocale={activeLocale}
@@ -169,7 +218,7 @@
                 <DefaultRenderer 
                     schema={componentInstance.component.schema}
                     componentId={componentInstance.id}
-                    formData={getFormDataForLocale(activeLocale)}
+                    bind:formData={localeFormData}
                     mode={RenderMode.TRANSLATION}
                     currentLocale={activeLocale}
                     isDefaultLocale={activeLocale === CMS_LOCALE}
