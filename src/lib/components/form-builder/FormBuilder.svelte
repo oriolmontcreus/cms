@@ -6,7 +6,7 @@
     import type { Component } from '@shared/types/pages.type';
     import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
-    import { initializeFormData, initializeTranslationData, getAllFields, collectFilesForDeletion, getTranslatableFields, getRepeatableFieldsWithTranslatableContent, type FormBuilderContext } from './utils/formHelpers';
+    import { initializeFormData, initializeTranslationData, collectFilesForDeletion, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
@@ -16,66 +16,11 @@
     export let slug: string;
     export let components: Component[] = [];
     export let translationMode: boolean = false;
+    export let isSubmitting = false;
 
+    // Initialize data once on component creation
     let formData: FormData = initializeFormData(config.components, components);
     let translationData: TranslationData = initializeTranslationData(config.components, components, SITE_LOCALES);
-    export let isSubmitting = false;
-    
-    // Ensure translation data is properly initialized for repeatable fields
-    $: {
-        config.components.forEach(componentInstance => {
-            const repeatableFields = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
-            
-            repeatableFields.forEach(repeatableField => {
-                const repeatableItems = formData[componentInstance.id]?.[repeatableField.name] || [];
-                const translatableNestedFields = getAllFields(repeatableField.schema || []).filter(f => f.translatable);
-                
-                SITE_LOCALES.forEach(locale => {
-                    if (locale.code !== CMS_LOCALE) {
-                        repeatableItems.forEach((item: any, itemIndex: number) => {
-                            const key = `${repeatableField.name}_${itemIndex}`;
-                            
-                            if (!translationData[componentInstance.id]) {
-                                translationData[componentInstance.id] = {};
-                            }
-                            if (!translationData[componentInstance.id][locale.code]) {
-                                translationData[componentInstance.id][locale.code] = {};
-                            }
-                            if (!translationData[componentInstance.id][locale.code][key]) {
-                                translationData[componentInstance.id][locale.code][key] = {};
-                            }
-                            
-                            translatableNestedFields.forEach(nestedField => {
-                                if (translationData[componentInstance.id][locale.code][key][nestedField.name] === undefined) {
-                                    translationData[componentInstance.id][locale.code][key][nestedField.name] = '';
-                                }
-                            });
-                        });
-                    }
-                });
-            });
-        });
-    }
-    $: {
-        if (!translationMode) {
-            // Only sync when in content mode to avoid conflicts
-            config.components.forEach(componentInstance => {
-                const translatableFields = getTranslatableFields(componentInstance.component.schema);
-                
-                translatableFields.forEach(field => {
-                    const contentModeValue = formData[componentInstance.id]?.[field.name];
-                    const currentTranslationValue = translationData[componentInstance.id]?.[CMS_LOCALE]?.[field.name];
-                    
-                    // Only sync if values are different to avoid unnecessary updates
-                    if (contentModeValue !== undefined && 
-                        translationData[componentInstance.id]?.[CMS_LOCALE] &&
-                        contentModeValue !== currentTranslationValue) {
-                        translationData[componentInstance.id][CMS_LOCALE][field.name] = contentModeValue;
-                    }
-                });
-            });
-        }
-    }
 
     const filesToDelete = writable<string[]>([]);
 
@@ -88,144 +33,161 @@
     };
     setContext('formBuilder', formBuilderContext);
 
-    async function uploadPendingFiles(data: any, fieldConfig?: any): Promise<any> {
+    // Single reactive statement to handle all form data updates
+    $: if (config.components && formData && !translationMode) {
+        console.log('[FormBuilder] Form data sync executed');
+        config.components.forEach(componentInstance => {
+            // Handle repeatable fields translations
+            const repeatableItems = formData[componentInstance.id] || {};
+            Object.entries(repeatableItems).forEach(([fieldName, items]) => {
+                if (Array.isArray(items)) {
+                    items.forEach((item: any, itemIndex: number) => {
+                        const key = `${fieldName}_${itemIndex}`;
+                        
+                        // Initialize translation data structure if needed
+                        SITE_LOCALES.forEach(locale => {
+                            if (locale.code !== CMS_LOCALE) {
+                                if (!translationData[componentInstance.id]) {
+                                    translationData[componentInstance.id] = {};
+                                }
+                                if (!translationData[componentInstance.id][locale.code]) {
+                                    translationData[componentInstance.id][locale.code] = {};
+                                }
+                                if (!translationData[componentInstance.id][locale.code][key]) {
+                                    translationData[componentInstance.id][locale.code][key] = {};
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+
+            // Sync content mode values to default locale translations
+            Object.entries(formData[componentInstance.id] || {}).forEach(([fieldName, value]) => {
+                if (translationData[componentInstance.id]?.[CMS_LOCALE]?.[fieldName] !== value) {
+                    if (!translationData[componentInstance.id]) {
+                        translationData[componentInstance.id] = {};
+                    }
+                    if (!translationData[componentInstance.id][CMS_LOCALE]) {
+                        translationData[componentInstance.id][CMS_LOCALE] = {};
+                    }
+                    translationData[componentInstance.id][CMS_LOCALE][fieldName] = value;
+                }
+            });
+        });
+    }
+
+    // Helper function to collect all files that need to be uploaded
+    function collectPendingFiles(data: any): File[] {
+        const files: File[] = [];
+        
+        function traverse(value: any) {
+            if (!value || typeof value !== 'object') return;
+            
+            if (value instanceof File) {
+                files.push(value);
+                return;
+            }
+            
+            if (Array.isArray(value)) {
+                value.forEach(item => traverse(item));
+                return;
+            }
+            
+            Object.values(value).forEach(val => traverse(val));
+        }
+        
+        traverse(data);
+        return files;
+    }
+
+    // Helper function to mark files for deletion
+    function markFilesForDeletion(data: any) {
+        function traverse(value: any) {
+            if (!value || typeof value !== 'object') return;
+            
+            if ((value as UploadedFileWithDeletionFlag)._markedForDeletion && (value as UploadedFileWithDeletionFlag).id) {
+                filesToDelete.update(current => [...current, (value as UploadedFileWithDeletionFlag).id]);
+                return;
+            }
+            
+            if (Array.isArray(value)) {
+                value.forEach(item => traverse(item));
+                return;
+            }
+            
+            Object.values(value).forEach(val => traverse(val));
+        }
+        
+        traverse(data);
+    }
+
+    // Helper function to replace file references in data
+    function replaceFileReferences(data: any, fileMap: Map<File, any>): any {
         if (!data || typeof data !== 'object') return data;
         
         if (data instanceof File) {
-            const uploadedFiles = await handleUploadFiles([data]);
-            return uploadedFiles?.[0] || null;
+            return fileMap.get(data) || null;
         }
         
         if (Array.isArray(data)) {
-            const result = [];
-            for (const item of data) {
-                if (item && (item as UploadedFileWithDeletionFlag)._markedForDeletion) {
-                    if ((item as UploadedFileWithDeletionFlag).id) {
-                        filesToDelete.update(current => [...current, (item as UploadedFileWithDeletionFlag).id]);
-                    }
-                } else if (item instanceof File) {
-                    const uploadedFiles = await handleUploadFiles([item]);
-                    if (uploadedFiles?.[0]) result.push(uploadedFiles[0]);
-                } else {
-                    result.push(await uploadPendingFiles(item));
-                }
-            }
-            return result.length > 0 ? result : null;
+            return data.map(item => replaceFileReferences(item, fileMap));
         }
         
         const result: any = {};
         for (const [key, value] of Object.entries(data)) {
-            if (value instanceof File) {
-                const existingValue = formData[fieldConfig?.componentId]?.[key];
-                if (existingValue && existingValue.id && !Array.isArray(existingValue)) {
-                    await handleDeleteFiles([existingValue.id]);
-                }
-            } else if (value && (value as UploadedFileWithDeletionFlag)._markedForDeletion) {
-                if ((value as UploadedFileWithDeletionFlag).id) {
-                    filesToDelete.update(current => [...current, (value as UploadedFileWithDeletionFlag).id]);
-                }
+            if ((value as UploadedFileWithDeletionFlag)?._markedForDeletion) {
                 result[key] = null;
-                continue;
+            } else {
+                result[key] = replaceFileReferences(value, fileMap);
             }
-            result[key] = await uploadPendingFiles(value);
         }
         return result;
     }
 
+    async function uploadPendingFiles(data: any): Promise<any> {
+        console.log('[FormBuilder] uploadPendingFiles called');
+        
+        // Step 1: Collect all files that need to be uploaded
+        const pendingFiles = collectPendingFiles(data);
+        
+        // Step 2: Mark files for deletion
+        markFilesForDeletion(data);
+        
+        // Step 3: Upload all files in a single batch
+        const uploadedFiles = pendingFiles.length > 0 ? (await handleUploadFiles(pendingFiles) || []) : [];
+        
+        // Step 4: Create a map of original files to their uploaded versions
+        const fileMap = new Map(pendingFiles.map((file, index) => [file, uploadedFiles[index]]));
+        
+        // Step 5: Replace all file references in the data structure
+        return replaceFileReferences(data, fileMap);
+    }
+
     export async function handleSubmit() {
+        console.log('[FormBuilder] handleSubmit called');
         try {
             isSubmitting = true;
             
+            // Process all form data at once
             const processedFormData = { ...formData };
             for (const componentId of Object.keys(processedFormData)) {
-                processedFormData[componentId] = await uploadPendingFiles(
-                    processedFormData[componentId], 
-                    { componentId }
-                );
+                processedFormData[componentId] = await uploadPendingFiles(processedFormData[componentId]);
             }
             
-            const updatedComponents: Component[] = await Promise.all(config.components.map(async componentInstance => {
-                const allFields = getAllFields(componentInstance.component.schema);
-                const colorFields = allFields.filter(field => field.type === 'color');
-                
-                let componentFormData = { ...processedFormData[componentInstance.id] };
-                
-                // For translatable fields, sync between content mode and translation mode
-                const translatableFields = getAllFields(componentInstance.component.schema).filter(field => field.translatable);
-                translatableFields.forEach(field => {
-                    // If we have a content mode value, it should be the source of truth for default locale
-                    const contentModeValue = componentFormData[field.name];
-                    if (contentModeValue !== undefined && translationData[componentInstance.id]?.[CMS_LOCALE]) {
-                        // Update translation data with content mode value
-                        translationData[componentInstance.id][CMS_LOCALE][field.name] = contentModeValue;
-                    }
-                });
-                
-                for (const field of colorFields) {
-                    const value = componentFormData[field.name];
-                    if (value && typeof value !== 'string') {
-                        console.warn(`Color field ${field.name} contains non-string value:`, value, 'Resetting to empty string');
-                        componentFormData[field.name] = '';
-                    }
+            const updatedComponents = await Promise.all(config.components.map(async componentInstance => ({
+                componentName: componentInstance.component.name,
+                instanceId: componentInstance.id,
+                displayName: componentInstance.displayName || componentInstance.component.name,
+                formData: {
+                    ...processedFormData[componentInstance.id],
+                    translations: translationData[componentInstance.id]
                 }
-                
-                // Process translation data
-                const processedTranslationData: any = {};
-                if (translationData[componentInstance.id]) {
-                    for (const [locale, localeData] of Object.entries(translationData[componentInstance.id])) {
-                        processedTranslationData[locale] = {};
-                        
-                        // Handle regular translatable fields
-                        const regularFields = getTranslatableFields(componentInstance.component.schema);
-                        for (const field of regularFields) {
-                            if (localeData[field.name] !== undefined) {
-                                processedTranslationData[locale][field.name] = await uploadPendingFiles(localeData[field.name]);
-                            }
-                        }
-                        
-                        // Handle repeatable field translations
-                        const repeatableFields = getRepeatableFieldsWithTranslatableContent(componentInstance.component.schema);
-                        for (const repeatableField of repeatableFields) {
-                            const repeatableItems = formData[componentInstance.id]?.[repeatableField.name] || [];
-                            const translatableNestedFields = getAllFields(repeatableField.schema || []).filter(f => f.translatable);
-                            
-                            for (let itemIndex = 0; itemIndex < repeatableItems.length; itemIndex++) {
-                                const key = `${repeatableField.name}_${itemIndex}`;
-                                if (localeData[key]) {
-                                    if (!processedTranslationData[locale][repeatableField.name]) {
-                                        processedTranslationData[locale][repeatableField.name] = [];
-                                    }
-                                    if (!processedTranslationData[locale][repeatableField.name][itemIndex]) {
-                                        processedTranslationData[locale][repeatableField.name][itemIndex] = {};
-                                    }
-                                    
-                                    for (const nestedField of translatableNestedFields) {
-                                        if (localeData[key][nestedField.name] !== undefined) {
-                                            processedTranslationData[locale][repeatableField.name][itemIndex][nestedField.name] = 
-                                                await uploadPendingFiles(localeData[key][nestedField.name]);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return {
-                    componentName: componentInstance.component.name,
-                    instanceId: componentInstance.id,
-                    displayName: componentInstance.displayName || componentInstance.component.name,
-                    formData: {
-                        ...componentFormData,
-                        translations: processedTranslationData
-                    }
-                };
-            }));
+            })));
             
             await handleUpdateComponents(slug, updatedComponents);
             
             const fileIdsToDelete = $filesToDelete;
-            
             if (fileIdsToDelete.length > 0) {
                 await handleDeleteFiles(fileIdsToDelete);
                 filesToDelete.set([]);

@@ -8,6 +8,7 @@ export interface FormBuilderContext {
 }
 
 export function collectFilesForDeletion(itemData: any, addToQueue: (fileIds: string[]) => void) {
+    console.log('[formHelpers] collectFilesForDeletion called');
     const fileIds: string[] = [];
     
     function extractFileIds(obj: any) {
@@ -47,6 +48,22 @@ export function convertToFormField(item: any): FormField | null {
     return null;
 }
 
+// Global schema analysis cache
+const schemaAnalysisCache = new WeakMap();
+const componentAnalysisCache = new WeakMap();
+
+interface SchemaAnalysis {
+    allFields: FormField[];
+    translatableFields: FormField[];
+    repeatableFields: FormField[];
+}
+
+interface ComponentAnalysis extends SchemaAnalysis {
+    hasFilamentTabs: boolean;
+    hasMixedSchema: boolean;
+}
+
+// Internal helper function for getting all fields from a schema
 export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
     if (Array.isArray(schema)) {
         return schema
@@ -70,14 +87,133 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
     return [];
 }
 
+function analyzeSchema(schema: Layout | SchemaItem[]): SchemaAnalysis {
+    if (schemaAnalysisCache.has(schema)) {
+        return schemaAnalysisCache.get(schema);
+    }
+
+    const allFields = getAllFields(schema);
+    console.log('[formHelpers] getAllFields called');
+    
+    const result: SchemaAnalysis = {
+        allFields,
+        translatableFields: allFields.filter((field: FormField) => field.translatable === true),
+        repeatableFields: allFields.filter((field: FormField) => {
+            if (field.type === 'repeatable' && field.schema) {
+                const nestedAnalysis = analyzeSchema(field.schema);
+                return nestedAnalysis.translatableFields.length > 0;
+            }
+            return false;
+        })
+    };
+    
+    schemaAnalysisCache.set(schema, result);
+    return result;
+}
+
+function getOrCreateComponentAnalysis(component: any): ComponentAnalysis {
+    if (componentAnalysisCache.has(component)) {
+        return componentAnalysisCache.get(component);
+    }
+
+    const schema = component.schema;
+    const schemaAnalysis = analyzeSchema(schema);
+    
+    const result: ComponentAnalysis = {
+        ...schemaAnalysis,
+        hasFilamentTabs: Array.isArray(schema) && schema.some((item: any) => item.type === SCHEMA_TYPES.TABS_CONTAINER),
+        hasMixedSchema: Array.isArray(schema) && schema.some((item: any) => item.type === SCHEMA_TYPES.TABS_SELECTOR)
+    };
+    
+    componentAnalysisCache.set(component, result);
+    return result;
+}
+
+export function initializeFormData(components: any[], existingComponents: Component[]): FormData {
+    console.log('[formHelpers] initializeFormData called');
+    const formData: FormData = {};
+    
+    components.forEach(componentInstance => {
+        const { allFields } = getOrCreateComponentAnalysis(componentInstance.component);
+        formData[componentInstance.id] = {};
+        const existingComponent = existingComponents.find(c => c.instanceId === componentInstance.id);
+        
+        allFields.forEach(field => {
+            const existingValue = existingComponent?.formData[field.name];
+            formData[componentInstance.id][field.name] = existingValue !== undefined ? 
+                existingValue : getDefaultValue(field);
+        });
+    });
+    
+    return formData;
+}
+
+export function initializeTranslationData(
+    components: any[], 
+    existingComponents: Component[], 
+    locales: readonly { code: string; name: string; }[]
+): TranslationData {
+    console.log('[formHelpers] initializeTranslationData called');
+    const translationData: TranslationData = {};
+    
+    components.forEach(componentInstance => {
+        const { translatableFields, repeatableFields } = getOrCreateComponentAnalysis(componentInstance.component);
+        const existingComponent = existingComponents.find(c => c.instanceId === componentInstance.id);
+        translationData[componentInstance.id] = {};
+        
+        locales.forEach(locale => {
+            translationData[componentInstance.id][locale.code] = {};
+            
+            // Handle regular translatable fields
+            translatableFields.forEach(field => {
+                if (field.type === 'repeatable') return;
+                
+                const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[field.name];
+                translationData[componentInstance.id][locale.code][field.name] = 
+                    existingTranslation !== undefined ? existingTranslation :
+                    locale.code === CMS_LOCALE ? (existingComponent?.formData?.[field.name] ?? getDefaultValue(field)) :
+                    getDefaultValue(field);
+            });
+            
+            // Handle repeatable fields
+            if (locale.code !== CMS_LOCALE) {
+                repeatableFields.forEach(repeatableField => {
+                    const repeatableItems = existingComponent?.formData?.[repeatableField.name] || [];
+                    const { translatableFields: nestedTranslatableFields } = analyzeSchema(repeatableField.schema || []);
+                    
+                    repeatableItems.forEach((item: any, itemIndex: number) => {
+                        const key = `${repeatableField.name}_${itemIndex}`;
+                        translationData[componentInstance.id][locale.code][key] = {};
+                        
+                        nestedTranslatableFields.forEach(nestedField => {
+                            const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[repeatableField.name]?.[itemIndex]?.[nestedField.name];
+                            translationData[componentInstance.id][locale.code][key][nestedField.name] = 
+                                existingTranslation !== undefined ? existingTranslation : getDefaultValue(nestedField);
+                        });
+                    });
+                });
+            }
+        });
+    });
+    
+    return translationData;
+}
+
+// Export these functions but make them use the cached analysis
+export function getTranslatableFields(schema: Layout | SchemaItem[]): FormField[] {
+    return analyzeSchema(schema).translatableFields;
+}
+
+export function getRepeatableFieldsWithTranslatableContent(schema: Layout | SchemaItem[]): FormField[] {
+    return analyzeSchema(schema).repeatableFields;
+}
+
 export function usesMixedSchema(component: any): boolean {
-    if (!Array.isArray(component.schema)) return false;
-    return component.schema.some((item: any) => item.type === SCHEMA_TYPES.TABS_SELECTOR);
+    return getOrCreateComponentAnalysis(component).hasMixedSchema;
 }
 
 export function usesFilamentTabs(component: any): boolean {
-    if (!Array.isArray(component.schema)) return false;
-    return component.schema.some((item: any) => item.type === SCHEMA_TYPES.TABS_CONTAINER);
+    return getOrCreateComponentAnalysis(component).hasFilamentTabs;
 }
 
 export function isFormField(item: SchemaItem): item is FormField {
@@ -89,6 +225,7 @@ export function isTabsContainer(item: SchemaItem): item is TabsContainer {
 }
 
 export function groupFieldsByTab(fields: FormField[], tabs: ComponentTab[], schema: any[]): Record<string, FormField[]> {
+    console.log('[formHelpers] groupFieldsByTab called');
     const tabFields: Record<string, FormField[]> = {};
 
     tabs.forEach(tab => {
@@ -147,113 +284,36 @@ export function renderSchemaItem(item: SchemaItem, componentId: string, activeTa
     return null;
 }
 
-export function initializeFormData(components: any[], existingComponents: Component[]): FormData {
-    const formData: FormData = {};
+// Cache for flattened fields
+const flattenedFieldsCache = new WeakMap();
+
+export function getFlattenedFields(schema: Layout | SchemaItem[]): {
+    allFields: FormField[],
+    translatableFields: FormField[],
+    repeatableFields: FormField[]
+} {
+    console.log('[formHelpers] getFlattenedFields called');
     
-    components.forEach(componentInstance => {
-        formData[componentInstance.id] = {};
-        const existingComponent = existingComponents.find(c => c.instanceId === componentInstance.id);
-        
-        const allFields = getAllFields(componentInstance.component.schema);
-        
-        allFields.forEach(field => {
-            const existingValue = existingComponent?.formData[field.name];
-            if (existingValue !== undefined) {
-                formData[componentInstance.id][field.name] = existingValue;
-            } else {
-                formData[componentInstance.id][field.name] = getDefaultValue(field);
+    if (flattenedFieldsCache.has(schema)) {
+        console.log('[formHelpers] getFlattenedFields cache hit');
+        return flattenedFieldsCache.get(schema);
+    }
+
+    const allFields = getAllFields(schema);
+    const result = {
+        allFields,
+        translatableFields: allFields.filter(field => field.translatable === true),
+        repeatableFields: allFields.filter(field => {
+            if (field.type === 'repeatable' && field.schema) {
+                const nestedFields = getAllFields(field.schema);
+                return nestedFields.some(f => f.translatable === true);
             }
-        });
-    });
+            return false;
+        })
+    };
     
-    return formData;
-}
-
-export function initializeTranslationData(
-    components: any[], 
-    existingComponents: Component[], 
-    locales: readonly { code: string; name: string; }[]
-): TranslationData {
-    const translationData: TranslationData = {};
-    
-    components.forEach(componentInstance => {
-        translationData[componentInstance.id] = {};
-        const existingComponent = existingComponents.find(c => c.instanceId === componentInstance.id);
-        
-        locales.forEach(locale => {
-            translationData[componentInstance.id][locale.code] = {};
-            
-            const allFields = getAllFields(componentInstance.component.schema);
-            const translatableFields = allFields.filter(field => field.translatable);
-            
-            translatableFields.forEach(field => {
-                if (field.type === 'repeatable') return;
-                
-                const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[field.name];
-                
-                if (existingTranslation !== undefined) {
-                    // Use existing translation if available
-                    translationData[componentInstance.id][locale.code][field.name] = existingTranslation;
-                } else if (locale.code === CMS_LOCALE) {
-                    // For default locale, use the current content mode value
-                    const contentModeValue = existingComponent?.formData?.[field.name];
-                    translationData[componentInstance.id][locale.code][field.name] = contentModeValue !== undefined ? contentModeValue : getDefaultValue(field);
-                } else {
-                    // For other locales, use default value
-                    translationData[componentInstance.id][locale.code][field.name] = getDefaultValue(field);
-                }
-            });
-            
-            // Handle repeatable fields separately
-            const repeatableFields = getAllFields(componentInstance.component.schema).filter(field => field.type === 'repeatable');
-            repeatableFields.forEach(repeatableField => {
-                const repeatableItems = existingComponent?.formData?.[repeatableField.name] || [];
-                const translatableNestedFields = getAllFields(repeatableField.schema || []).filter(f => f.translatable);
-                
-                repeatableItems.forEach((item: any, itemIndex: number) => {
-                    const key = `${repeatableField.name}_${itemIndex}`;
-                    
-                    translatableNestedFields.forEach(nestedField => {
-                        if (locale.code === CMS_LOCALE) {
-                            // For default locale, we don't store in translation data, it's in content mode
-                            return;
-                        }
-                        
-                        // Check if translation exists in the saved format (array structure)
-                        const existingTranslation = existingComponent?.formData?.translations?.[locale.code]?.[repeatableField.name]?.[itemIndex]?.[nestedField.name];
-                        
-                        if (!translationData[componentInstance.id][locale.code][key]) {
-                            translationData[componentInstance.id][locale.code][key] = {};
-                        }
-                        
-                        if (existingTranslation !== undefined) {
-                            translationData[componentInstance.id][locale.code][key][nestedField.name] = existingTranslation;
-                        } else {
-                            translationData[componentInstance.id][locale.code][key][nestedField.name] = getDefaultValue(nestedField);
-                        }
-                    });
-                });
-            });
-        });
-    });
-    
-    return translationData;
-}
-
-export function getTranslatableFields(schema: Layout | SchemaItem[]): FormField[] {
-    const allFields = getAllFields(schema);
-    return allFields.filter(field => field.translatable === true);
-}
-
-export function getRepeatableFieldsWithTranslatableContent(schema: Layout | SchemaItem[]): FormField[] {
-    const allFields = getAllFields(schema);
-    return allFields.filter(field => {
-        if (field.type === 'repeatable' && field.schema) {
-            const nestedTranslatableFields = getAllFields(field.schema).filter(f => f.translatable === true);
-            return nestedTranslatableFields.length > 0;
-        }
-        return false;
-    });
+    flattenedFieldsCache.set(schema, result);
+    return result;
 }
 
 function getDefaultValue(field: FormField) {

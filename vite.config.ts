@@ -10,7 +10,16 @@ export default defineConfig({
 		port: 5173,
 		strictPort: true,
 		watch: {
-			usePolling: true
+			usePolling: true,
+			ignored: [
+				'**/site/src/data/pages.json'
+			]
+		},
+		fs: {
+			allow: [
+				'.',
+				'../site/src/data'
+			]
 		}
 	},
 	resolve: {

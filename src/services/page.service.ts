@@ -3,16 +3,21 @@ import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "@/services/toast.service";
 import { getPageConfig, getAllPageSlugs } from "@/lib/page-registry";
 import { api } from "@/lib/utils/api";
-import { SITE_DIRECTORY_NAME } from "@shared/env";
+import { CMS_NAME, FRONTEND_URL } from "@shared/env";
 
 //region Local data helpers
 async function getExistingPagesData(): Promise<Page[]> {
     try {
-        //TODO: clean up this import
-        const pagesData = await import(`../../../${SITE_DIRECTORY_NAME}/src/data/pages.json`);
-        return pagesData.default || [];
+        const response = await fetch(`${FRONTEND_URL}/src/data/pages.json?t=${Date.now()}`, {
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });  
+        if (!response.ok) throw new Error('Failed to fetch pages.json');
+        return await response.json();
     } catch (error) {
-        console.log('No existing pages.json found, starting fresh');
+        console.warn(`${CMS_NAME} No existing pages.json found or error fetching it, starting fresh`);
         return [];
     }
 }
