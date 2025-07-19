@@ -20,10 +20,9 @@
     export let translationData: TranslationData = {};
     export let componentId: string = "";
 
-    // Get context with proper typing
     const formBuilderContext = getContext<FormBuilderContext>("formBuilder");
 
-    // Initialize empty array if no value
+    let removingItems = new Set<number>();
     $: if (!Array.isArray(value)) {
         value = [];
     }
@@ -58,11 +57,18 @@
     }
 
     function removeItem(index: number) {
-        const itemToRemove = value[index];
-        if (itemToRemove && formBuilderContext?.collectFilesForDeletion) {
-            formBuilderContext.collectFilesForDeletion(itemToRemove);
-        }
-        value = value.filter((_, i) => i !== index);
+        removingItems.add(index);
+        removingItems = removingItems;
+
+        setTimeout(() => {
+            const itemToRemove = value[index];
+            if (itemToRemove && formBuilderContext?.collectFilesForDeletion) {
+                formBuilderContext.collectFilesForDeletion(itemToRemove);
+            }
+            value = value.filter((_, i) => i !== index);
+            removingItems.delete(index);
+            removingItems = removingItems;
+        }, 300);
     }
 </script>
 
@@ -79,32 +85,47 @@
     <div class={gridClasses}>
         {#each value as item, index (index)}
             {#if field.contained}
-                <Card>
-                    <CardContent>
-                        <div class="flex items-start justify-end mb-4">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onclick={() => removeItem(index)}
-                                class="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                                <TrashIcon class="w-4 h-4" />
-                            </Button>
-                        </div>
-                        <UnifiedRenderer
-                            schema={field.schema || []}
-                            componentId={`${fieldId}-${index}`}
-                            bind:formData={value[index]}
-                            mode={translationMode}
-                            {currentLocale}
-                            {isDefaultLocale}
-                            {translationData}
-                        />
-                    </CardContent>
-                </Card>
+                <div
+                    class="transition-all duration-300 ease-in-out {removingItems.has(
+                        index,
+                    )
+                        ? ' scale-95 opacity-0'
+                        : ''}"
+                >
+                    <Card>
+                        <CardContent>
+                            <div class="flex items-start justify-end mb-4">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onclick={() => removeItem(index)}
+                                    class="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    disabled={removingItems.has(index)}
+                                >
+                                    <TrashIcon class="w-4 h-4" />
+                                </Button>
+                            </div>
+                            <UnifiedRenderer
+                                schema={field.schema || []}
+                                componentId={`${fieldId}-${index}`}
+                                bind:formData={value[index]}
+                                mode={translationMode}
+                                {currentLocale}
+                                {isDefaultLocale}
+                                {translationData}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
             {:else}
-                <div class="space-y-4">
+                <div
+                    class="space-y-4 transition-all duration-300 ease-in-out {removingItems.has(
+                        index,
+                    )
+                        ? 'bg-red-500/20 scale-95 opacity-0 rounded-lg p-4'
+                        : ''}"
+                >
                     <div class="flex items-center justify-between">
                         <div class="text-sm font-medium text-muted-foreground">
                             Item {index + 1}
@@ -122,6 +143,7 @@
                                 variant="ghost"
                                 size="sm"
                                 class="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                disabled={removingItems.has(index)}
                             >
                                 <TrashIcon class="w-4 h-4" />
                             </Button>
