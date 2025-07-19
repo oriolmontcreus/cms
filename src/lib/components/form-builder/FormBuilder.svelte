@@ -10,8 +10,9 @@
     import { initializeFormData, initializeTranslationData, collectFilesForDeletion, convertTranslationDataForSaving, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
-    import { setContext } from 'svelte';
+    import { setContext, onMount } from 'svelte';
     import { SITE_LOCALES, CMS_LOCALE } from '@/lib/shared/env';
+    import { IconChevronDown, IconChevronUp } from '@tabler/icons-svelte';
 
     export let config: PageConfig;
     export let slug: string;
@@ -22,6 +23,63 @@
     // Initialize data once on component creation
     let formData: FormData = initializeFormData(config.components, components);
     let translationData: TranslationData = initializeTranslationData(config.components, components, SITE_LOCALES);
+
+    // Collapse state management
+    const STORAGE_KEY = `component-collapse-${slug}`;
+    let componentCollapseState: Record<string, boolean> = {};
+
+    // Load collapse state from localStorage
+    onMount(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                componentCollapseState = JSON.parse(saved);
+            }
+            // Set default collapsed state for new components
+            config.components.forEach(comp => {
+                if (!(comp.id in componentCollapseState)) {
+                    componentCollapseState[comp.id] = true; // Default: collapsed
+                }
+            });
+        } catch (error) {
+            console.warn('Failed to load component collapse state:', error);
+            // Default all components to collapsed
+            config.components.forEach(comp => {
+                componentCollapseState[comp.id] = true;
+            });
+        }
+    });
+
+    // Save collapse state to localStorage
+    function saveCollapseState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(componentCollapseState));
+        } catch (error) {
+            console.warn('Failed to save component collapse state:', error);
+        }
+    }
+
+    // Toggle individual component collapse state
+    function toggleComponentCollapse(componentId: string) {
+        componentCollapseState[componentId] = !componentCollapseState[componentId];
+        saveCollapseState();
+    }
+
+    // Collapse all components
+    function collapseAll() {
+        config.components.forEach(comp => {
+            componentCollapseState[comp.id] = true;
+        });
+        saveCollapseState();
+    }
+
+    // Expand all components
+    function expandAll() {
+        config.components.forEach(comp => {
+            componentCollapseState[comp.id] = false;
+        });
+        saveCollapseState();
+    }
 
     const filesToDelete = writable<string[]>([]);
 
@@ -211,6 +269,26 @@
 </script>
 
 <div class={CSS_CLASSES.FORM_CONTAINER}>
+    <!-- Collapse/Expand Controls -->
+    <div class="flex gap-2 mb-4">
+        <Button
+            variant="outline"
+            size="sm"
+            onclick={collapseAll}
+        >
+            <IconChevronUp class="h-4 w-4 mr-2" />
+            Collapse all
+        </Button>
+        <Button
+            variant="outline"
+            size="sm"
+            onclick={expandAll}
+        >
+            <IconChevronDown class="h-4 w-4 mr-2" />
+            Expand all
+        </Button>
+    </div>
+
     {#each config.components as componentInstance (componentInstance.id)}
         <ComponentRenderer 
             {componentInstance} 
@@ -218,6 +296,8 @@
             {mode}
             {translationData}
             locales={SITE_LOCALES}
+            isCollapsed={componentCollapseState[componentInstance.id] ?? true}
+            onToggleCollapse={() => toggleComponentCollapse(componentInstance.id)}
         />
     {/each}
 </div> 
