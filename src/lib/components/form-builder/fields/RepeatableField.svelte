@@ -5,7 +5,7 @@
     import TrashIcon from '@tabler/icons-svelte/icons/trash';
     import type { FormField, TranslationData } from '../types';
     import { RenderMode } from '../types';
-    import DefaultRenderer from '../components/DefaultRenderer.svelte';
+    import UnifiedRenderer from '../components/UnifiedRenderer.svelte';
     import { CSS_CLASSES } from '../constants';
     import { cn } from '$lib/utils';
     import { getContext } from 'svelte';
@@ -87,7 +87,7 @@
                         >
                             <TrashIcon class="w-4 h-4" />
                         </button>
-                        <DefaultRenderer
+                        <UnifiedRenderer
                             schema={field.schema || []}
                             componentId={`${fieldId}-${index}`}
                             bind:formData={value[index]}
@@ -107,7 +107,7 @@
                     >
                         <TrashIcon class="w-4 h-4" />
                     </button>
-                    <DefaultRenderer
+                    <UnifiedRenderer
                         schema={field.schema || []}
                         componentId={`${fieldId}-${index}`}
                         bind:formData={value[index]}
