@@ -28,13 +28,10 @@
     
     let activeLocale = locales.find(l => l.code !== CMS_LOCALE)?.code || locales[0]?.code || '';
     
-    // Create select value object for the select component
-    $: selectedLocale = { value: activeLocale, label: locales.find(l => l.code === activeLocale)?.name || '' };
-    
     // Handle locale selection
-    function handleLocaleChange(selected: { value: string; label: string } | undefined) {
-        if (selected?.value) {
-            activeLocale = selected.value;
+    function handleLocaleChange(newLocale: string | undefined) {
+        if (newLocale) {
+            activeLocale = newLocale;
         }
     }
     
@@ -81,18 +78,27 @@
         <div class="mb-4">
             <h4 class="text-sm font-medium text-muted-foreground mb-2">Translation Mode</h4>
             <div class="w-48">
-                <Select bind:selected={selectedLocale} onSelectedChange={handleLocaleChange}>
+                <Select 
+                    type="single"
+                    value={activeLocale}
+                    onValueChange={handleLocaleChange}
+                >
                     <SelectTrigger class="w-full">
-                        <span class="flex items-center gap-2">
-                            {selectedLocale?.label || 'Select Language'}
-                            {#if selectedLocale?.value === CMS_LOCALE}
-                                <span class="text-xs opacity-60">(default)</span>
-                            {/if}
-                        </span>
+                        {#if activeLocale}
+                            {@const currentLocale = locales.find(l => l.code === activeLocale)}
+                            <span class="flex items-center gap-2">
+                                {currentLocale?.name || 'Select Language'}
+                                {#if activeLocale === CMS_LOCALE}
+                                    <span class="text-xs opacity-60">(default)</span>
+                                {/if}
+                            </span>
+                        {:else}
+                            <span>Select Language</span>
+                        {/if}
                     </SelectTrigger>
                     <SelectContent>
                         {#each locales as locale}
-                            <SelectItem value={locale.code}>
+                            <SelectItem value={locale.code} label={locale.name}>
                                 <span class="flex items-center gap-2">
                                     {locale.name}
                                     {#if locale.code === CMS_LOCALE}
