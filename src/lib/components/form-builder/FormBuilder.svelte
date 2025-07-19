@@ -1,21 +1,21 @@
 <script lang="ts">
-    import type { PageConfig, FormData, TranslationData } from './types';
+    import type { PageConfig, FormData, TranslationData, RenderMode } from './types';
     import { Button } from '@components/ui/button';
     import { handleUpdateComponents } from '@/services/page.service';
     import { handleDeleteFiles, handleUploadFiles } from '@/services/file.service';
-    import type { Component } from '@shared/types/pages.type';
-    import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
+    import type { Component } from '@/lib/shared/types/pages.type';
+    import type { UploadedFileWithDeletionFlag } from '@/lib/shared/types/file.type';
     import ComponentRenderer from './components/ComponentRenderer.svelte';
     import { initializeFormData, initializeTranslationData, collectFilesForDeletion, type FormBuilderContext } from './utils/formHelpers';
     import { CSS_CLASSES } from './constants';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
-    import { SITE_LOCALES, CMS_LOCALE } from '@shared/env';
+    import { SITE_LOCALES, CMS_LOCALE } from '@/lib/shared/env';
 
     export let config: PageConfig;
     export let slug: string;
     export let components: Component[] = [];
-    export let translationMode: boolean = false;
+    export let mode: RenderMode = RenderMode.CONTENT;
     export let isSubmitting = false;
 
     // Initialize data once on component creation
@@ -34,7 +34,7 @@
     setContext('formBuilder', formBuilderContext);
 
     // Single reactive statement to handle all form data updates
-    $: if (config.components && formData && !translationMode) {
+    $: if (config.components && formData && mode === RenderMode.CONTENT) {
         console.log('[FormBuilder] Form data sync executed');
         config.components.forEach(componentInstance => {
             // Handle repeatable fields translations
@@ -206,7 +206,7 @@
         <ComponentRenderer 
             {componentInstance} 
             {formData}
-            {translationMode}
+            {mode}
             {translationData}
             locales={SITE_LOCALES}
         />

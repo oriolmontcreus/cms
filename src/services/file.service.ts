@@ -1,8 +1,8 @@
 import { api } from "@/lib/utils/api";
 import { safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "./toast.service";
-import type { UploadedFile } from "@shared/types/file.type";
-import { BACKEND_URL } from "@shared/env";
+import type { UploadedFile } from "@/lib/shared/types/file.type";
+import { BACKEND_URL } from "@/lib/shared/env";
 
 const root = "/files";
 

@@ -1,21 +1,24 @@
 <script lang="ts">
-    import type { GridLayout } from '../types';
+    import type { GridLayout, RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
+    import { filterFieldsByMode } from '../utils/formHelpers';
     import { cn } from '$lib/utils';
 
     export let layout: GridLayout;
     export let formData: Record<string, any>;
     export let componentId: string;
     export let activeTab: string | undefined = undefined;
+    export let mode: RenderMode = RenderMode.CONTENT;
 
     const columns = layout.columns || 2;
     const gap = layout.gap || 4;
     const responsive = layout.responsive;
 
-    // Filter fields based on active tab
-    $: filteredFields = activeTab 
+    // Filter fields based on active tab and render mode
+    $: tabFilteredFields = activeTab 
         ? layout.schema.filter(field => field.tab === activeTab)
         : layout.schema.filter(field => !field.tab);
+    $: filteredFields = filterFieldsByMode(tabFilteredFields, mode);
     $: hasFieldsToShow = filteredFields.length > 0;
 
     $: gridClasses = cn(

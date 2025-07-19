@@ -1,7 +1,7 @@
-import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData, TranslationData } from '../types';
-import type { Component } from '@shared/types/pages.type';
+import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData, TranslationData, RenderMode } from '../types';
+import type { Component } from '@/lib/shared/types/pages.type';
 import { SCHEMA_TYPES, DEFAULT_VALUES } from '../constants';
-import { CMS_LOCALE } from '@shared/env';
+import { CMS_LOCALE } from '@/lib/shared/env';
 
 export interface FormBuilderContext {
     collectFilesForDeletion: (itemData: any) => void;
@@ -331,6 +331,53 @@ function getDefaultValue(field: FormField) {
     }
 
     return defaultValueMap.get(field.type) ?? DEFAULT_VALUES.EMPTY_STRING;
+}
+
+/**
+ * Filters schema items based on render mode
+ * In translation mode, only shows fields marked as translatable
+ * In content mode, shows all fields
+ */
+export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
+    if (mode === RenderMode.CONTENT) {
+        return schema;
+    }
+    
+    // Translation mode - filter to only translatable fields
+    return schema.filter(item => {
+        const field = convertToFormField(item);
+        if (field) {
+            return field.translatable === true;
+        }
+        
+        // For non-field items like grids, tabs, etc., check if they contain translatable fields
+        if (item && typeof item === 'object' && 'type' in item) {
+            if (item.type === SCHEMA_TYPES.GRID && 'schema' in item) {
+                const hasTranslatableFields = (item.schema as FormField[]).some(f => f.translatable === true);
+                return hasTranslatableFields;
+            }
+            if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
+                const hasTranslatableFields = (item as TabsContainer).tabs.some(tab => 
+                    filterSchemaByMode(tab.schema, mode).length > 0
+                );
+                return hasTranslatableFields;
+            }
+        }
+        
+        return false;
+    });
+}
+
+/**
+ * Filters fields within a grid or container based on render mode
+ */
+export function filterFieldsByMode(fields: FormField[], mode: RenderMode): FormField[] {
+    if (mode === RenderMode.CONTENT) {
+        return fields;
+    }
+    
+    // Translation mode - only translatable fields
+    return fields.filter(field => field.translatable === true);
 } 
 
  

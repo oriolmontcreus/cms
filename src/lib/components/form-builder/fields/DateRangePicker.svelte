@@ -13,7 +13,7 @@
     import { cn } from "$lib/utils.js";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { type DateRange, DateRangePicker } from 'bits-ui';
-    import { CMS_LOCALE } from "@shared/env";
+    import { CMS_LOCALE } from "@/lib/shared/env";
 
     interface Props {
         field: FormField;

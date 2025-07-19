@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { UploadedFileWithDeletionFlag } from '@shared/types/file.type';
+    import type { UploadedFileWithDeletionFlag } from '@/lib/shared/types/file.type';
     import { Button } from '@components/ui/button';
     import { Popover, PopoverContent, PopoverTrigger } from '@components/ui/popover';
     import ConfirmPopover from '@components/ConfirmPopover.svelte';
