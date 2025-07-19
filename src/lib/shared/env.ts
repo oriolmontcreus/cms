@@ -8,6 +8,7 @@ export const SITE_LOCALES = [
 export const CMS_LOCALE = 'en';
 
 // Other environment constants that might be needed
-export const CMS_NAME = process.env.CMS_NAME || 'Froggy CMS';
-export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-export const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+// Note: In browser, we can't access process.env directly, so we use fallback values
+export const CMS_NAME = 'Froggy CMS';
+export const FRONTEND_URL = 'http://localhost:3000';
+export const BACKEND_URL = 'http://localhost:3001';

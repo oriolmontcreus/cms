@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { SchemaItem, FormData, RenderMode } from '../types';
+    import type { SchemaItem, FormData } from '../types';
+    import { RenderMode } from '../types';
     import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
     import FormFieldComponent from '../FormField.svelte';
     import GridLayout from '../layouts/GridLayout.svelte';

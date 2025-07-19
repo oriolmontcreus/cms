@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { TabsLayout, RenderMode } from '../types';
+    import type { TabsLayout } from '../types';
+    import { RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
     import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
     import { filterFieldsByMode } from '../utils/formHelpers';

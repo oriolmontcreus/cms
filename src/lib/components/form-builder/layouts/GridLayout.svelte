@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { GridLayout, RenderMode } from '../types';
+    import type { GridLayout } from '../types';
+    import { RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
     import { filterFieldsByMode } from '../utils/formHelpers';
     import { cn } from '$lib/utils';

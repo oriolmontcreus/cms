@@ -1,4 +1,5 @@
-import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData, TranslationData, RenderMode } from '../types';
+import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormData, TranslationData } from '../types';
+import { RenderMode } from '../types';
 import type { Component } from '@/lib/shared/types/pages.type';
 import { SCHEMA_TYPES, DEFAULT_VALUES } from '../constants';
 import { CMS_LOCALE } from '@/lib/shared/env';

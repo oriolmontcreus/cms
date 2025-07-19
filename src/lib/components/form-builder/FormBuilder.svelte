@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { PageConfig, FormData, TranslationData, RenderMode } from './types';
+    import type { PageConfig, FormData, TranslationData } from './types';
+    import { RenderMode } from './types';
     import { Button } from '@components/ui/button';
     import { handleUpdateComponents } from '@/services/page.service';
     import { handleDeleteFiles, handleUploadFiles } from '@/services/file.service';

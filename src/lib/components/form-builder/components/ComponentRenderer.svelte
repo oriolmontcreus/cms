@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { FormData, TranslationData, RenderMode } from '../types';
+    import type { FormData, TranslationData } from '../types';
+    import { RenderMode } from '../types';
     import FilamentTabsRenderer from './FilamentTabsRenderer.svelte';
     import MixedSchemaRenderer from './MixedSchemaRenderer.svelte';
     import DefaultRenderer from './DefaultRenderer.svelte';

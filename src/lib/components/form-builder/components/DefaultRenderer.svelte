@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { SchemaItem, RenderMode } from '../types';
+    import type { SchemaItem } from '../types';
+    import { RenderMode } from '../types';
     import FormFieldComponent from '../FormField.svelte';
     import { isFormField, convertToFormField, filterSchemaByMode } from '../utils/formHelpers';
     import { CSS_CLASSES } from '../constants';
