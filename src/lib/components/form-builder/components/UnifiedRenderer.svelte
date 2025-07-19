@@ -1,19 +1,26 @@
 <script lang="ts">
-    import type { SchemaItem, FormData, TranslationData, TabsContainer, FormField, GridLayout as GridLayoutType } from '../types';
-    import { RenderMode } from '../types';
-    import { Tabs, TabsContent, TabsList } from '$lib/components/ui/tabs';
-    import FormFieldComponent from '../FormField.svelte';
-    import GridLayoutComponent from '../layouts/GridLayout.svelte';
-    import ResponsiveTabTrigger from './ResponsiveTabTrigger.svelte';
-    import { filterSchemaByModeOptimized } from '../utils/optimizedSchemaProcessor';
-    import { convertToFormField } from '../utils/formHelpers';
-    import { CSS_CLASSES, SCHEMA_TYPES } from '../constants';
+    import type {
+        SchemaItem,
+        FormData,
+        TranslationData,
+        TabsContainer,
+        FormField,
+        GridLayout as GridLayoutType,
+    } from "../types";
+    import { RenderMode } from "../types";
+    import { Tabs, TabsContent, TabsList } from "$lib/components/ui/tabs";
+    import FormFieldComponent from "../FormField.svelte";
+    import GridLayoutComponent from "../layouts/GridLayout.svelte";
+    import ResponsiveTabTrigger from "./ResponsiveTabTrigger.svelte";
+    import { filterSchemaByModeOptimized } from "../utils/optimizedSchemaProcessor";
+    import { convertToFormField } from "../utils/formHelpers";
+    import { CSS_CLASSES, SCHEMA_TYPES } from "../constants";
 
     export let schema: SchemaItem[];
     export let componentId: string;
     export let formData: Record<string, any>;
     export let mode: RenderMode = RenderMode.CONTENT;
-    export let currentLocale: string = '';
+    export let currentLocale: string = "";
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
 
@@ -26,11 +33,17 @@
     }
 
     function isGrid(item: any): boolean {
-        return item && typeof item === 'object' && item.type === SCHEMA_TYPES.GRID;
+        return (
+            item && typeof item === "object" && item.type === SCHEMA_TYPES.GRID
+        );
     }
 
     function isTabsContainer(item: any): boolean {
-        return item && typeof item === 'object' && item.type === SCHEMA_TYPES.TABS_CONTAINER;
+        return (
+            item &&
+            typeof item === "object" &&
+            item.type === SCHEMA_TYPES.TABS_CONTAINER
+        );
     }
 
     function getUniqueKey(item: any, index: number): string {
@@ -58,7 +71,7 @@
             isDefaultLocale,
             translationData,
             componentId,
-            compact: mode === RenderMode.TRANSLATION
+            compact: mode === RenderMode.TRANSLATION,
         };
     }
 </script>
@@ -69,7 +82,7 @@
             {@const field = convertToFormField(item)}
             {#if field}
                 {@const props = renderField(field)}
-                <FormFieldComponent 
+                <FormFieldComponent
                     field={props.field}
                     fieldId={props.fieldId}
                     bind:value={formData[field.name]}
@@ -93,18 +106,26 @@
             />
         {:else if isTabsContainer(item)}
             {@const tabsContainer = item as TabsContainer}
-            {@const defaultTab = tabsContainer.activeTab || tabsContainer.tabs[0]?.name || ''}
-            
+            {@const defaultTab =
+                tabsContainer.activeTab || tabsContainer.tabs[0]?.name || ""}
+
             <Tabs value={defaultTab} class={CSS_CLASSES.TABS_CONTAINER}>
-                <TabsList class={CSS_CLASSES.TABS_LIST} style="grid-template-columns: repeat({tabsContainer.tabs.length}, minmax(0, 1fr));">
+                <TabsList
+                    class={CSS_CLASSES.TABS_LIST}
+                    style="grid-template-columns: repeat({tabsContainer.tabs
+                        .length}, minmax(0, 1fr));"
+                >
                     {#each tabsContainer.tabs as tab (tab.name)}
                         <ResponsiveTabTrigger {tab} value={tab.name} />
                     {/each}
                 </TabsList>
 
                 {#each tabsContainer.tabs as tab (tab.name)}
-                    <TabsContent value={tab.name} class={CSS_CLASSES.TABS_CONTENT}>
-                        <svelte:self 
+                    <TabsContent
+                        value={tab.name}
+                        class={CSS_CLASSES.TABS_CONTENT}
+                    >
+                        <svelte:self
                             schema={tab.schema}
                             {componentId}
                             {formData}

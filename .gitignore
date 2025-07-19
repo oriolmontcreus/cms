@@ -21,6 +21,3 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-
-# Performance benchmarks and temporary files
-performance-benchmark.ts
