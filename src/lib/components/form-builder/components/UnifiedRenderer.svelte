@@ -71,6 +71,50 @@
             compact: mode === RenderMode.TRANSLATION,
         };
     }
+
+    function hasTranslatableContent(item: any): boolean {
+        if (!item || typeof item !== "object") return false;
+
+        // Handle containers
+        if ("type" in item) {
+            if (item.type === SCHEMA_TYPES.GRID && "schema" in item) {
+                return (item.schema as FormField[]).some(
+                    (f) =>
+                        f.translatable === true ||
+                        (f.type === "repeatable" &&
+                            f.schema &&
+                            hasTranslatableFieldsInSchema(f.schema)),
+                );
+            }
+
+            if (item.type === SCHEMA_TYPES.TABS_CONTAINER && "tabs" in item) {
+                return (item as TabsContainer).tabs.some((tab) =>
+                    tab.schema.some((schemaItem) =>
+                        hasTranslatableContent(schemaItem),
+                    ),
+                );
+            }
+        }
+
+        // Handle individual fields
+        const field = convertToFormField(item);
+        if (field) {
+            if (field.translatable === true) return true;
+
+            if (field.type === "repeatable" && field.schema) {
+                return hasTranslatableFieldsInSchema(field.schema);
+            }
+        }
+
+        return false;
+    }
+
+    function hasTranslatableFieldsInSchema(schema: any[]): boolean {
+        return schema.some((item) => {
+            const field = convertToFormField(item);
+            return field?.translatable === true;
+        });
+    }
 </script>
 
 <div class="space-y-6">
@@ -103,37 +147,57 @@
             />
         {:else if isTabsContainer(item)}
             {@const tabsContainer = item as TabsContainer}
-            {@const defaultTab =
-                tabsContainer.activeTab || tabsContainer.tabs[0]?.name || ""}
+            {@const filteredTabs =
+                mode === RenderMode.TRANSLATION
+                    ? tabsContainer.tabs.filter((tab) =>
+                          tab.schema.some((schemaItem) =>
+                              hasTranslatableContent(schemaItem),
+                          ),
+                      )
+                    : tabsContainer.tabs}
 
-            <Tabs value={defaultTab} class={CSS_CLASSES.TABS_CONTAINER}>
-                <TabsList
-                    class={CSS_CLASSES.TABS_LIST}
-                    style="grid-template-columns: repeat({tabsContainer.tabs
-                        .length}, minmax(0, 1fr));"
-                >
-                    {#each tabsContainer.tabs as tab (tab.name)}
-                        <ResponsiveTabTrigger {tab} value={tab.name} />
-                    {/each}
-                </TabsList>
+            {#if filteredTabs.length > 0}
+                {@const defaultTab =
+                    filteredTabs.find(
+                        (tab) => tab.name === tabsContainer.activeTab,
+                    )?.name ||
+                    filteredTabs[0]?.name ||
+                    ""}
 
-                {#each tabsContainer.tabs as tab (tab.name)}
-                    <TabsContent
-                        value={tab.name}
-                        class={CSS_CLASSES.TABS_CONTENT}
+                <Tabs value={defaultTab} class={CSS_CLASSES.TABS_CONTAINER}>
+                    <TabsList
+                        class={CSS_CLASSES.TABS_LIST}
+                        style="grid-template-columns: repeat({filteredTabs.length}, minmax(0, 1fr));"
                     >
-                        <svelte:self
-                            schema={tab.schema}
-                            {componentId}
-                            {formData}
-                            {mode}
-                            {currentLocale}
-                            {isDefaultLocale}
-                            {translationData}
-                        />
-                    </TabsContent>
-                {/each}
-            </Tabs>
+                        {#each filteredTabs as tab (tab.name)}
+                            <ResponsiveTabTrigger {tab} value={tab.name} />
+                        {/each}
+                    </TabsList>
+
+                    {#each filteredTabs as tab (tab.name)}
+                        <TabsContent
+                            value={tab.name}
+                            class={CSS_CLASSES.TABS_CONTENT}
+                        >
+                            <svelte:self
+                                schema={tab.schema}
+                                {componentId}
+                                {formData}
+                                {mode}
+                                {currentLocale}
+                                {isDefaultLocale}
+                                {translationData}
+                            />
+                        </TabsContent>
+                    {/each}
+                </Tabs>
+            {:else if mode === RenderMode.TRANSLATION}
+                <div
+                    class="text-sm text-muted-foreground p-4 border rounded-lg bg-muted/10"
+                >
+                    This section has no translatable fields.
+                </div>
+            {/if}
         {/if}
     {/each}
 </div>
