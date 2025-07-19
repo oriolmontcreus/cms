@@ -1,5 +1,6 @@
 import type { PageConfig } from '../lib/components/form-builder/types';
 import { HeroComponent } from '../components/Hero';
+import { ContactInfo } from '../components/ContactInfo';
 
 export const config: PageConfig = {
     title: "Home",
@@ -9,6 +10,11 @@ export const config: PageConfig = {
             component: HeroComponent,
             id: "hero-main",
             displayName: "HERO SECTION"
+        },
+        {
+            component: ContactInfo,
+            id: 'contact-info',
+            displayName: 'CONTACT INFORMATION'
         }
     ]
 };

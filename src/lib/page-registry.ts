@@ -5,7 +5,7 @@ import { config as homeConfig } from '../pages/home';
 
 // Page registry - add new pages here
 const pageConfigs: Record<string, PageConfig> = {
-    'home': homeConfig
+    'home': homeConfig,
 };
 
 export function getPageConfig(slug: string): PageConfig | null {

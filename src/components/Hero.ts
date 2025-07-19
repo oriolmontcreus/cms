@@ -29,7 +29,7 @@ export const HeroComponent: Component = {
                                 .min(3)
                                 .max(100)
                                 .placeholder('Enter the secondary title'),
-                            
+
                             TextInput('subtitle')
                                 .label('Subtitle')
                                 .placeholder('Enter a subtitle')
@@ -90,7 +90,7 @@ export const HeroComponent: Component = {
                                     .required()
                                     .placeholder('Enter card title')
                                     .translatable(),
-                                
+
                                 TextInput('subtitle')
                                     .label('Card Subtitle')
                                     .placeholder('Enter card subtitle')
