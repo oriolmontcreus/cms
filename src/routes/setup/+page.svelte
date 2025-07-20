@@ -74,9 +74,9 @@
         step = 2;
         isLoading = false;
 
-        // Redirect to login after showing success
+        // Redirect to home after showing success
         setTimeout(() => {
-            goto("/login");
+            goto("/");
         }, 3000);
     }
 
@@ -152,9 +152,7 @@
         <!-- Step content -->
         {#if step === 0}
             <div in:scale={{ duration: 600, delay: 600, easing: quintOut }}>
-                <Card
-                    class="text-center backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-0 shadow-xl"
-                >
+                <Card class="text-center">
                     <CardContent class="p-8">
                         <div class="mb-6">
                             <SparklesIcon
@@ -186,9 +184,7 @@
 
         {#if step === 1}
             <div in:fly={{ y: 20, duration: 400 }}>
-                <Card
-                    class="backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-0 shadow-xl"
-                >
+                <Card>
                     <CardHeader class="text-center">
                         <CardTitle
                             class="text-xl text-gray-900 dark:text-white"
@@ -201,58 +197,40 @@
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div class="space-y-2">
-                            <Label
-                                for="name"
-                                class="text-gray-700 dark:text-gray-300"
-                                >Full Name</Label
-                            >
+                            <Label for="name">Full Name</Label>
                             <Input
                                 id="name"
                                 type="text"
                                 placeholder="John Doe"
                                 bind:value={name}
                                 required
-                                class="border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                             />
                         </div>
 
                         <div class="space-y-2">
-                            <Label
-                                for="email"
-                                class="text-gray-700 dark:text-gray-300"
-                                >Email Address</Label
-                            >
+                            <Label for="email">Email Address</Label>
                             <Input
                                 id="email"
                                 type="email"
                                 placeholder="admin@example.com"
                                 bind:value={email}
                                 required
-                                class="border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                             />
                         </div>
 
                         <div class="space-y-2">
-                            <Label
-                                for="password"
-                                class="text-gray-700 dark:text-gray-300"
-                                >Password</Label
-                            >
+                            <Label for="password">Password</Label>
                             <Input
                                 id="password"
                                 type="password"
                                 placeholder="Enter a secure password"
                                 bind:value={password}
                                 required
-                                class="border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                             />
                         </div>
 
                         <div class="space-y-2">
-                            <Label
-                                for="confirmPassword"
-                                class="text-gray-700 dark:text-gray-300"
-                                >Confirm Password</Label
+                            <Label for="confirmPassword">Confirm Password</Label
                             >
                             <Input
                                 id="confirmPassword"
@@ -260,7 +238,6 @@
                                 placeholder="Confirm your password"
                                 bind:value={confirmPassword}
                                 required
-                                class="border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
                             />
                             {#if passwordError}
                                 <p class="text-red-500 text-sm">
@@ -276,7 +253,7 @@
                                 !password ||
                                 !confirmPassword ||
                                 !name}
-                            class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg transition-all duration-200"
+                            class="w-full"
                         >
                             {#if isLoading}
                                 <div
@@ -294,9 +271,7 @@
 
         {#if step === 2}
             <div in:scale={{ duration: 600, easing: quintOut }}>
-                <Card
-                    class="text-center backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-0 shadow-xl"
-                >
+                <Card>
                     <CardContent class="p-8">
                         <div class="mb-6">
                             <div
@@ -322,7 +297,7 @@
                                 <div
                                     class="animate-pulse w-2 h-2 bg-green-600 rounded-full mr-2"
                                 ></div>
-                                Redirecting to login...
+                                Redirecting to dashboard...
                             </div>
                         </div>
                     </CardContent>
