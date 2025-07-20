@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
-    import { fade, fly, scale } from "svelte/transition";
+    import { fade, scale } from "svelte/transition";
     import { quintOut } from "svelte/easing";
     import { Button } from "$lib/components/ui/button";
     import { Card, CardContent } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
+    import PasswordInput from "$lib/components/PasswordInput.svelte";
     import {
         Stepper,
         StepperIndicator,
@@ -18,6 +19,7 @@
         handleSetupSuperAdmin,
         checkSetupStatus,
     } from "@/services/auth.service";
+    import { usePasswordStrength } from "$lib/hooks/usePasswordStrength.svelte";
 
     let step = $state(0);
     let welcomeName = $state("");
@@ -26,6 +28,14 @@
     let confirmPassword = $state("");
     let isLoading = $state(false);
     let passwordError = $state("");
+
+    // Create password strength instance for validation
+    const passwordStrength = usePasswordStrength({ id: "setup-password" });
+
+    // Sync password state with strength validator
+    $effect(() => {
+        passwordStrength.password = password;
+    });
 
     const steps = [
         {
@@ -53,10 +63,16 @@
             passwordError = "Passwords do not match";
             return false;
         }
-        if (password.length < 8) {
-            passwordError = "Password must be at least 8 characters long";
+
+        // Sync password with strength validator
+        passwordStrength.password = password;
+
+        if (passwordStrength.strengthScore < 4) {
+            passwordError =
+                "Please ensure your password meets all requirements";
             return false;
         }
+
         passwordError = "";
         return true;
     }
@@ -197,12 +213,11 @@
                     </div>
 
                     <div class="max-w-sm mx-auto space-y-6">
-                        <Input
+                        <PasswordInput
                             id="password"
-                            type="password"
                             placeholder="Enter a secure password"
                             bind:value={password}
-                            class="text-center"
+                            className="text-center"
                             required
                         />
 
@@ -233,7 +248,9 @@
                                 onclick={handleSubmit}
                                 disabled={isLoading ||
                                     !password ||
-                                    !confirmPassword}
+                                    !confirmPassword ||
+                                    passwordStrength.strengthScore < 4 ||
+                                    password !== confirmPassword}
                                 class="flex-1"
                             >
                                 {#if isLoading}
