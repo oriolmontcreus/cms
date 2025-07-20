@@ -4,13 +4,7 @@
     import { fade, fly, scale } from "svelte/transition";
     import { quintOut } from "svelte/easing";
     import { Button } from "$lib/components/ui/button";
-    import {
-        Card,
-        CardContent,
-        CardDescription,
-        CardHeader,
-        CardTitle,
-    } from "$lib/components/ui/card";
+    import { Card, CardContent } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
     import {
         Stepper,
@@ -19,8 +13,6 @@
         StepperTitle,
         StepperTrigger,
     } from "$lib/components/ui/stepper";
-    import GalleryVerticalEndIcon from "@lucide/svelte/icons/gallery-vertical-end";
-    import SparklesIcon from "@lucide/svelte/icons/sparkles";
     import CheckCircleIcon from "@lucide/svelte/icons/check-circle";
     import {
         handleSetupSuperAdmin,
