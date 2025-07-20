@@ -32,9 +32,10 @@ export async function setupSuperAdmin(email: string, password: string, name: str
 export async function autoLogin(): Promise<User | null> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
+    let setupStatus: { needsSetup: boolean } | null = null;
 
     try {
-        const setupStatus = await checkSetupStatus();
+        setupStatus = await checkSetupStatus();
         if (setupStatus.needsSetup) {
             loggedUser.set(null);
             goto('/setup');
@@ -54,7 +55,7 @@ export async function autoLogin(): Promise<User | null> {
     } finally {
         if (get(loggedUser) === null) {
             const currentPath = window.location.pathname;
-            if (currentPath !== '/setup') goto('/login');
+            if (currentPath !== '/setup' && setupStatus && !setupStatus.needsSetup) goto('/login');
         }
         clearTimeout(timeoutId);
     }

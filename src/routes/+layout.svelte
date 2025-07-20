@@ -1,26 +1,27 @@
 <script lang="ts">
-	import '../app.css';
-	import { Toaster } from 'svelte-sonner';
+	import "../app.css";
+	import { Toaster } from "svelte-sonner";
 	import { ModeWatcher, mode } from "mode-watcher";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
-	import { onNavigate } from '$app/navigation';
-	import { page } from '$app/state';
-	import { onMount } from 'svelte';
-	import { autoLogin } from '@/services/auth.service';
-	import PageLoading from '$lib/components/PageLoading.svelte';
-	import { fade } from 'svelte/transition';
-	
+	import { onNavigate } from "$app/navigation";
+	import { page } from "$app/state";
+	import { onMount } from "svelte";
+	import { autoLogin } from "@/services/auth.service";
+	import PageLoading from "$lib/components/PageLoading.svelte";
+	import { fade } from "svelte/transition";
+
 	let { children } = $props();
-	
-	const isLoginPage = $derived(page.url.pathname === '/login');
+
+	const isLoginPage = $derived(page.url.pathname === "/login");
+	const isSetupPage = $derived(page.url.pathname === "/setup");
 	let authInitialized = $state(false);
-	
+
 	onMount(async () => {
 		await autoLogin();
 		authInitialized = true;
 	});
-	
+
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
 
@@ -34,12 +35,12 @@
 </script>
 
 <svelte:head>
-    <title>Froggy</title>
+	<title>Froggy</title>
 </svelte:head>
 
 {#if authInitialized}
 	<main in:fade={{ duration: 400 }}>
-		{#if isLoginPage}
+		{#if isLoginPage || isSetupPage}
 			<div style="view-transition-name: main-content;" class="h-full">
 				{@render children()}
 			</div>
@@ -49,7 +50,10 @@
 			>
 				<AppSidebar variant="inset" />
 				<Sidebar.Inset>
-					<div style="view-transition-name: main-content;" class="h-full">
+					<div
+						style="view-transition-name: main-content;"
+						class="h-full"
+					>
 						{@render children()}
 					</div>
 				</Sidebar.Inset>
@@ -60,5 +64,5 @@
 	<PageLoading />
 {/if}
 
-<Toaster richColors theme={mode.current === 'dark' ? 'dark' : 'light'} />
+<Toaster richColors theme={mode.current === "dark" ? "dark" : "light"} />
 <ModeWatcher defaultMode="dark" />
