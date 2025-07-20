@@ -26,6 +26,7 @@
     let confirmPassword = $state("");
     let isLoading = $state(false);
     let passwordError = $state("");
+    let visitedSteps = $state(new Set([0])); // Track visited steps, starting with step 0
 
     const steps = [
         {
@@ -64,6 +65,7 @@
     function handleWelcomeNext() {
         if (welcomeName.trim() && email.trim()) {
             step = 1;
+            visitedSteps.add(1); // Mark step 1 as visited
         }
     }
 
@@ -80,6 +82,7 @@
         // Use welcomeName as the name for the admin account
         await handleSetupSuperAdmin(email, password, welcomeName);
         step = 2;
+        visitedSteps.add(2); // Mark step 2 as visited
         isLoading = false;
 
         // Redirect to home after showing success
@@ -135,7 +138,7 @@
             <!-- Step content -->
             {#if step === 0}
                 <div
-                    in:fade={{ duration: 600, delay: 600 }}
+                    in:fade={{ duration: visitedSteps.has(0) ? 200 : 600, delay: visitedSteps.has(0) ? 0 : 600 }}
                     class="text-center space-y-8"
                 >
                     <!-- Welcome message -->
@@ -188,7 +191,7 @@
 
             {#if step === 1}
                 <div
-                    in:fly={{ y: 20, duration: 400 }}
+                    in:fly={{ y: visitedSteps.has(1) ? 10 : 20, duration: visitedSteps.has(1) ? 200 : 400 }}
                     class="text-center space-y-8"
                 >
                     <div class="space-y-6">
@@ -257,7 +260,7 @@
             {/if}
 
             {#if step === 2}
-                <div in:scale={{ duration: 600, easing: quintOut }}>
+                <div in:scale={{ duration: visitedSteps.has(2) ? 300 : 600, easing: quintOut }}>
                     <Card>
                         <CardContent class="p-8">
                             <div class="mb-6">
