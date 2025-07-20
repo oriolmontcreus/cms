@@ -26,7 +26,6 @@
     let confirmPassword = $state("");
     let isLoading = $state(false);
     let passwordError = $state("");
-    let visitedSteps = $state(new Set([0])); // Track visited steps, starting with step 0
 
     const steps = [
         {
@@ -65,7 +64,6 @@
     function handleWelcomeNext() {
         if (welcomeName.trim() && email.trim()) {
             step = 1;
-            visitedSteps.add(1); // Mark step 1 as visited
         }
     }
 
@@ -82,7 +80,6 @@
         // Use welcomeName as the name for the admin account
         await handleSetupSuperAdmin(email, password, welcomeName);
         step = 2;
-        visitedSteps.add(2); // Mark step 2 as visited
         isLoading = false;
 
         // Redirect to home after showing success
@@ -112,7 +109,7 @@
             {#if step > 0}
                 <div
                     class="mx-auto max-w-xl space-y-8 mb-8"
-                    in:fade={{ duration: 600, delay: 400 }}
+                    in:fade={{ duration: 400 }}
                 >
                     <Stepper value={step + 1} class="items-start gap-4">
                         {#each steps as { title }, i}
@@ -137,10 +134,7 @@
 
             <!-- Step content -->
             {#if step === 0}
-                <div
-                    in:fade={{ duration: visitedSteps.has(0) ? 200 : 600, delay: visitedSteps.has(0) ? 0 : 600 }}
-                    class="text-center space-y-8"
-                >
+                <div in:fade={{ duration: 600 }} class="text-center space-y-8">
                     <!-- Welcome message -->
                     <div class="space-y-6">
                         <h1
@@ -190,10 +184,7 @@
             {/if}
 
             {#if step === 1}
-                <div
-                    in:fly={{ y: visitedSteps.has(1) ? 10 : 20, duration: visitedSteps.has(1) ? 200 : 400 }}
-                    class="text-center space-y-8"
-                >
+                <div in:fade={{ duration: 400 }} class="text-center space-y-8">
                     <div class="space-y-6">
                         <h1
                             class="text-4xl font-light text-white tracking-tight"
@@ -260,7 +251,7 @@
             {/if}
 
             {#if step === 2}
-                <div in:scale={{ duration: visitedSteps.has(2) ? 300 : 600, easing: quintOut }}>
+                <div in:scale={{ duration: 600, easing: quintOut }}>
                     <Card>
                         <CardContent class="p-8">
                             <div class="mb-6">
