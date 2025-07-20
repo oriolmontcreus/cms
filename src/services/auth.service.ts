@@ -17,6 +17,16 @@ export async function logout(): Promise<void> {
     await api.post(`${root}/logout`);
     loggedUser.set(null);
 }
+
+export async function checkSetupStatus(): Promise<{ needsSetup: boolean }> {
+    const { data } = await api.get<{ needsSetup: boolean }>(`${root}/setup/status`);
+    return data;
+}
+
+export async function setupSuperAdmin(email: string, password: string, name: string): Promise<User> {
+    const { data } = await api.post<User>(`${root}/setup/superadmin`, { email, password, name });
+    return data;
+}
 //endregion
 
 export async function autoLogin(): Promise<User | null> {
@@ -24,17 +34,28 @@ export async function autoLogin(): Promise<User | null> {
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     try {
+        const setupStatus = await checkSetupStatus();
+        if (setupStatus.needsSetup) {
+            loggedUser.set(null);
+            goto('/setup');
+            return null;
+        }
+
         const { data } = await api.get<User>(`${root}/me`, {
             signal: controller.signal,
             headers: { "Cache-Control": "no-cache" },
         });
         loggedUser.set(data);
         return data;
+
     } catch {
         loggedUser.set(null);
         return null;
     } finally {
-        if (get(loggedUser) === null) goto('/login');
+        if (get(loggedUser) === null) {
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/setup') goto('/login');
+        }
         clearTimeout(timeoutId);
     }
 }
@@ -56,5 +77,16 @@ export async function handleLogout(): Promise<void> {
         error: 'Error logging out. Please try again.'
     });
     if (!err) goto('/login');
+}
+
+export async function handleSetupSuperAdmin(email: string, password: string, name: string, redirect: boolean = false): Promise<void> {
+    const [ok, err] = await fetchWithToast(setupSuperAdmin(email, password, name), {
+        loading: 'Setting up your account...',
+        success: () => `Welcome to Froggy CMS! Your account has been created successfully.`,
+        error: 'Error setting up your account. Please try again.'
+    });
+    if (!err) {
+        if (redirect) goto('/login');
+    }
 }
 //endregion
