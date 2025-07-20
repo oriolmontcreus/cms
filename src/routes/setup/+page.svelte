@@ -12,7 +12,6 @@
         CardTitle,
     } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
     import {
         Stepper,
         StepperIndicator,
@@ -29,10 +28,10 @@
     } from "@/services/auth.service";
 
     let step = $state(0);
+    let welcomeName = $state("");
     let email = $state("");
     let password = $state("");
     let confirmPassword = $state("");
-    let name = $state("");
     let isLoading = $state(false);
     let passwordError = $state("");
 
@@ -55,9 +54,6 @@
             goto("/login");
             return;
         }
-
-        // Start the welcome animation
-        setTimeout(() => (step = 1), 2000);
     });
 
     function validatePasswords() {
@@ -73,11 +69,18 @@
         return true;
     }
 
+    function handleWelcomeNext() {
+        if (welcomeName.trim() && email.trim()) {
+            step = 1;
+        }
+    }
+
     async function handleSubmit() {
         if (!validatePasswords()) return;
 
         isLoading = true;
-        await handleSetupSuperAdmin(email, password, name);
+        // Use welcomeName as the name for the admin account
+        await handleSetupSuperAdmin(email, password, welcomeName);
         step = 2;
         isLoading = false;
 
@@ -97,172 +100,152 @@
 <div class="min-h-screen w-full relative bg-black">
     <div
         class="absolute inset-0 z-0"
-        style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 70%), #000000;"
+        style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 90%), #000000;"
     ></div>
 
     <div
         class="relative z-10 flex items-center justify-center p-4 min-h-screen"
     >
         <div class="w-full max-w-md mx-auto relative z-10">
-            <!-- Logo and brand -->
-            <div
-                class="text-center mb-8"
-                in:fade={{ duration: 800, delay: 200 }}
-            >
-                <div
-                    class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white mb-4 shadow-lg"
-                >
-                    <GalleryVerticalEndIcon class="w-8 h-8" />
-                </div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    Froggy CMS
-                </h1>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">
-                    Content Management Made Simple
-                </p>
-            </div>
-
             <!-- Step indicator -->
-            <div
-                class="mx-auto max-w-xl space-y-8 mb-8"
-                in:fade={{ duration: 600, delay: 400 }}
-            >
-                <Stepper value={step + 1} class="items-start gap-4">
-                    {#each steps as { title }, i}
-                        <StepperItem step={i + 1} class="flex-1">
-                            <StepperTrigger
-                                class="w-full flex-col items-start gap-2 rounded"
-                            >
-                                <StepperIndicator class="bg-border h-1 w-full">
-                                    <span class="sr-only">{i + 1}</span>
-                                </StepperIndicator>
-                                <div class="space-y-0.5">
-                                    <StepperTitle>{title}</StepperTitle>
-                                </div>
-                            </StepperTrigger>
-                        </StepperItem>
-                    {/each}
-                </Stepper>
-            </div>
+            {#if step > 0}
+                <div
+                    class="mx-auto max-w-xl space-y-8 mb-8"
+                    in:fade={{ duration: 600, delay: 400 }}
+                >
+                    <Stepper value={step + 1} class="items-start gap-4">
+                        {#each steps as { title }, i}
+                            <StepperItem step={i + 1} class="flex-1">
+                                <StepperTrigger
+                                    class="w-full flex-col items-start gap-2 rounded"
+                                >
+                                    <StepperIndicator
+                                        class="bg-border h-1 w-full"
+                                    >
+                                        <span class="sr-only">{i + 1}</span>
+                                    </StepperIndicator>
+                                    <div class="space-y-0.5">
+                                        <StepperTitle>{title}</StepperTitle>
+                                    </div>
+                                </StepperTrigger>
+                            </StepperItem>
+                        {/each}
+                    </Stepper>
+                </div>
+            {/if}
 
             <!-- Step content -->
             {#if step === 0}
-                <div in:scale={{ duration: 600, delay: 600, easing: quintOut }}>
-                    <Card class="text-center">
-                        <CardContent class="p-8">
-                            <div class="mb-6">
-                                <SparklesIcon
-                                    class="w-16 h-16 mx-auto text-blue-600 mb-4"
-                                />
-                                <h2
-                                    class="text-xl font-semibold text-gray-900 dark:text-white mb-2"
-                                >
-                                    {steps[0].title}
-                                </h2>
-                                <p class="text-gray-600 dark:text-gray-300">
-                                    {steps[0].description}
-                                </p>
-                            </div>
+                <div
+                    in:fade={{ duration: 600, delay: 600 }}
+                    class="text-center space-y-8"
+                >
+                    <!-- Welcome message -->
+                    <div class="space-y-6">
+                        <h1
+                            class="text-4xl font-light text-white tracking-tight"
+                        >
+                            Welcome to Froggy CMS
+                        </h1>
+                        <p class="text-lg text-gray-300 font-light">
+                            How should we address you?
+                        </p>
+                    </div>
+
+                    <!-- Input section -->
+                    <div class="max-w-sm mx-auto space-y-6">
+                        <Input
+                            id="welcomeName"
+                            type="text"
+                            placeholder="Mr./Ms./Dr. [Your name]"
+                            bind:value={welcomeName}
+                            class="text-center"
+                        />
+
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="admin@example.com"
+                            bind:value={email}
+                            class="text-center"
+                        />
+
+                        {#if welcomeName.trim() && email.trim()}
                             <div
-                                class="space-y-2 text-sm text-gray-500 dark:text-gray-400"
+                                in:fade={{ duration: 300 }}
+                                class="flex justify-end"
                             >
-                                <div class="flex items-center justify-center">
-                                    <div
-                                        class="animate-pulse w-2 h-2 bg-primary rounded-full mr-2"
-                                    ></div>
-                                    Initializing your CMS...
-                                </div>
+                                <Button
+                                    onclick={handleWelcomeNext}
+                                    variant="ghost"
+                                    class="text-gray-300 hover:text-white hover:bg-gray-700/50 px-6"
+                                >
+                                    Continue →
+                                </Button>
                             </div>
-                        </CardContent>
-                    </Card>
+                        {/if}
+                    </div>
                 </div>
             {/if}
 
             {#if step === 1}
-                <div in:fly={{ y: 20, duration: 400 }}>
-                    <Card>
-                        <CardHeader class="text-center">
-                            <CardTitle
-                                class="text-xl text-gray-900 dark:text-white"
-                            >
-                                {steps[1].title}
-                            </CardTitle>
-                            <CardDescription>
-                                {steps[1].description}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="space-y-4">
-                            <div class="space-y-2">
-                                <Label for="name">Full name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    placeholder="John Doe"
-                                    bind:value={name}
-                                    required
-                                />
-                            </div>
+                <div
+                    in:fly={{ y: 20, duration: 400 }}
+                    class="text-center space-y-8"
+                >
+                    <div class="space-y-6">
+                        <h1
+                            class="text-4xl font-light text-white tracking-tight"
+                        >
+                            Create your password
+                        </h1>
+                        <p class="text-lg text-gray-300 font-light">
+                            Secure your admin account
+                        </p>
+                    </div>
 
-                            <div class="space-y-2">
-                                <Label for="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="admin@example.com"
-                                    bind:value={email}
-                                    required
-                                />
-                            </div>
+                    <div class="max-w-sm mx-auto space-y-6">
+                        <Input
+                            id="password"
+                            type="password"
+                            placeholder="Enter a secure password"
+                            bind:value={password}
+                            class="text-center"
+                            required
+                        />
 
-                            <div class="space-y-2">
-                                <Label for="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    placeholder="Enter a secure password"
-                                    bind:value={password}
-                                    required
-                                />
-                            </div>
+                        <Input
+                            id="confirmPassword"
+                            type="password"
+                            placeholder="Confirm your password"
+                            bind:value={confirmPassword}
+                            class="text-center"
+                            required
+                        />
 
-                            <div class="space-y-2">
-                                <Label for="confirmPassword"
-                                    >Confirm password</Label
-                                >
-                                <Input
-                                    id="confirmPassword"
-                                    type="password"
-                                    placeholder="Confirm your password"
-                                    bind:value={confirmPassword}
-                                    required
-                                />
-                                {#if passwordError}
-                                    <p class="text-red-500 text-sm">
-                                        {passwordError}
-                                    </p>
-                                {/if}
-                            </div>
+                        {#if passwordError}
+                            <p class="text-red-500 text-sm text-center">
+                                {passwordError}
+                            </p>
+                        {/if}
 
-                            <Button
-                                onclick={handleSubmit}
-                                disabled={isLoading ||
-                                    !email ||
-                                    !password ||
-                                    !confirmPassword ||
-                                    !name}
-                                class="w-full"
-                            >
-                                {#if isLoading}
-                                    <div
-                                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
-                                    ></div>
-                                    Creating account...
-                                {:else}
-                                    Next
-                                {/if}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                        <Button
+                            onclick={handleSubmit}
+                            disabled={isLoading ||
+                                !password ||
+                                !confirmPassword}
+                            class="w-full"
+                        >
+                            {#if isLoading}
+                                <div
+                                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                                ></div>
+                                Creating account...
+                            {:else}
+                                Complete Setup
+                            {/if}
+                        </Button>
+                    </div>
                 </div>
             {/if}
 
