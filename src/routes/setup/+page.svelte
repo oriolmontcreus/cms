@@ -258,7 +258,7 @@
                                     ></div>
                                     Creating account...
                                 {:else}
-                                    Create admin account
+                                    Next
                                 {/if}
                             </Button>
                         </CardContent>
