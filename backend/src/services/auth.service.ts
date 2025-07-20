@@ -9,6 +9,7 @@ import { getUserById } from "@/src/services/user.service.js";
 import { isValidObjectId } from "mongoose";
 import { JWTPayload } from "jose";
 import { USER_DATA_CACHE_TTL } from "@/constants/env.js";
+import { Roles } from "@shared/constants/role.type.js";
 
 const userCache = new Map();
 const CACHE_TTL = USER_DATA_CACHE_TTL;
@@ -47,6 +48,7 @@ export async function register(r: UserRegisterPayload): Promise<User> {
     name: r.name,
     email: r.email,
     password: r.password,
+    permissions: r.permissions
   };
 
   const newUser = new UserModel(allowedFields);
@@ -61,18 +63,42 @@ export async function getCurrentUser(token: string | undefined): Promise<User> {
   const cached = userCache.get(cacheKey);
   if (cached && cached.expiry > Date.now()) return cached.user;
 
-    const res: JWTPayload = await verifyToken(token);
-    if (!isValidObjectId(res._id)) throw new InvalidToken();
-    
-    const user = await getUserById(String(res._id));
+  const res: JWTPayload = await verifyToken(token);
+  if (!isValidObjectId(res._id)) throw new InvalidToken();
 
-    // Cache the result
-    userCache.set(cacheKey, {
-      user,
-      expiry: Date.now() + CACHE_TTL,
-    });
+  const user = await getUserById(String(res._id));
 
-    return user;
+  // Cache the result
+  userCache.set(cacheKey, {
+    user,
+    expiry: Date.now() + CACHE_TTL,
+  });
+
+  return user;
+}
+
+export async function hasUsers(): Promise<boolean> {
+  const userCount = await UserModel.countDocuments();
+  return userCount > 0;
+}
+
+export async function setupSuperAdmin(r: UserRegisterPayload): Promise<User> {
+  const hasAnyUsers = await hasUsers();
+  if (hasAnyUsers) {
+    throw new AlreadyExists("System has already been set up");
+  }
+
+  // Create the superadmin user
+  const superAdminPayload: UserRegisterPayload = {
+    name: r.name,
+    email: r.email,
+    password: r.password,
+    permissions: Roles.SUPER_ADMIN,
+  };
+
+  const newUser = new UserModel(superAdminPayload);
+  const res = await newUser.save();
+  return res.toJSON();
 }
 
 /**
