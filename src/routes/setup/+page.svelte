@@ -13,6 +13,13 @@
     } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
+    import {
+        Stepper,
+        StepperIndicator,
+        StepperItem,
+        StepperTitle,
+        StepperTrigger,
+    } from "$lib/components/ui/stepper";
     import GalleryVerticalEndIcon from "@lucide/svelte/icons/gallery-vertical-end";
     import SparklesIcon from "@lucide/svelte/icons/sparkles";
     import CheckCircleIcon from "@lucide/svelte/icons/check-circle";
@@ -118,35 +125,25 @@
 
         <!-- Step indicator -->
         <div
-            class="flex items-center justify-center mb-8"
+            class="mx-auto max-w-xl space-y-8 mb-8"
             in:fade={{ duration: 600, delay: 400 }}
         >
-            {#each steps as _, i}
-                <div class="flex items-center">
-                    <div
-                        class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 {i <
-                        step
-                            ? 'bg-green-500 text-white'
-                            : i === step
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}"
-                    >
-                        {#if i < step}
-                            <CheckCircleIcon class="w-4 h-4" />
-                        {:else}
-                            {i + 1}
-                        {/if}
-                    </div>
-                    {#if i < steps.length - 1}
-                        <div
-                            class="w-12 h-0.5 transition-colors duration-300 {i <
-                            step
-                                ? 'bg-green-500'
-                                : 'bg-gray-200 dark:bg-gray-700'}"
-                        ></div>
-                    {/if}
-                </div>
-            {/each}
+            <Stepper value={step + 1} class="items-start gap-4">
+                {#each steps as { title }, i}
+                    <StepperItem step={i + 1} class="flex-1">
+                        <StepperTrigger
+                            class="w-full flex-col items-start gap-2 rounded"
+                        >
+                            <StepperIndicator class="bg-border h-1 w-full">
+                                <span class="sr-only">{i + 1}</span>
+                            </StepperIndicator>
+                            <div class="space-y-0.5">
+                                <StepperTitle>{title}</StepperTitle>
+                            </div>
+                        </StepperTrigger>
+                    </StepperItem>
+                {/each}
+            </Stepper>
         </div>
 
         <!-- Step content -->
