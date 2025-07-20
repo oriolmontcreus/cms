@@ -34,4 +34,23 @@ router.get(
   ),
 );
 
+// Setup endpoints - no authentication required for initial setup
+router.get(
+  "/setup/status",
+  withRateLimit(authController.checkSetupStatus.bind(authController), {
+    limit: 10,
+    windowSecs: 60,
+    message: "Too many setup status requests. Please try again later.",
+  }),
+);
+
+router.post(
+  "/setup/superadmin",
+  withRateLimit(authController.setupSuperAdmin.bind(authController), {
+    limit: 3,
+    windowSecs: 300, // 5 minutes - stricter limit for setup
+    message: "Too many setup attempts. Please try again later.",
+  }),
+);
+
 export { router as authRouter };

@@ -8,7 +8,7 @@
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import { handleLogout } from "@/services/auth.service";
-	import type { User } from "@shared/types/user.type";
+	import type { User } from "@/lib/shared/types/user.type";
 	
 	let { user }: { user: User } = $props();
 

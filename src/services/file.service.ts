@@ -8,11 +8,22 @@ const root = "/files";
 
 //region Routes
 export function getFileUrl(file: UploadedFile): string {
-    if (file.path.startsWith('http://') || file.path.startsWith('https://')) {
-        return file.path;
+    // Prefer URL if available
+    if (file.url) {
+        return file.url;
     }
-    const filename = file.path.split('/').pop() || file.fileName;
-    return `${BACKEND_URL}/${filename}`;
+    
+    // Fallback to path for backward compatibility
+    if (file.path) {
+        if (file.path.startsWith('http://') || file.path.startsWith('https://')) {
+            return file.path;
+        }
+        const filename = file.path.split('/').pop() || file.fileName;
+        return `${BACKEND_URL}/uploads/${filename}`;
+    }
+    
+    // Final fallback to fileName
+    return `${BACKEND_URL}/uploads/${file.fileName}`;
 }
 
 export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {

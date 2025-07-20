@@ -6,6 +6,8 @@ export interface UploadedFile {
     mimeType: string;
     size: number;
     url: string;
+    path?: string; // For backward compatibility 
+    uploadedAt?: Date | string; // For display purposes
 }
 
 export interface UploadedFileWithDeletionFlag extends UploadedFile {

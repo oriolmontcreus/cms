@@ -4,6 +4,7 @@ import AlreadyExists from "@/errors/AlreadyExists.js";
 import Unauthorized from "@/errors/Unauthorized.js";
 import InvalidToken from "@/errors/InvalidToken.js";
 import { User, UserRegisterPayload } from "@shared/types/user.type.js";
+import { Roles } from "@shared/constants/role.type.js";
 import { DecodedSession } from "@/src/types/session.js";
 import { getUserById } from "@/src/services/user.service.js";
 import { isValidObjectId } from "mongoose";
@@ -47,9 +48,35 @@ export async function register(r: UserRegisterPayload): Promise<User> {
     name: r.name,
     email: r.email,
     password: r.password,
+    permissions: r.permissions,
   };
 
   const newUser = new UserModel(allowedFields);
+  const res = await newUser.save();
+  return res.toJSON();
+}
+
+export async function hasUsers(): Promise<boolean> {
+  const userCount = await UserModel.countDocuments();
+  return userCount > 0;
+}
+
+export async function setupSuperAdmin(r: UserRegisterPayload): Promise<User> {
+  // First check if any users exist
+  const hasAnyUsers = await hasUsers();
+  if (hasAnyUsers) {
+    throw new AlreadyExists("System has already been set up");
+  }
+
+  // Create the superadmin user
+  const superAdminPayload: UserRegisterPayload = {
+    name: r.name,
+    email: r.email,
+    password: r.password,
+    permissions: Roles.SUPER_ADMIN,
+  };
+
+  const newUser = new UserModel(superAdminPayload);
   const res = await newUser.save();
   return res.toJSON();
 }

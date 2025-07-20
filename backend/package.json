@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "create-user": "tsx scripts/create-user.ts",
+    "start": "node dist/cms/backend/src/index.js",
     "create-page": "tsx scripts/create-page.ts",
     "create-component": "tsx scripts/create-component.ts"
   },

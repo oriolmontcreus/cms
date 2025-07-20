@@ -48,6 +48,24 @@ export class AuthController {
     return c.json(user);
   }
 
+  async checkSetupStatus(c: Context) {
+    const hasUsers = await authService.hasUsers();
+    return c.json({ needsSetup: !hasUsers });
+  }
+
+  async setupSuperAdmin(c: Context) {
+    const payload = await c.req.json();
+    try {
+      const res: User = await authService.setupSuperAdmin(payload);
+      return c.json(res);
+    } catch (err) {
+      if (err instanceof AlreadyExists) {
+        throw new BadRequest("User with this email already exists");
+      }
+      throw err;
+    }
+  }
+
   logout(c: Context) {
     deleteCookie(c, SESSION_COOKIE);
     return c.json(null);

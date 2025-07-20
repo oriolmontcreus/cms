@@ -77,7 +77,7 @@
                         </div>
                         <div class="flex justify-between">
                             <span>Uploaded</span>
-                            <span>{formatDate(new Date(fileData.uploadedAt))}</span>
+                            <span>{fileData.uploadedAt ? formatDate(new Date(fileData.uploadedAt)) : 'Unknown'}</span>
                         </div>
                     </div>
                 </div>
