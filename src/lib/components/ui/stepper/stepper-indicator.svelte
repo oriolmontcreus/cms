@@ -42,12 +42,12 @@
         class={cn("relative overflow-hidden rounded-full", className)}
         {...restProps}
     >
-        <div class="absolute inset-0 bg-gray-200 dark:bg-gray-700"></div>
+        <div class="absolute inset-0 bg-muted"></div>
         <div
             class="h-full transition-all duration-300 {isCompleted
-                ? 'bg-blue-600 w-full'
+                ? 'bg-primary w-full'
                 : isActive
-                  ? 'bg-blue-600 w-1/2'
+                  ? 'bg-primary w-1/2'
                   : 'bg-transparent w-0'}"
         ></div>
         {@render children?.()}
@@ -55,12 +55,12 @@
 {:else}
     <div
         class={cn(
-            "w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium transition-all duration-300",
+            "size-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300",
             isCompleted
-                ? "bg-blue-600 border-blue-600 text-white"
+                ? "!bg-primary text-primary-foreground"
                 : isActive
-                  ? "bg-blue-600 border-blue-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400",
+                  ? "!bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
             className,
         )}
         {...restProps}

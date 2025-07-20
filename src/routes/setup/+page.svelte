@@ -42,10 +42,10 @@
             description: "Let's get your content management system set up",
         },
         {
-            title: "Create Your Admin Account",
+            title: "Create your admin account",
             description: "Set up the first administrator account",
         },
-        { title: "All Set!", description: "Your CMS is ready to use" },
+        { title: "All set!", description: "Your CMS is ready to use" },
     ];
 
     onMount(async () => {
@@ -169,7 +169,7 @@
                         >
                             <div class="flex items-center justify-center">
                                 <div
-                                    class="animate-pulse w-2 h-2 bg-blue-600 rounded-full mr-2"
+                                    class="animate-pulse w-2 h-2 bg-primary rounded-full mr-2"
                                 ></div>
                                 Initializing your CMS...
                             </div>
@@ -194,7 +194,7 @@
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div class="space-y-2">
-                            <Label for="name">Full Name</Label>
+                            <Label for="name">Full name</Label>
                             <Input
                                 id="name"
                                 type="text"
@@ -205,7 +205,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="email">Email Address</Label>
+                            <Label for="email">Email address</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -227,7 +227,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="confirmPassword">Confirm Password</Label
+                            <Label for="confirmPassword">Confirm password</Label
                             >
                             <Input
                                 id="confirmPassword"
@@ -256,9 +256,9 @@
                                 <div
                                     class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
                                 ></div>
-                                Creating Account...
+                                Creating account...
                             {:else}
-                                Create Admin Account
+                                Create admin account
                             {/if}
                         </Button>
                     </CardContent>
