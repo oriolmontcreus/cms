@@ -75,6 +75,12 @@
         }
     }
 
+    function handleBack() {
+        if (step > 0) {
+            step--;
+        }
+    }
+
     async function handleSubmit() {
         if (!validatePasswords()) return;
 
@@ -170,20 +176,20 @@
                             class="text-center"
                         />
 
-                        {#if welcomeName.trim() && email.trim()}
-                            <div
-                                in:fade={{ duration: 300 }}
-                                class="flex justify-end"
+                        <div class="flex justify-end">
+                            <Button
+                                onclick={handleWelcomeNext}
+                                variant="ghost"
+                                class="text-gray-300 hover:text-white hover:bg-gray-700/50 px-6 transition-opacity duration-300"
+                                style="opacity: {welcomeName.trim() &&
+                                email.trim()
+                                    ? '1'
+                                    : '0'}"
+                                disabled={!welcomeName.trim() || !email.trim()}
                             >
-                                <Button
-                                    onclick={handleWelcomeNext}
-                                    variant="ghost"
-                                    class="text-gray-300 hover:text-white hover:bg-gray-700/50 px-6"
-                                >
-                                    Continue →
-                                </Button>
-                            </div>
-                        {/if}
+                                Continue →
+                            </Button>
+                        </div>
                     </div>
                 </div>
             {/if}
@@ -229,22 +235,31 @@
                             </p>
                         {/if}
 
-                        <Button
-                            onclick={handleSubmit}
-                            disabled={isLoading ||
-                                !password ||
-                                !confirmPassword}
-                            class="w-full"
-                        >
-                            {#if isLoading}
-                                <div
-                                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
-                                ></div>
-                                Creating account...
-                            {:else}
-                                Complete Setup
-                            {/if}
-                        </Button>
+                        <div class="flex gap-3">
+                            <Button
+                                onclick={handleBack}
+                                variant="ghost"
+                                class="flex-1 text-gray-300 hover:text-white hover:bg-gray-700/50"
+                            >
+                                ← Back
+                            </Button>
+                            <Button
+                                onclick={handleSubmit}
+                                disabled={isLoading ||
+                                    !password ||
+                                    !confirmPassword}
+                                class="flex-1"
+                            >
+                                {#if isLoading}
+                                    <div
+                                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                                    ></div>
+                                    Creating account...
+                                {:else}
+                                    Complete Setup
+                                {/if}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             {/if}
