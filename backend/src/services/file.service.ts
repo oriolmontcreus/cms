@@ -80,8 +80,7 @@ async function processFile(file: File): Promise<UploadedFile> {
     fileName,
     mimeType: file.type,
     size: file.size,
-    path: filePath,
-    uploadedAt: new Date()
+    url: `/uploads/${fileName}`
   };
 }
 

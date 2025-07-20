@@ -12,9 +12,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@shared/*": ["../../shared/*"]
+      "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["./**/*", "../../shared/**/*"],
+  "include": ["./**/*", "../shared/**/*"],
   "exclude": ["node_modules", "dist"]
 } 

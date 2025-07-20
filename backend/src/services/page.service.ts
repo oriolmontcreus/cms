@@ -24,6 +24,10 @@ const savePageData = async (pages: Page[]): Promise<void> => {
 };
 
 export class PageService {
+  static async getPages(): Promise<Page[]> {
+    return await getExistingPagesData();
+  }
+
   static async updateComponents(slug: string, components: Component[]): Promise<Page> {
     const existingPages = await getExistingPagesData();
     const pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);

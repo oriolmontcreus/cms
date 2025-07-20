@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { UserModel } from "../src/models/user.model";
+import { UserModel } from "../src/models/user.model.js";
 
 enum Roles {
   CLIENT = 1 << 0,                        // 1
