@@ -94,212 +94,213 @@
     }
 </script>
 
-<div
-    class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4"
->
-    <!-- Background decoration -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-            class="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl"
-        ></div>
-        <div
-            class="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-tr from-indigo-400/20 to-pink-400/20 blur-3xl"
-        ></div>
-    </div>
+<div class="min-h-screen w-full relative bg-black">
+    <div
+        class="absolute inset-0 z-0"
+        style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 70%), #000000;"
+    ></div>
 
-    <div class="w-full max-w-md mx-auto relative z-10">
-        <!-- Logo and brand -->
-        <div class="text-center mb-8" in:fade={{ duration: 800, delay: 200 }}>
+    <div
+        class="relative z-10 flex items-center justify-center p-4 min-h-screen"
+    >
+        <div class="w-full max-w-md mx-auto relative z-10">
+            <!-- Logo and brand -->
             <div
-                class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white mb-4 shadow-lg"
+                class="text-center mb-8"
+                in:fade={{ duration: 800, delay: 200 }}
             >
-                <GalleryVerticalEndIcon class="w-8 h-8" />
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white mb-4 shadow-lg"
+                >
+                    <GalleryVerticalEndIcon class="w-8 h-8" />
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    Froggy CMS
+                </h1>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                    Content Management Made Simple
+                </p>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                Froggy CMS
-            </h1>
-            <p class="text-gray-600 dark:text-gray-300 text-sm">
-                Content Management Made Simple
-            </p>
-        </div>
 
-        <!-- Step indicator -->
-        <div
-            class="mx-auto max-w-xl space-y-8 mb-8"
-            in:fade={{ duration: 600, delay: 400 }}
-        >
-            <Stepper value={step + 1} class="items-start gap-4">
-                {#each steps as { title }, i}
-                    <StepperItem step={i + 1} class="flex-1">
-                        <StepperTrigger
-                            class="w-full flex-col items-start gap-2 rounded"
-                        >
-                            <StepperIndicator class="bg-border h-1 w-full">
-                                <span class="sr-only">{i + 1}</span>
-                            </StepperIndicator>
-                            <div class="space-y-0.5">
-                                <StepperTitle>{title}</StepperTitle>
-                            </div>
-                        </StepperTrigger>
-                    </StepperItem>
-                {/each}
-            </Stepper>
-        </div>
-
-        <!-- Step content -->
-        {#if step === 0}
-            <div in:scale={{ duration: 600, delay: 600, easing: quintOut }}>
-                <Card class="text-center">
-                    <CardContent class="p-8">
-                        <div class="mb-6">
-                            <SparklesIcon
-                                class="w-16 h-16 mx-auto text-blue-600 mb-4"
-                            />
-                            <h2
-                                class="text-xl font-semibold text-gray-900 dark:text-white mb-2"
+            <!-- Step indicator -->
+            <div
+                class="mx-auto max-w-xl space-y-8 mb-8"
+                in:fade={{ duration: 600, delay: 400 }}
+            >
+                <Stepper value={step + 1} class="items-start gap-4">
+                    {#each steps as { title }, i}
+                        <StepperItem step={i + 1} class="flex-1">
+                            <StepperTrigger
+                                class="w-full flex-col items-start gap-2 rounded"
                             >
-                                {steps[0].title}
-                            </h2>
-                            <p class="text-gray-600 dark:text-gray-300">
-                                {steps[0].description}
-                            </p>
-                        </div>
-                        <div
-                            class="space-y-2 text-sm text-gray-500 dark:text-gray-400"
-                        >
-                            <div class="flex items-center justify-center">
-                                <div
-                                    class="animate-pulse w-2 h-2 bg-primary rounded-full mr-2"
-                                ></div>
-                                Initializing your CMS...
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                                <StepperIndicator class="bg-border h-1 w-full">
+                                    <span class="sr-only">{i + 1}</span>
+                                </StepperIndicator>
+                                <div class="space-y-0.5">
+                                    <StepperTitle>{title}</StepperTitle>
+                                </div>
+                            </StepperTrigger>
+                        </StepperItem>
+                    {/each}
+                </Stepper>
             </div>
-        {/if}
 
-        {#if step === 1}
-            <div in:fly={{ y: 20, duration: 400 }}>
-                <Card>
-                    <CardHeader class="text-center">
-                        <CardTitle
-                            class="text-xl text-gray-900 dark:text-white"
-                        >
-                            {steps[1].title}
-                        </CardTitle>
-                        <CardDescription>
-                            {steps[1].description}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent class="space-y-4">
-                        <div class="space-y-2">
-                            <Label for="name">Full name</Label>
-                            <Input
-                                id="name"
-                                type="text"
-                                placeholder="John Doe"
-                                bind:value={name}
-                                required
-                            />
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="email">Email address</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="admin@example.com"
-                                bind:value={email}
-                                required
-                            />
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="Enter a secure password"
-                                bind:value={password}
-                                required
-                            />
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="confirmPassword">Confirm password</Label
-                            >
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                placeholder="Confirm your password"
-                                bind:value={confirmPassword}
-                                required
-                            />
-                            {#if passwordError}
-                                <p class="text-red-500 text-sm">
-                                    {passwordError}
+            <!-- Step content -->
+            {#if step === 0}
+                <div in:scale={{ duration: 600, delay: 600, easing: quintOut }}>
+                    <Card class="text-center">
+                        <CardContent class="p-8">
+                            <div class="mb-6">
+                                <SparklesIcon
+                                    class="w-16 h-16 mx-auto text-blue-600 mb-4"
+                                />
+                                <h2
+                                    class="text-xl font-semibold text-gray-900 dark:text-white mb-2"
+                                >
+                                    {steps[0].title}
+                                </h2>
+                                <p class="text-gray-600 dark:text-gray-300">
+                                    {steps[0].description}
                                 </p>
-                            {/if}
-                        </div>
-
-                        <Button
-                            onclick={handleSubmit}
-                            disabled={isLoading ||
-                                !email ||
-                                !password ||
-                                !confirmPassword ||
-                                !name}
-                            class="w-full"
-                        >
-                            {#if isLoading}
-                                <div
-                                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
-                                ></div>
-                                Creating account...
-                            {:else}
-                                Create admin account
-                            {/if}
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        {/if}
-
-        {#if step === 2}
-            <div in:scale={{ duration: 600, easing: quintOut }}>
-                <Card>
-                    <CardContent class="p-8">
-                        <div class="mb-6">
+                            </div>
                             <div
-                                class="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4"
+                                class="space-y-2 text-sm text-gray-500 dark:text-gray-400"
                             >
-                                <CheckCircleIcon
-                                    class="w-8 h-8 text-green-600"
+                                <div class="flex items-center justify-center">
+                                    <div
+                                        class="animate-pulse w-2 h-2 bg-primary rounded-full mr-2"
+                                    ></div>
+                                    Initializing your CMS...
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            {/if}
+
+            {#if step === 1}
+                <div in:fly={{ y: 20, duration: 400 }}>
+                    <Card>
+                        <CardHeader class="text-center">
+                            <CardTitle
+                                class="text-xl text-gray-900 dark:text-white"
+                            >
+                                {steps[1].title}
+                            </CardTitle>
+                            <CardDescription>
+                                {steps[1].description}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent class="space-y-4">
+                            <div class="space-y-2">
+                                <Label for="name">Full name</Label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    bind:value={name}
+                                    required
                                 />
                             </div>
-                            <h2
-                                class="text-xl font-semibold text-gray-900 dark:text-white mb-2"
-                            >
-                                {steps[2].title}
-                            </h2>
-                            <p class="text-gray-600 dark:text-gray-300">
-                                {steps[2].description}
-                            </p>
-                        </div>
-                        <div
-                            class="space-y-2 text-sm text-gray-500 dark:text-gray-400"
-                        >
-                            <div class="flex items-center justify-center">
-                                <div
-                                    class="animate-pulse w-2 h-2 bg-green-600 rounded-full mr-2"
-                                ></div>
-                                Redirecting to dashboard...
+
+                            <div class="space-y-2">
+                                <Label for="email">Email address</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="admin@example.com"
+                                    bind:value={email}
+                                    required
+                                />
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        {/if}
+
+                            <div class="space-y-2">
+                                <Label for="password">Password</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    placeholder="Enter a secure password"
+                                    bind:value={password}
+                                    required
+                                />
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label for="confirmPassword"
+                                    >Confirm password</Label
+                                >
+                                <Input
+                                    id="confirmPassword"
+                                    type="password"
+                                    placeholder="Confirm your password"
+                                    bind:value={confirmPassword}
+                                    required
+                                />
+                                {#if passwordError}
+                                    <p class="text-red-500 text-sm">
+                                        {passwordError}
+                                    </p>
+                                {/if}
+                            </div>
+
+                            <Button
+                                onclick={handleSubmit}
+                                disabled={isLoading ||
+                                    !email ||
+                                    !password ||
+                                    !confirmPassword ||
+                                    !name}
+                                class="w-full"
+                            >
+                                {#if isLoading}
+                                    <div
+                                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                                    ></div>
+                                    Creating account...
+                                {:else}
+                                    Create admin account
+                                {/if}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            {/if}
+
+            {#if step === 2}
+                <div in:scale={{ duration: 600, easing: quintOut }}>
+                    <Card>
+                        <CardContent class="p-8">
+                            <div class="mb-6">
+                                <div
+                                    class="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4"
+                                >
+                                    <CheckCircleIcon
+                                        class="w-8 h-8 text-green-600"
+                                    />
+                                </div>
+                                <h2
+                                    class="text-xl font-semibold text-gray-900 dark:text-white mb-2"
+                                >
+                                    {steps[2].title}
+                                </h2>
+                                <p class="text-gray-600 dark:text-gray-300">
+                                    {steps[2].description}
+                                </p>
+                            </div>
+                            <div
+                                class="space-y-2 text-sm text-gray-500 dark:text-gray-400"
+                            >
+                                <div class="flex items-center justify-center">
+                                    <div
+                                        class="animate-pulse w-2 h-2 bg-green-600 rounded-full mr-2"
+                                    ></div>
+                                    Redirecting to dashboard...
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            {/if}
+        </div>
     </div>
 </div>
