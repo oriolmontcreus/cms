@@ -27,12 +27,24 @@
 
     let users: User[] = [];
     let loading = true;
-    let error: string | null = null;
 
     // Dialog states
     let createDialogOpen = false;
     let editDialogOpen = false;
     let selectedUser: User | null = null;
+
+    // Role configuration maps
+    const roleLabels = new Map([
+        [Roles.SUPER_ADMIN, "Super Admin"],
+        [Roles.DEVELOPER, "Developer"],
+        [Roles.CLIENT, "Client"]
+    ]);
+
+    const roleVariants = new Map<number, "default" | "secondary" | "destructive">([
+        [Roles.SUPER_ADMIN, "destructive"],
+        [Roles.DEVELOPER, "default"],
+        [Roles.CLIENT, "secondary"]
+    ]);
 
     // Load users on mount
     onMount(async () => {
@@ -41,15 +53,10 @@
 
     async function loadUsers() {
         loading = true;
-        error = null;
-
         const result = await handleGetAllUsers();
         if (result) {
             users = result;
-        } else {
-            error = "Failed to load users";
         }
-
         loading = false;
     }
 
@@ -78,31 +85,13 @@
     }
 
     function getRoleLabel(permissions: number): string {
-        switch (permissions) {
-            case Roles.SUPER_ADMIN:
-                return "Super Admin";
-            case Roles.DEVELOPER:
-                return "Developer";
-            case Roles.CLIENT:
-                return "Client";
-            default:
-                return "Unknown";
-        }
+        return roleLabels.get(permissions) ?? "Unknown";
     }
 
     function getRoleVariant(
         permissions: number,
     ): "default" | "secondary" | "destructive" {
-        switch (permissions) {
-            case Roles.SUPER_ADMIN:
-                return "destructive";
-            case Roles.DEVELOPER:
-                return "default";
-            case Roles.CLIENT:
-                return "secondary";
-            default:
-                return "secondary";
-        }
+        return roleVariants.get(permissions) ?? "secondary";
     }
 
     function formatDate(dateString: string | Date): string {
@@ -135,17 +124,6 @@
                     <div class="text-center py-8">
                         <div class="text-gray-500">Loading users...</div>
                     </div>
-                {:else if error}
-                    <Card>
-                        <CardContent class="py-8">
-                            <div class="text-center text-red-500">{error}</div>
-                            <div class="text-center mt-4">
-                                <Button onclick={loadUsers} variant="outline">
-                                    Try Again
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
                 {:else if users.length === 0}
                     <Card>
                         <CardContent class="py-8">
