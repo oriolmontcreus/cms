@@ -33,20 +33,27 @@
     let editDialogOpen = false;
     let selectedUser: User | null = null;
 
-    // Role configuration maps
     const roleLabels = new Map([
         [Roles.SUPER_ADMIN, "Super Admin"],
         [Roles.DEVELOPER, "Developer"],
-        [Roles.CLIENT, "Client"]
+        [Roles.CLIENT, "Client"],
     ]);
 
-    const roleVariants = new Map<number, "default" | "secondary" | "destructive">([
-        [Roles.SUPER_ADMIN, "destructive"],
-        [Roles.DEVELOPER, "default"],
-        [Roles.CLIENT, "secondary"]
+    const roleStyles = new Map([
+        [
+            Roles.SUPER_ADMIN,
+            "bg-purple-500 text-purple-100 border-transparent dark:bg-purple-700",
+        ],
+        [
+            Roles.DEVELOPER,
+            "bg-blue-500 text-blue-100 border-transparent dark:bg-blue-900",
+        ],
+        [
+            Roles.CLIENT,
+            "bg-green-500 text-green-100 border-transparent dark:bg-green-900",
+        ],
     ]);
 
-    // Load users on mount
     onMount(async () => {
         await loadUsers();
     });
@@ -71,27 +78,26 @@
     }
 
     async function deleteUserConfirm(user: User) {
-        const success = await handleDeleteUser(user._id, user.name);
-        if (success) {
-            await loadUsers(); // Refresh the list
-        }
+        const ok = await handleDeleteUser(user._id, user.name);
+        if (ok) await loadUsers();
     }
 
     function handleUserSaved() {
         createDialogOpen = false;
         editDialogOpen = false;
         selectedUser = null;
-        loadUsers(); // Refresh the list
+        loadUsers();
     }
 
     function getRoleLabel(permissions: number): string {
         return roleLabels.get(permissions) ?? "Unknown";
     }
 
-    function getRoleVariant(
-        permissions: number,
-    ): "default" | "secondary" | "destructive" {
-        return roleVariants.get(permissions) ?? "secondary";
+    function getRoleStyle(permissions: number): string {
+        return (
+            roleStyles.get(permissions) ??
+            "bg-gray-500 text-white border-transparent"
+        );
     }
 
     function formatDate(dateString: string | Date): string {
@@ -162,7 +168,7 @@
                                             >
                                             <Table.Cell>
                                                 <Badge
-                                                    variant={getRoleVariant(
+                                                    class={getRoleStyle(
                                                         user.permissions,
                                                     )}
                                                 >
