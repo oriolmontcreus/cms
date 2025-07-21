@@ -55,7 +55,7 @@ export class AuthController {
       return c.json(res);
     } catch (err) {
       if (err instanceof AlreadyExists) {
-        throw new BadRequest("User with this email already exists");
+        throw new BadRequest("System has already been set up");
       }
       throw err;
     }
