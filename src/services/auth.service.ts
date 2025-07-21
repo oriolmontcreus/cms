@@ -55,7 +55,7 @@ export async function autoLogin(): Promise<User | null> {
     } finally {
         if (get(loggedUser) === null) {
             const currentPath = window.location.pathname;
-            if (currentPath !== '/setup' && !setupStatus.needsSetup) goto('/login');
+            if (currentPath !== '/setup' && !setupStatus!.needsSetup) goto('/login');
         }
         clearTimeout(timeoutId);
     }

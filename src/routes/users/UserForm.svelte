@@ -3,14 +3,16 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
-    import { createUser, updateUser } from "@/services/user.service";
+    import {
+        handleCreateUser,
+        handleUpdateUser,
+    } from "@/services/user.service";
     import type {
         User,
         UserRegisterPayload,
         UserUpdatePayload,
     } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
-    import { toast } from "svelte-sonner";
     import { onMount } from "svelte";
 
     // Props
@@ -89,40 +91,38 @@
 
         loading = true;
 
-        try {
-            if (isEditing && user) {
-                const updateData: UserUpdatePayload = {
-                    name: name.trim(),
-                    email: email.trim(),
-                    permissions,
-                };
+        let success = false;
 
-                // Only include password if it's provided
-                if (password) {
-                    (updateData as any).password = password;
-                }
+        if (isEditing && user) {
+            const updateData: UserUpdatePayload = {
+                name: name.trim(),
+                email: email.trim(),
+                permissions,
+            };
 
-                await updateUser(user._id, updateData);
-                toast.success("User updated successfully");
-            } else {
-                const createData: UserRegisterPayload = {
-                    name: name.trim(),
-                    email: email.trim(),
-                    password,
-                    permissions,
-                };
-
-                await createUser(createData);
-                toast.success("User created successfully");
+            // Only include password if it's provided
+            if (password) {
+                (updateData as any).password = password;
             }
 
+            const result = await handleUpdateUser(user._id, updateData);
+            success = !!result;
+        } else {
+            const createData: UserRegisterPayload = {
+                name: name.trim(),
+                email: email.trim(),
+                password,
+                permissions,
+            };
+
+            const result = await handleCreateUser(createData);
+            success = !!result;
+        }
+
+        loading = false;
+
+        if (success) {
             onSuccess();
-        } catch (err: any) {
-            console.error("Error saving user:", err);
-            const errorMessage = err?.message || "Failed to save user";
-            toast.error(errorMessage);
-        } finally {
-            loading = false;
         }
     }
 

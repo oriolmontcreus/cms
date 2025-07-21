@@ -18,10 +18,12 @@
     import DotsVerticalIcon from "@tabler/icons-svelte/icons/dots-vertical";
     import EditIcon from "@tabler/icons-svelte/icons/edit";
     import TrashIcon from "@tabler/icons-svelte/icons/trash";
-    import { getAllUsers, deleteUser } from "@/services/user.service";
+    import {
+        handleGetAllUsers,
+        handleDeleteUser,
+    } from "@/services/user.service";
     import type { User } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
-    import { toast } from "svelte-sonner";
 
     let users: User[] = [];
     let loading = true;
@@ -38,17 +40,17 @@
     });
 
     async function loadUsers() {
-        try {
-            loading = true;
-            error = null;
-            users = await getAllUsers();
-        } catch (err) {
+        loading = true;
+        error = null;
+
+        const result = await handleGetAllUsers();
+        if (result) {
+            users = result;
+        } else {
             error = "Failed to load users";
-            console.error("Error loading users:", err);
-            toast.error("Failed to load users");
-        } finally {
-            loading = false;
         }
+
+        loading = false;
     }
 
     function handleCreateUser() {
@@ -61,14 +63,10 @@
         editDialogOpen = true;
     }
 
-    async function handleDeleteUser(user: User) {
-        try {
-            await deleteUser(user._id);
-            toast.success("User deleted successfully");
+    async function deleteUserConfirm(user: User) {
+        const success = await handleDeleteUser(user._id, user.name);
+        if (success) {
             await loadUsers(); // Refresh the list
-        } catch (err) {
-            console.error("Error deleting user:", err);
-            toast.error("Failed to delete user");
         }
     }
 
@@ -250,7 +248,7 @@
                                                                         "Are you sure you want to delete this user? This action cannot be undone.",
                                                                     )
                                                                 ) {
-                                                                    handleDeleteUser(
+                                                                    deleteUserConfirm(
                                                                         user,
                                                                     );
                                                                 }

@@ -1,9 +1,12 @@
 import { api } from "@/lib/utils/api";
 import { loggedUser } from "@/stores/loggedUser";
 import type { User, UserRegisterPayload, UserUpdatePayload } from "@shared/types/user.type";
+import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
+import { errorToast } from "./toast.service";
 
 const root = "/user";
 
+//region Routes
 export async function getAllUsers(): Promise<User[]> {
     const { data } = await api.get(root);
     return data;
@@ -34,3 +37,57 @@ export async function deleteUserAccount(): Promise<boolean> {
     loggedUser.set(null);
     return data;
 }
+//endregion
+
+//region Handlers
+export async function handleGetAllUsers(): Promise<User[] | null> {
+    const [data, err] = await safeFetch(getAllUsers());
+    if (err || !data) errorToast("Failed to load users. Please try again.");
+    return data || null;
+}
+
+export async function handleGetUserById(id: string): Promise<User | null> {
+    const [data, err] = await fetchWithToast(getUserById(id), {
+        loading: 'Loading user...',
+        success: () => 'User loaded successfully.',
+        error: 'Failed to load user. Please try again.'
+    });
+    return data || null;
+}
+
+export async function handleCreateUser(userData: UserRegisterPayload): Promise<User | null> {
+    const [data, err] = await fetchWithToast(createUser(userData), {
+        loading: 'Creating user...',
+        success: () => `User "${userData.name}" created successfully.`,
+        error: 'Failed to create user. Please check the information and try again.'
+    });
+    return data || null;
+}
+
+export async function handleUpdateUser(id: string, userData: UserUpdatePayload): Promise<User | null> {
+    const [data, err] = await fetchWithToast(updateUser(id, userData), {
+        loading: 'Updating user...',
+        success: () => `User "${userData.name || 'user'}" updated successfully.`,
+        error: 'Failed to update user. Please check the information and try again.'
+    });
+    return data || null;
+}
+
+export async function handleDeleteUser(id: string, userName?: string): Promise<boolean> {
+    const [data, err] = await fetchWithToast(deleteUser(id), {
+        loading: 'Deleting user...',
+        success: () => `User ${userName ? `"${userName}"` : ''} deleted successfully.`,
+        error: 'Failed to delete user. Please try again.'
+    });
+    return !!data && !err;
+}
+
+export async function handleDeleteUserAccount(): Promise<boolean> {
+    const [data, err] = await fetchWithToast(deleteUserAccount(), {
+        loading: 'Deleting your account...',
+        success: () => 'Your account has been deleted successfully.',
+        error: 'Failed to delete your account. Please try again.'
+    });
+    return !!data && !err;
+}
+//endregion
