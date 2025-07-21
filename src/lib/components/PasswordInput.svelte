@@ -22,8 +22,14 @@
         className?: string;
     } = $props();
 
+    function generateUUID(): string {
+        return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2) + Date.now().toString(36);
+    }
+
     const passwordStrength = usePasswordStrength({
-        id: id || crypto.randomUUID(),
+        id: id || generateUUID(),
     });
 
     // Track if user has started typing to avoid showing errors on first render
