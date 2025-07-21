@@ -29,6 +29,12 @@
     let isLoading = $state(false);
     let passwordError = $state("");
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValidEmail = $derived(
+        email.trim() && emailRegex.test(email.trim()),
+    );
+
     // Create password strength instance for validation
     const passwordStrength = usePasswordStrength({ id: "setup-password" });
 
@@ -78,7 +84,7 @@
     }
 
     function handleWelcomeNext() {
-        if (welcomeName.trim() && email.trim()) {
+        if (welcomeName.trim() && isValidEmail) {
             step = 1;
         }
     }
@@ -187,10 +193,10 @@
                                 variant="ghost"
                                 class="text-gray-300 hover:text-white hover:bg-gray-700/50 px-6 transition-opacity duration-300"
                                 style="opacity: {welcomeName.trim() &&
-                                email.trim()
+                                isValidEmail
                                     ? '1'
                                     : '0'}"
-                                disabled={!welcomeName.trim() || !email.trim()}
+                                disabled={!welcomeName.trim() || !isValidEmail}
                             >
                                 Continue →
                             </Button>
