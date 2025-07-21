@@ -43,6 +43,24 @@ export class AuthController {
     }
   }
 
+  async checkSetupStatus(c: Context) {
+    const hasUsers = await authService.hasUsers();
+    return c.json({ needsSetup: !hasUsers });
+  }
+
+  async setupSuperAdmin(c: Context) {
+    const payload = await c.req.json();
+    try {
+      const res: User = await authService.setupSuperAdmin(payload);
+      return c.json(res);
+    } catch (err) {
+      if (err instanceof AlreadyExists) {
+        throw new BadRequest("System has already been set up");
+      }
+      throw err;
+    }
+  }
+
   async getCurrentUser(c: Context) {
     const user = c.get("user");
     return c.json(user);

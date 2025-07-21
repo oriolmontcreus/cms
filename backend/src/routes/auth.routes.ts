@@ -9,7 +9,7 @@ const authController = new AuthController();
 router.post(
   "/login",
   withRateLimit(authController.login.bind(authController), {
-    limit: 5,
+    limit: 10,
     windowSecs: 60,
     message: "Too many login attempts. Please try again in a minute.",
   }),
@@ -32,6 +32,24 @@ router.get(
       windowSecs: 60,
     },
   ),
+);
+
+router.get(
+  "/setup/status",
+  withRateLimit(authController.checkSetupStatus.bind(authController), {
+    limit: 10,
+    windowSecs: 60,
+    message: "Too many setup status requests. Please try again later.",
+  }),
+);
+
+router.post(
+  "/setup/superadmin",
+  withRateLimit(authController.setupSuperAdmin.bind(authController), {
+    limit: 3,
+    windowSecs: 120,
+    message: "Too many setup attempts. Please try again later in a couple of minutes.",
+  }),
 );
 
 export { router as authRouter };
