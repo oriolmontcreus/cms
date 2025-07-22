@@ -374,7 +374,8 @@
                                 value={setupResult.setupUrl}
                                 readonly
                                 class="text-sm font-mono"
-                                onclick={(e) => e.target.select()}
+                                onclick={(e) =>
+                                    (e.target as HTMLInputElement)?.select()}
                             />
                             <Button
                                 size="sm"
