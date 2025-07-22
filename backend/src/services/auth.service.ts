@@ -22,7 +22,13 @@ export async function login(
     "+password",
   );
 
-  if (!user || !password || !await user.comparePassword(password)) {
+  if (!user) throw new Unauthorized();
+
+  if (!user.isInitialized) {
+    throw new Unauthorized("Account not initialized. Please complete setup first.");
+  }
+
+  if (!password || !await user.comparePassword(password)) {
     throw new Unauthorized();
   }
 

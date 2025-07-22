@@ -1,6 +1,6 @@
 import { api } from "@/lib/utils/api";
 import { loggedUser } from "@/stores/loggedUser";
-import type { User, UserRegisterPayload, UserUpdatePayload } from "@shared/types/user.type";
+import type { User, UserRegisterPayload, UserUpdatePayload, UserCreatePayload, UserSetupPayload } from "@shared/types/user.type";
 import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "./toast.service";
 
@@ -19,6 +19,21 @@ export async function getUserById(id: string): Promise<User> {
 
 export async function createUser(userData: UserRegisterPayload): Promise<User> {
     const { data } = await api.post(root, userData);
+    return data;
+}
+
+export async function createUserWithoutPassword(userData: UserCreatePayload): Promise<{ user: User; setupToken: string; setupUrl: string }> {
+    const { data } = await api.post(`${root}/create-uninitialized`, userData);
+    return data;
+}
+
+export async function setupUserAccount(token: string, setupData: UserSetupPayload): Promise<User> {
+    const { data } = await api.post(`${root}/setup/${token}`, setupData);
+    return data;
+}
+
+export async function regenerateSetupToken(userId: string): Promise<{ setupToken: string; setupUrl: string }> {
+    const { data } = await api.post(`${root}/${userId}/regenerate-setup-token`);
     return data;
 }
 
@@ -60,6 +75,33 @@ export async function handleCreateUser(userData: UserRegisterPayload): Promise<U
         loading: 'Creating user...',
         success: () => `User "${userData.name}" created successfully.`,
         error: 'Failed to create user. Please check the information and try again.'
+    });
+    return data || null;
+}
+
+export async function handleCreateUserWithoutPassword(userData: UserCreatePayload): Promise<{ user: User; setupToken: string; setupUrl: string } | null> {
+    const [data, err] = await fetchWithToast(createUserWithoutPassword(userData), {
+        loading: 'Creating user...',
+        success: () => `User "${userData.name}" created successfully. Setup link generated.`,
+        error: 'Failed to create user. Please check the information and try again.'
+    });
+    return data || null;
+}
+
+export async function handleSetupUserAccount(token: string, setupData: UserSetupPayload): Promise<User | null> {
+    const [data, err] = await fetchWithToast(setupUserAccount(token, setupData), {
+        loading: 'Setting up your account...',
+        success: () => 'Account setup completed successfully!',
+        error: 'Failed to setup account. Please check your information and try again.'
+    });
+    return data || null;
+}
+
+export async function handleRegenerateSetupToken(userId: string, userName?: string): Promise<{ setupToken: string; setupUrl: string } | null> {
+    const [data, err] = await fetchWithToast(regenerateSetupToken(userId), {
+        loading: 'Regenerating setup link...',
+        success: () => `Setup link regenerated for ${userName ? `"${userName}"` : 'user'}.`,
+        error: 'Failed to regenerate setup link. Please try again.'
     });
     return data || null;
 }

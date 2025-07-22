@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { Button } from "$lib/components/ui/button";
+    import { Input } from "$lib/components/ui/input";
+    import { Label } from "$lib/components/ui/label";
     import * as Table from "$lib/components/ui/table";
     import * as Dialog from "$lib/components/ui/dialog";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -21,16 +23,19 @@
     import {
         handleGetAllUsers,
         handleDeleteUser,
+        handleRegenerateSetupToken,
     } from "@/services/user.service";
     import type { User } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
 
     let users: User[] = [];
     let loading = true;
+    let setupResult: { setupUrl: string; setupToken: string } | null = null;
 
     // Dialog states
     let createDialogOpen = false;
     let editDialogOpen = false;
+    let setupLinkDialogOpen = false;
     let selectedUser: User | null = null;
 
     const roleLabels = new Map([
@@ -82,10 +87,26 @@
         if (ok) await loadUsers();
     }
 
-    function handleUserSaved() {
+    async function regenerateSetupLink(user: User) {
+        const result = await handleRegenerateSetupToken(user._id, user.name);
+        if (result) {
+            setupResult = result;
+            selectedUser = user;
+            setupLinkDialogOpen = true;
+        }
+    }
+
+    function handleUserSaved(result?: any) {
         createDialogOpen = false;
         editDialogOpen = false;
         selectedUser = null;
+
+        // If result contains setup info, show the setup link dialog
+        if (result && result.setupUrl) {
+            setupResult = result;
+            setupLinkDialogOpen = true;
+        }
+
         loadUsers();
     }
 
@@ -156,6 +177,7 @@
                                         <Table.Head>Name</Table.Head>
                                         <Table.Head>Email</Table.Head>
                                         <Table.Head>Role</Table.Head>
+                                        <Table.Head>Status</Table.Head>
                                         <Table.Head>Created</Table.Head>
                                         <Table.Head>Updated</Table.Head>
                                         <Table.Head class="w-[100px]"
@@ -180,6 +202,17 @@
                                                     {getRoleLabel(
                                                         user.permissions,
                                                     )}
+                                                </Badge>
+                                            </Table.Cell>
+                                            <Table.Cell>
+                                                <Badge
+                                                    class={user.isInitialized
+                                                        ? "bg-green-500 text-green-100 border-transparent"
+                                                        : "bg-orange-500 text-orange-100 border-transparent"}
+                                                >
+                                                    {user.isInitialized
+                                                        ? "Active"
+                                                        : "Pending Setup"}
                                                 </Badge>
                                             </Table.Cell>
                                             <Table.Cell
@@ -227,6 +260,20 @@
                                                             />
                                                             Edit
                                                         </DropdownMenu.Item>
+                                                        {#if !user.isInitialized}
+                                                            <DropdownMenu.Item
+                                                                onclick={() =>
+                                                                    regenerateSetupLink(
+                                                                        user,
+                                                                    )}
+                                                            >
+                                                                <PlusIcon
+                                                                    class="h-4 w-4 mr-2"
+                                                                />
+                                                                Regenerate Setup
+                                                                Link
+                                                            </DropdownMenu.Item>
+                                                        {/if}
                                                         <DropdownMenu.Separator
                                                         />
                                                         <DropdownMenu.Item
@@ -294,5 +341,79 @@
             onSuccess={handleUserSaved}
             onCancel={() => (editDialogOpen = false)}
         />
+    </Dialog.Content>
+</Dialog.Root>
+
+<!-- Setup Link Dialog -->
+<Dialog.Root bind:open={setupLinkDialogOpen}>
+    <Dialog.Content class="sm:max-w-[500px]">
+        <Dialog.Header>
+            <Dialog.Title>User Setup Link Generated</Dialog.Title>
+            <Dialog.Description>
+                Copy this secure link and send it to the user to complete their
+                account setup.
+            </Dialog.Description>
+        </Dialog.Header>
+        {#if setupResult}
+            <div class="space-y-4">
+                <div
+                    class="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4 rounded-lg"
+                >
+                    <p class="text-sm text-green-800 dark:text-green-300 mb-3">
+                        <strong>Setup link generated successfully!</strong> Copy
+                        the link below and send it to the user through your preferred
+                        communication method.
+                    </p>
+                    <div class="space-y-2">
+                        <Label for="setup-url" class="text-sm font-medium"
+                            >Setup URL:</Label
+                        >
+                        <div class="flex gap-2">
+                            <Input
+                                id="setup-url"
+                                value={setupResult.setupUrl}
+                                readonly
+                                class="text-sm font-mono"
+                                onclick={(e) => e.target.select()}
+                            />
+                            <Button
+                                size="sm"
+                                onclick={async () => {
+                                    if (setupResult?.setupUrl) {
+                                        await navigator.clipboard.writeText(
+                                            setupResult.setupUrl,
+                                        );
+                                        // Could add a toast notification here if desired
+                                    }
+                                }}
+                            >
+                                Copy
+                            </Button>
+                        </div>
+                        <p class="text-xs text-muted-foreground">
+                            ⚠️ This link expires in 48 hours for security
+                            reasons.
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                            💡 Send this link to the user via email, Slack, or
+                            your preferred communication method.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onclick={() => {
+                            setupLinkDialogOpen = false;
+                            setupResult = null;
+                            selectedUser = null;
+                        }}
+                    >
+                        Close
+                    </Button>
+                </div>
+            </div>
+        {/if}
     </Dialog.Content>
 </Dialog.Root>

@@ -37,6 +37,36 @@ router.post(
   }), Roles.SUPER_ADMIN),
 );
 
+// Create user without password (returns setup URL) - superadmin only
+router.post(
+  "/create-uninitialized",
+  withAuth(withRateLimit(userController.createUserWithoutPassword.bind(userController), {
+    limit: 10,
+    windowSecs: 120,
+    message: "Too many user creation attempts. Please try again later.",
+  }), Roles.SUPER_ADMIN),
+);
+
+// Setup user account (public endpoint)
+router.post(
+  "/setup/:token",
+  withRateLimit(userController.setupUserAccount.bind(userController), {
+    limit: 5,
+    windowSecs: 120,
+    message: "Too many setup attempts. Please try again in a couple of minutes.",
+  }),
+);
+
+// Regenerate setup token (superadmin only)
+router.post(
+  "/:id/regenerate-setup-token",
+  withAuth(withRateLimit(userController.regenerateSetupToken.bind(userController), {
+    limit: 5,
+    windowSecs: 120,
+    message: "Too many regeneration attempts. Please try again in a couple of minutes.",
+  }), Roles.SUPER_ADMIN),
+);
+
 // Update user (superadmin only)
 router.put(
   "/:id",

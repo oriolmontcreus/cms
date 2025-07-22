@@ -3,21 +3,24 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
+    import * as Checkbox from "$lib/components/ui/checkbox";
     import {
         handleCreateUser,
         handleUpdateUser,
+        handleCreateUserWithoutPassword,
     } from "@/services/user.service";
     import type {
         User,
         UserRegisterPayload,
         UserUpdatePayload,
+        UserCreatePayload,
     } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
     import { onMount } from "svelte";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
-    export let onSuccess: () => void;
+    export let onSuccess: (result?: any) => void;
     export let onCancel: () => void;
 
     // Form state
@@ -27,6 +30,7 @@
     let confirmPassword = "";
     let permissions = Roles.CLIENT;
     let loading = false;
+    let createWithoutPassword = false;
 
     // Validation state
     let errors: Record<string, string> = {};
@@ -61,7 +65,7 @@
             errors.email = "Please enter a valid email address";
         }
 
-        if (!isEditing) {
+        if (!isEditing && !createWithoutPassword) {
             if (!password) {
                 errors.password = "Password is required";
             } else if (password.length < 8) {
@@ -92,6 +96,7 @@
         loading = true;
 
         let success = false;
+        let result: any = null;
 
         if (isEditing && user) {
             const updateData: UserUpdatePayload = {
@@ -105,7 +110,16 @@
                 (updateData as any).password = password;
             }
 
-            const result = await handleUpdateUser(user._id, updateData);
+            result = await handleUpdateUser(user._id, updateData);
+            success = !!result;
+        } else if (createWithoutPassword) {
+            const createData: UserCreatePayload = {
+                name: name.trim(),
+                email: email.trim(),
+                permissions,
+            };
+
+            result = await handleCreateUserWithoutPassword(createData);
             success = !!result;
         } else {
             const createData: UserRegisterPayload = {
@@ -115,14 +129,14 @@
                 permissions,
             };
 
-            const result = await handleCreateUser(createData);
+            result = await handleCreateUser(createData);
             success = !!result;
         }
 
         loading = false;
 
         if (success) {
-            onSuccess();
+            onSuccess(result);
         }
     }
 
@@ -132,6 +146,7 @@
     }
 
     $: selectedRoleValue = permissions.toString();
+    $: passwordRequired = !isEditing && !createWithoutPassword;
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-6">
@@ -202,55 +217,88 @@
         </Select.Root>
     </div>
 
-    <!-- Password Fields -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <Label for="password">
-                {isEditing
-                    ? "New Password (leave empty to keep current)"
-                    : "Password *"}
-            </Label>
-            <Input
-                id="password"
-                type="password"
-                bind:value={password}
-                placeholder={isEditing
-                    ? "Enter new password (optional)"
-                    : "Enter password"}
-                required={!isEditing}
-                class={errors.password ? "border-destructive" : ""}
+    {#if !isEditing}
+        <!-- Create without password option -->
+        <div class="flex items-center space-x-2">
+            <Checkbox.Root
+                id="createWithoutPassword"
+                bind:checked={createWithoutPassword}
                 disabled={loading}
             />
-            {#if errors.password}
-                <p class="text-sm text-destructive">{errors.password}</p>
-            {/if}
-            {#if !isEditing}
-                <p class="text-sm text-muted-foreground">
-                    Password must be at least 8 characters long
+            <Label
+                for="createWithoutPassword"
+                class="text-sm font-normal cursor-pointer"
+            >
+                Generate setup link instead of setting password now
+            </Label>
+        </div>
+        {#if createWithoutPassword}
+            <div
+                class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg"
+            >
+                <p class="text-sm text-blue-800 dark:text-blue-300">
+                    <strong>Setup Link Mode:</strong> A secure setup link will be
+                    generated that you can copy and send to the user. The user will
+                    use this link to create their own password. The link expires
+                    in 48 hours for security.
                 </p>
-            {/if}
-        </div>
+            </div>
+        {/if}
+    {/if}
 
-        <div class="space-y-2">
-            <Label for="confirmPassword">
-                {isEditing ? "Confirm New Password" : "Confirm Password *"}
-            </Label>
-            <Input
-                id="confirmPassword"
-                type="password"
-                bind:value={confirmPassword}
-                placeholder={isEditing
-                    ? "Confirm new password"
-                    : "Confirm password"}
-                required={!isEditing || !!password}
-                class={errors.confirmPassword ? "border-destructive" : ""}
-                disabled={loading}
-            />
-            {#if errors.confirmPassword}
-                <p class="text-sm text-destructive">{errors.confirmPassword}</p>
-            {/if}
+    <!-- Password Fields -->
+    {#if !createWithoutPassword}
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <Label for="password">
+                    {isEditing
+                        ? "New Password (leave empty to keep current)"
+                        : "Password *"}
+                </Label>
+                <Input
+                    id="password"
+                    type="password"
+                    bind:value={password}
+                    placeholder={isEditing
+                        ? "Enter new password (optional)"
+                        : "Enter password"}
+                    required={passwordRequired}
+                    class={errors.password ? "border-destructive" : ""}
+                    disabled={loading}
+                />
+                {#if errors.password}
+                    <p class="text-sm text-destructive">{errors.password}</p>
+                {/if}
+                {#if !isEditing}
+                    <p class="text-sm text-muted-foreground">
+                        Password must be at least 8 characters long
+                    </p>
+                {/if}
+            </div>
+
+            <div class="space-y-2">
+                <Label for="confirmPassword">
+                    {isEditing ? "Confirm New Password" : "Confirm Password *"}
+                </Label>
+                <Input
+                    id="confirmPassword"
+                    type="password"
+                    bind:value={confirmPassword}
+                    placeholder={isEditing
+                        ? "Confirm new password"
+                        : "Confirm password"}
+                    required={passwordRequired || !!password}
+                    class={errors.confirmPassword ? "border-destructive" : ""}
+                    disabled={loading}
+                />
+                {#if errors.confirmPassword}
+                    <p class="text-sm text-destructive">
+                        {errors.confirmPassword}
+                    </p>
+                {/if}
+            </div>
         </div>
-    </div>
+    {/if}
 
     <!-- Role Description -->
     <div class="bg-muted/50 p-4 rounded-lg space-y-2">
