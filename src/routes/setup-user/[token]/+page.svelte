@@ -103,7 +103,7 @@
     }
 </script>
 
-<div class="min-h-screen w-full relative bg-black">
+<div class="min-h-screen w-full relative bg-black dark">
     <div
         class="absolute inset-0 z-0"
         style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 90%), #000000;"

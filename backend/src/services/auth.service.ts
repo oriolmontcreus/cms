@@ -95,10 +95,11 @@ export async function setupSuperAdmin(r: UserRegisterPayload): Promise<User> {
   }
 
   // Create the superadmin user
-  const superAdminPayload: UserRegisterPayload = {
+  const superAdminPayload: UserRegisterPayload & { isInitialized: boolean } = {
     name: r.name,
     email: r.email,
     password: r.password,
+    isInitialized: true,
     permissions: Roles.SUPER_ADMIN,
   };
 

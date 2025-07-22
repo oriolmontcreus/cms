@@ -14,7 +14,11 @@
 	let { children } = $props();
 
 	const isLoginPage = $derived(page.url.pathname === "/login");
-	const isSetupPage = $derived(page.url.pathname === "/setup");
+	const isSetupPage = $derived(
+		page.url.pathname === "/setup" ||
+			page.url.pathname.startsWith("/setup-user"),
+	);
+	console.log(page.url.pathname);
 	let authInitialized = $state(false);
 
 	onMount(async () => {

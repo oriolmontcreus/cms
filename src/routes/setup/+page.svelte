@@ -117,7 +117,7 @@
     }
 </script>
 
-<div class="min-h-screen w-full relative bg-black">
+<div class="min-h-screen w-full relative bg-black dark">
     <div
         class="absolute inset-0 z-0"
         style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 90%), #000000;"
@@ -174,24 +174,24 @@
                         <Input
                             id="welcomeName"
                             type="text"
-                            placeholder="Mr./Ms./Dr. [Your name]"
+                            placeholder="I'm ..."
                             bind:value={welcomeName}
-                            class="text-center"
+                            class="text-center text-white"
                         />
 
                         <Input
                             id="email"
                             type="email"
-                            placeholder="admin@example.com"
+                            placeholder="My email is ..."
                             bind:value={email}
-                            class="text-center"
+                            class="text-center text-white"
                         />
 
                         <div class="flex justify-end">
                             <Button
                                 onclick={handleWelcomeNext}
                                 variant="ghost"
-                                class="text-gray-300 hover:text-white hover:bg-gray-700/50 px-6 transition-opacity duration-300"
+                                class="text-white"
                                 style="opacity: {welcomeName.trim() &&
                                 isValidEmail
                                     ? '1'
@@ -223,7 +223,7 @@
                             id="password"
                             placeholder="Enter a secure password"
                             bind:value={password}
-                            className="text-center"
+                            className="text-center text-white"
                             required
                         />
 
@@ -232,7 +232,7 @@
                             type="password"
                             placeholder="Confirm your password"
                             bind:value={confirmPassword}
-                            class="text-center"
+                            class="text-center text-white"
                             required
                         />
 
@@ -246,7 +246,7 @@
                             <Button
                                 onclick={handleBack}
                                 variant="ghost"
-                                class="flex-1 text-gray-300 hover:text-white hover:bg-gray-700/50"
+                                class="flex-1 text-white"
                             >
                                 ← Back
                             </Button>
