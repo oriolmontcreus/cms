@@ -20,6 +20,7 @@
         checkSetupStatus,
     } from "@/services/auth.service";
     import { usePasswordStrength } from "$lib/hooks/usePasswordStrength.svelte";
+    import { setMode } from "mode-watcher";
 
     let step = $state(0);
     let welcomeName = $state("");
@@ -56,7 +57,7 @@
     ];
 
     onMount(async () => {
-        // Check if setup is actually needed
+        setMode("dark");
         const status = await checkSetupStatus();
         if (!status.needsSetup) {
             goto("/login");
@@ -176,7 +177,7 @@
                             type="text"
                             placeholder="I'm ..."
                             bind:value={welcomeName}
-                            class="text-center text-white"
+                            class="text-center"
                         />
 
                         <Input
@@ -184,14 +185,13 @@
                             type="email"
                             placeholder="My email is ..."
                             bind:value={email}
-                            class="text-center text-white"
+                            class="text-center"
                         />
 
                         <div class="flex justify-end">
                             <Button
                                 onclick={handleWelcomeNext}
                                 variant="ghost"
-                                class="text-white"
                                 style="opacity: {welcomeName.trim() &&
                                 isValidEmail
                                     ? '1'
@@ -223,7 +223,7 @@
                             id="password"
                             placeholder="Enter a secure password"
                             bind:value={password}
-                            className="text-center text-white"
+                            className="text-center"
                             required
                         />
 
@@ -232,7 +232,7 @@
                             type="password"
                             placeholder="Confirm your password"
                             bind:value={confirmPassword}
-                            class="text-center text-white"
+                            class="text-center"
                             required
                         />
 
@@ -246,7 +246,7 @@
                             <Button
                                 onclick={handleBack}
                                 variant="ghost"
-                                class="flex-1 text-white"
+                                class="flex-1"
                             >
                                 ← Back
                             </Button>
