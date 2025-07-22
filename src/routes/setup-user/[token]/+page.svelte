@@ -11,6 +11,7 @@
     import CheckCircleIcon from "@lucide/svelte/icons/check-circle";
     import { handleSetupUserAccount } from "@/services/user.service";
     import { usePasswordStrength } from "$lib/hooks/usePasswordStrength.svelte";
+    import { setMode } from "mode-watcher";
 
     let step = $state(0);
     let name = $state("");
@@ -20,6 +21,10 @@
     let passwordError = $state("");
     let setupError = $state("");
     let token = $state("");
+
+    onMount(() => {
+        setMode("dark");
+    });
 
     // Create password strength instance for validation
     const passwordStrength = usePasswordStrength({ id: "setup-password" });
