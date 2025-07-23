@@ -31,8 +31,6 @@
     let users: User[] = [];
     let loading = true;
     let setupResult: { setupUrl: string; setupToken: string } | null = null;
-
-    // Dialog states
     let createDialogOpen = false;
     let editDialogOpen = false;
     let setupLinkDialogOpen = false;
@@ -59,77 +57,62 @@
         ],
     ]);
 
-    onMount(async () => {
-        await loadUsers();
-    });
+    onMount(loadUsers);
 
     async function loadUsers() {
         loading = true;
         const result = await handleGetAllUsers();
-        if (result) {
-            users = result;
-        }
+        if (result) users = result;
         loading = false;
     }
 
-    function handleCreateUser() {
+    const openCreateDialog = () => {
         selectedUser = null;
         createDialogOpen = true;
-    }
+    };
 
-    function handleEditUser(user: User) {
+    const openEditDialog = (user: User) => {
         selectedUser = user;
         editDialogOpen = true;
-    }
+    };
 
-    async function deleteUserConfirm(user: User) {
+    const deleteUser = async (user: User) => {
         const ok = await handleDeleteUser(user._id, user.name);
         if (ok) await loadUsers();
-    }
+    };
 
-    async function regenerateSetupLink(user: User) {
+    const regenerateSetupLink = async (user: User) => {
         const result = await handleRegenerateSetupToken(user._id, user.name);
         if (result) {
             setupResult = result;
             selectedUser = user;
             setupLinkDialogOpen = true;
         }
-    }
+    };
 
-    function handleUserSaved(result?: any) {
+    const handleUserSaved = (result?: any) => {
         createDialogOpen = false;
         editDialogOpen = false;
         selectedUser = null;
 
-        // If result contains setup info, show the setup link dialog
-        if (result && result.setupUrl) {
+        if (result?.setupUrl) {
             setupResult = result;
             setupLinkDialogOpen = true;
         }
 
         loadUsers();
-    }
+    };
 
-    function getRoleLabel(permissions: number): string {
-        return roleLabels.get(permissions) ?? "Unknown";
-    }
+    const getRoleLabel = (permissions: number) =>
+        roleLabels.get(permissions) ?? "Unknown";
+    const getRoleStyle = (permissions: number) =>
+        roleStyles.get(permissions) ??
+        "bg-gray-500 text-white border-transparent";
 
-    function getRoleStyle(permissions: number): string {
-        return (
-            roleStyles.get(permissions) ??
-            "bg-gray-500 text-white border-transparent"
-        );
-    }
-
-    function formatDate(dateString: string | Date): string {
+    const formatDate = (dateString: string | Date) => {
         const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const year = date.getFullYear();
-        const hours = date.getHours().toString().padStart(2, "0");
-        const minutes = date.getMinutes().toString().padStart(2, "0");
-        return `${day}/${month}/${year} ${hours}:${minutes}`;
-    }
+        return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    };
 </script>
 
 <SiteHeader title="Users" />
@@ -146,7 +129,7 @@
                             Manage system users and their permissions
                         </p>
                     </div>
-                    <Button onclick={handleCreateUser}>
+                    <Button onclick={openCreateDialog}>
                         <PlusIcon class="h-4 w-4 mr-2" />
                         Add User
                     </Button>
@@ -251,7 +234,7 @@
                                                     >
                                                         <DropdownMenu.Item
                                                             onclick={() =>
-                                                                handleEditUser(
+                                                                openEditDialog(
                                                                     user,
                                                                 )}
                                                         >
@@ -284,7 +267,7 @@
                                                                         "Are you sure you want to delete this user? This action cannot be undone.",
                                                                     )
                                                                 ) {
-                                                                    deleteUserConfirm(
+                                                                    deleteUser(
                                                                         user,
                                                                     );
                                                                 }
@@ -315,10 +298,10 @@
     <Dialog.Content class="sm:max-w-[600px]">
         <Dialog.Header>
             <Dialog.Title>Create New User</Dialog.Title>
-            <Dialog.Description>
-                Add a new user to the system. Fill in the required information
-                below.
-            </Dialog.Description>
+            <Dialog.Description
+                >Add a new user to the system. Fill in the required information
+                below.</Dialog.Description
+            >
         </Dialog.Header>
         <UserForm
             onSuccess={handleUserSaved}
@@ -332,9 +315,9 @@
     <Dialog.Content class="sm:max-w-[600px]">
         <Dialog.Header>
             <Dialog.Title>Edit User</Dialog.Title>
-            <Dialog.Description>
-                Update user information and permissions.
-            </Dialog.Description>
+            <Dialog.Description
+                >Update user information and permissions.</Dialog.Description
+            >
         </Dialog.Header>
         <UserForm
             user={selectedUser}
@@ -349,10 +332,10 @@
     <Dialog.Content class="sm:max-w-[500px]">
         <Dialog.Header>
             <Dialog.Title>User Setup Link Generated</Dialog.Title>
-            <Dialog.Description>
-                Copy this secure link and send it to the user to complete their
-                account setup.
-            </Dialog.Description>
+            <Dialog.Description
+                >Copy this secure link and send it to the user to complete their
+                account setup.</Dialog.Description
+            >
         </Dialog.Header>
         {#if setupResult}
             <div class="space-y-4">
@@ -384,7 +367,6 @@
                                         await navigator.clipboard.writeText(
                                             setupResult.setupUrl,
                                         );
-                                        // Could add a toast notification here if desired
                                     }
                                 }}
                             >
