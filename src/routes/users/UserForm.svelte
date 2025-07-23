@@ -4,6 +4,7 @@
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import * as Checkbox from "$lib/components/ui/checkbox";
+    import RoleSelector from "$lib/components/ui/role-selector.svelte";
     import {
         handleCreateUser,
         handleUpdateUser,
@@ -36,13 +37,6 @@
     let errors: Record<string, string> = {};
 
     const isEditing = !!user;
-
-    // Role options
-    const roleOptions = [
-        { value: Roles.CLIENT, label: "Client" },
-        { value: Roles.DEVELOPER, label: "Developer" },
-        { value: Roles.SUPER_ADMIN, label: "Super Admin" },
-    ];
 
     onMount(() => {
         if (user) {
@@ -140,12 +134,6 @@
         }
     }
 
-    function getRoleLabel(roleValue: number): string {
-        const role = roleOptions.find((r) => r.value === roleValue);
-        return role?.label || "Unknown";
-    }
-
-    $: selectedRoleValue = permissions.toString();
     $: passwordRequired = !isEditing && !createWithoutPassword;
 </script>
 
@@ -187,35 +175,13 @@
     </div>
 
     <!-- Role Selection -->
-    <div class="space-y-2">
-        <Label for="role">Role *</Label>
-        <Select.Root
-            type="single"
-            value={selectedRoleValue}
-            onValueChange={(value) => {
-                if (value) {
-                    permissions = parseInt(value);
-                }
-            }}
-        >
-            <Select.Trigger id="role" disabled={loading}>
-                {getRoleLabel(permissions)}
-            </Select.Trigger>
-            <Select.Content>
-                <Select.Group>
-                    <Select.Label>User Roles</Select.Label>
-                    {#each roleOptions as role (role.value)}
-                        <Select.Item
-                            value={role.value.toString()}
-                            label={role.label}
-                        >
-                            {role.label}
-                        </Select.Item>
-                    {/each}
-                </Select.Group>
-            </Select.Content>
-        </Select.Root>
-    </div>
+    <RoleSelector
+        bind:value={permissions}
+        onValueChange={(value) => (permissions = value)}
+        disabled={loading}
+        label="Role *"
+        id="role"
+    />
 
     {#if !isEditing}
         <!-- Create without password option -->
