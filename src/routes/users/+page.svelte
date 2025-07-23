@@ -213,15 +213,31 @@
                                                 </TooltipProvider>
                                             </Table.Cell>
                                             <Table.Cell>
-                                                <Badge
-                                                    class={user.isInitialized
-                                                        ? "bg-green-500 text-green-100 border-transparent"
-                                                        : "bg-orange-500 text-orange-100 border-transparent"}
+                                                <TooltipProvider
+                                                    delayDuration={300}
                                                 >
-                                                    {user.isInitialized
-                                                        ? "Active"
-                                                        : "Pending Setup"}
-                                                </Badge>
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            {#snippet child({
+                                                                props,
+                                                            })}
+                                                                <div
+                                                                    class="inline-flex items-center justify-center w-3 h-3 rounded-full cursor-help transition-colors {user.isInitialized
+                                                                        ? 'bg-green-500/60'
+                                                                        : 'bg-red-500/60'}"
+                                                                    {...props}
+                                                                ></div>
+                                                            {/snippet}
+                                                        </TooltipTrigger>
+                                                        <TooltipContent
+                                                            class="px-2 py-1 text-xs"
+                                                        >
+                                                            {user.isInitialized
+                                                                ? "Active"
+                                                                : "Pending Setup"}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                             </Table.Cell>
                                             <Table.Cell
                                                 >{formatDate(
