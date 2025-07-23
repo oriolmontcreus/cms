@@ -8,6 +8,7 @@
     import { Input } from "$lib/components/ui/input";
     import PasswordInput from "$lib/components/PasswordInput.svelte";
     import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
+    import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
     import {
         Stepper,
         StepperIndicator,
@@ -251,8 +252,11 @@
                                 onclick={handleBack}
                                 variant="ghost"
                                 class="flex-1"
+                                effect="expandIcon"
+                                iconPlacement="left"
+                                icon={ArrowLeftIcon}
                             >
-                                ← Back
+                                Back
                             </Button>
                             <Button
                                 onclick={handleSubmit}
