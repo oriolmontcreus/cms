@@ -7,6 +7,7 @@
     import { Card, CardContent } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
     import PasswordInput from "$lib/components/PasswordInput.svelte";
+    import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
     import {
         Stepper,
         StepperIndicator,
@@ -192,13 +193,16 @@
                             <Button
                                 onclick={handleWelcomeNext}
                                 variant="ghost"
+                                effect="expandIcon"
+                                iconPlacement="right"
+                                icon={ArrowRightIcon}
                                 style="opacity: {welcomeName.trim() &&
                                 isValidEmail
                                     ? '1'
                                     : '0'}"
                                 disabled={!welcomeName.trim() || !isValidEmail}
                             >
-                                Continue →
+                                Continue
                             </Button>
                         </div>
                     </div>
