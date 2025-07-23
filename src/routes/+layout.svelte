@@ -18,7 +18,6 @@
 		page.url.pathname === "/setup" ||
 			page.url.pathname.startsWith("/setup-user"),
 	);
-	console.log(page.url.pathname);
 	let authInitialized = $state(false);
 
 	onMount(async () => {

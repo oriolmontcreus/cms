@@ -102,8 +102,7 @@
         if (!validatePasswords()) return;
 
         isLoading = true;
-        // Use welcomeName as the name for the admin account
-        await handleSetupSuperAdmin(email, password, welcomeName);
+        await handleSetupSuperAdmin(email, password, welcomeName, true);
         step = 2;
         isLoading = false;
 
@@ -111,12 +110,6 @@
         setTimeout(() => {
             goto("/");
         }, 3000);
-    }
-
-    function nextStep() {
-        if (step < steps.length - 1) {
-            step++;
-        }
     }
 </script>
 

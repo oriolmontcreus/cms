@@ -88,7 +88,7 @@ export async function hasUsers(): Promise<boolean> {
   return userCount > 0;
 }
 
-export async function setupSuperAdmin(r: UserRegisterPayload): Promise<User> {
+export async function setupSuperAdmin(r: UserRegisterPayload): Promise<{ token: string; user: User }> {
   const hasAnyUsers = await hasUsers();
   if (hasAnyUsers) {
     throw new AlreadyExists("System has already been set up");
@@ -104,8 +104,16 @@ export async function setupSuperAdmin(r: UserRegisterPayload): Promise<User> {
   };
 
   const newUser = new UserModel(superAdminPayload);
-  const res = await newUser.save();
-  return res.toJSON();
+  const savedUser = await newUser.save();
+
+  const payload: DecodedSession = {
+    email: savedUser.email,
+    _id: savedUser._id.toString(),
+  };
+  const token = await createToken(payload);
+  const userObj = savedUser.toJSON();
+
+  return { token, user: userObj };
 }
 
 /**

@@ -51,8 +51,19 @@ export class AuthController {
   async setupSuperAdmin(c: Context) {
     const payload = await c.req.json();
     try {
-      const res: User = await authService.setupSuperAdmin(payload);
-      return c.json(res);
+      const { token, user } = await authService.setupSuperAdmin(payload);
+
+      // Set session cookie for automatic login
+      const cookieOptions = {
+        httpOnly: true,
+        secure: ENV === Environment.PRODUCTION,
+        path: "/",
+        sameSite: "Lax" as const,
+        maxAge: 24 * 60 * 60, // 24 hours in seconds
+      };
+      setCookie(c, SESSION_COOKIE, token, cookieOptions);
+
+      return c.json(user);
     } catch (err) {
       if (err instanceof AlreadyExists) {
         throw new BadRequest("System has already been set up");
