@@ -2,10 +2,9 @@ import { Context } from "hono";
 import * as userService from "@/src/services/user.service.js";
 import * as authService from "@/src/services/auth.service.js";
 import { User, UserRegisterPayload, UserUpdatePayload, UserCreatePayload, UserSetupPayload } from "@shared/types/user.type.js";
-import { getCookie } from "hono/cookie";
+import { getCookie, deleteCookie } from "hono/cookie";
 import { SESSION_COOKIE } from "@/constants/env.js";
 import BadRequest from "@/errors/BadRequest.js";
-import AlreadyExists from "@/errors/AlreadyExists.js";
 
 export class UserController {
   async getAllUsers(c: Context) {
@@ -28,15 +27,8 @@ export class UserController {
       throw new BadRequest("Email, password, and name are required");
     }
 
-    try {
-      const user = await userService.createUser(userData);
-      return c.json(user);
-    } catch (err) {
-      if (err instanceof AlreadyExists) {
-        throw new BadRequest("User with this email already exists");
-      }
-      throw err;
-    }
+    const user = await userService.createUser(userData);
+    return c.json(user);
   }
 
   async createUserWithoutPassword(c: Context) {
@@ -46,15 +38,8 @@ export class UserController {
       throw new BadRequest("Email and name are required");
     }
 
-    try {
-      const result = await userService.createUserWithoutPassword(userData);
-      return c.json(result);
-    } catch (err) {
-      if (err instanceof AlreadyExists) {
-        throw new BadRequest("User with this email already exists");
-      }
-      throw err;
-    }
+    const result = await userService.createUserWithoutPassword(userData);
+    return c.json(result);
   }
 
   async setupUserAccount(c: Context) {
@@ -66,24 +51,16 @@ export class UserController {
       throw new BadRequest("Password is required");
     }
 
-    try {
-      const user = await userService.setupUserAccount(token, setupData);
-      return c.json(user);
-    } catch (err) {
-      throw err;
-    }
+    const user = await userService.setupUserAccount(token, setupData);
+    return c.json(user);
   }
 
   async regenerateSetupToken(c: Context) {
     const userId = c.req.param('id');
     if (!userId) throw new BadRequest("User ID is required");
 
-    try {
-      const result = await userService.regenerateSetupToken(userId);
-      return c.json(result);
-    } catch (err) {
-      throw err;
-    }
+    const result = await userService.regenerateSetupToken(userId);
+    return c.json(result);
   }
 
   async updateUser(c: Context) {
@@ -91,15 +68,8 @@ export class UserController {
     if (!userId) throw new BadRequest("User ID is required");
     const updateData: UserUpdatePayload = await c.req.json();
 
-    try {
-      const user = await userService.updateUser(userId, updateData);
-      return c.json(user);
-    } catch (err) {
-      if (err instanceof AlreadyExists) {
-        throw new BadRequest("User with this email already exists");
-      }
-      throw err;
-    }
+    const user = await userService.updateUser(userId, updateData);
+    return c.json(user);
   }
 
   async deleteUserById(c: Context) {
@@ -122,11 +92,7 @@ export class UserController {
     );
     await userService.deleteUserAccount(user._id);
 
-    c.header(
-      "Set-Cookie",
-      `${SESSION_COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax`,
-    );
-
+    deleteCookie(c, SESSION_COOKIE);
     return c.json(true);
   }
 }
