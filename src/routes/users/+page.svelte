@@ -8,6 +8,12 @@
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { Badge } from "$lib/components/ui/badge";
     import {
+        Tooltip,
+        TooltipContent,
+        TooltipProvider,
+        TooltipTrigger,
+    } from "$lib/components/ui/tooltip";
+    import {
         Card,
         CardContent,
         CardHeader,
@@ -42,19 +48,16 @@
         [Roles.CLIENT, "Client"],
     ]);
 
+    const roleCharacters = new Map([
+        [Roles.SUPER_ADMIN, "S"],
+        [Roles.DEVELOPER, "D"],
+        [Roles.CLIENT, "C"],
+    ]);
+
     const roleStyles = new Map([
-        [
-            Roles.SUPER_ADMIN,
-            "bg-purple-500 text-purple-100 border-transparent dark:bg-purple-700",
-        ],
-        [
-            Roles.DEVELOPER,
-            "bg-blue-500 text-blue-100 border-transparent dark:bg-blue-900",
-        ],
-        [
-            Roles.CLIENT,
-            "bg-green-500 text-green-100 border-transparent dark:bg-green-900",
-        ],
+        [Roles.SUPER_ADMIN, "bg-purple-400/20 text-purple-500"],
+        [Roles.DEVELOPER, "bg-blue-400/20 text-blue-500"],
+        [Roles.CLIENT, "bg-green-400/20 text-green-500"],
     ]);
 
     onMount(loadUsers);
@@ -105,9 +108,11 @@
 
     const getRoleLabel = (permissions: number) =>
         roleLabels.get(permissions) ?? "Unknown";
+    const getRoleCharacter = (permissions: number) =>
+        roleCharacters.get(permissions) ?? "?";
     const getRoleStyle = (permissions: number) =>
         roleStyles.get(permissions) ??
-        "bg-gray-500 text-white border-transparent";
+        "bg-gray-500 text-white border border-gray-400";
 
     const formatDate = (dateString: string | Date) => {
         const date = new Date(dateString);
@@ -177,15 +182,35 @@
                                             <Table.Cell>{user.email}</Table.Cell
                                             >
                                             <Table.Cell>
-                                                <Badge
-                                                    class={getRoleStyle(
-                                                        user.permissions,
-                                                    )}
+                                                <TooltipProvider
+                                                    delayDuration={300}
                                                 >
-                                                    {getRoleLabel(
-                                                        user.permissions,
-                                                    )}
-                                                </Badge>
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            {#snippet child({
+                                                                props,
+                                                            })}
+                                                                <div
+                                                                    class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold cursor-help transition-colors {getRoleStyle(
+                                                                        user.permissions,
+                                                                    )}"
+                                                                    {...props}
+                                                                >
+                                                                    {getRoleCharacter(
+                                                                        user.permissions,
+                                                                    )}
+                                                                </div>
+                                                            {/snippet}
+                                                        </TooltipTrigger>
+                                                        <TooltipContent
+                                                            class="px-2 py-1 text-xs"
+                                                        >
+                                                            {getRoleLabel(
+                                                                user.permissions,
+                                                            )}
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                             </Table.Cell>
                                             <Table.Cell>
                                                 <Badge
