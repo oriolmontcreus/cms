@@ -134,8 +134,12 @@
                             Manage system users and their permissions
                         </p>
                     </div>
-                    <Button onclick={openCreateDialog}>
-                        <PlusIcon class="h-4 w-4 mr-2" />
+                    <Button
+                        onclick={openCreateDialog}
+                        effect="expandIcon"
+                        iconPlacement="right"
+                        icon={PlusIcon}
+                    >
                         Add User
                     </Button>
                 </div>
