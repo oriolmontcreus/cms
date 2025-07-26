@@ -417,14 +417,7 @@
             Cancel
         </Button>
         <Button type="submit" disabled={loading}>
-            {#if loading}
-                <div
-                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
-                ></div>
-                {isEditing ? "Updating..." : "Creating..."}
-            {:else}
-                {isEditing ? "Update User" : "Create User"}
-            {/if}
+            {isEditing ? "Update User" : "Create User"}
         </Button>
     </div>
 </form>
