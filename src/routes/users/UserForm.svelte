@@ -4,7 +4,12 @@
     import { Label } from "$lib/components/ui/label";
     import * as Select from "$lib/components/ui/select";
     import * as Checkbox from "$lib/components/ui/checkbox";
+    import {
+        RadioGroup,
+        RadioGroupItem,
+    } from "$lib/components/ui/radio-group/index.js";
     import RoleSelector from "$lib/components/ui/role-selector.svelte";
+    import PasswordInput from "$lib/components/PasswordInput.svelte";
     import {
         handleCreateUser,
         handleUpdateUser,
@@ -19,6 +24,8 @@
     import { Roles } from "@shared/constants/role.type";
     import { onMount } from "svelte";
     import InfoCircle from "@tabler/icons-svelte/icons/info-circle";
+    import Lock from "@tabler/icons-svelte/icons/lock";
+    import Link from "@tabler/icons-svelte/icons/link";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
@@ -32,7 +39,7 @@
     let confirmPassword = "";
     let permissions = Roles.CLIENT;
     let loading = false;
-    let createWithoutPassword = false;
+    let setupMethod = "immediate"; // "immediate" or "link"
 
     // Validation state
     let errors: Record<string, string> = {};
@@ -60,7 +67,7 @@
             errors.email = "Please enter a valid email address";
         }
 
-        if (!isEditing && !createWithoutPassword) {
+        if (!isEditing && setupMethod === "immediate") {
             if (!password) {
                 errors.password = "Password is required";
             } else if (password.length < 8) {
@@ -107,7 +114,7 @@
 
             result = await handleUpdateUser(user._id, updateData);
             success = !!result;
-        } else if (createWithoutPassword) {
+        } else if (setupMethod === "link") {
             const createData: UserCreatePayload = {
                 name: name.trim(),
                 email: email.trim(),
@@ -135,14 +142,14 @@
         }
     }
 
-    $: passwordRequired = !isEditing && !createWithoutPassword;
+    $: passwordRequired = !isEditing && setupMethod === "immediate";
 </script>
 
-<form onsubmit={handleSubmit} class="space-y-6">
+<form onsubmit={handleSubmit} class="space-y-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Name Field -->
         <div class="space-y-2">
-            <Label for="name">Name *</Label>
+            <Label for="name">Name</Label>
             <Input
                 id="name"
                 type="text"
@@ -159,7 +166,7 @@
 
         <!-- Email Field -->
         <div class="space-y-2">
-            <Label for="email">Email *</Label>
+            <Label for="email">Email</Label>
             <Input
                 id="email"
                 type="email"
@@ -180,82 +187,94 @@
         bind:value={permissions}
         onValueChange={(value) => (permissions = value)}
         disabled={loading}
-        label="Role *"
+        label="Role"
         id="role"
     />
 
     {#if !isEditing}
-        <!-- Create without password option -->
-        <div class="flex items-center space-x-2">
-            <Checkbox.Root
-                id="createWithoutPassword"
-                bind:checked={createWithoutPassword}
-                disabled={loading}
-            />
-            <Label
-                for="createWithoutPassword"
-                class="text-sm font-normal cursor-pointer"
-            >
-                Generate setup link instead of setting password now
-            </Label>
-        </div>
-        {#if createWithoutPassword}
-            <div class="border-border rounded-lg border px-4 py-3">
-                <p class="text-sm">
-                    <InfoCircle
-                        class="-mt-0.5 inline-flex text-blue-500"
-                        size={16}
-                        aria-hidden="true"
+        <!-- Setup Method Selection -->
+        <div class="space-y-2">
+            <Label class="text-sm font-medium">Setup Method</Label>
+            <RadioGroup bind:value={setupMethod} class="gap-1">
+                <!-- Set Password Now -->
+                <div
+                    class="border-input has-data-[state=checked]:border-ring relative flex w-full items-center gap-2 rounded-md border p-2 shadow-sm"
+                >
+                    <RadioGroupItem
+                        value="immediate"
+                        id="setup-immediate"
+                        class="order-1 after:absolute after:inset-0"
+                        disabled={loading}
                     />
-                    A secure setup link will be generated that you can copy and send
-                    to the user. The user will use this link to create their own
-                    password. The link expires in 48 hours for security.
-                </p>
-            </div>
-        {/if}
+                    <div class="flex grow items-center gap-2">
+                        <Lock size="16" class="text-muted-foreground" />
+                        <Label
+                            for="setup-immediate"
+                            class="text-sm font-medium cursor-pointer"
+                        >
+                            Set password now
+                        </Label>
+                    </div>
+                </div>
+
+                <!-- Send Setup Link -->
+                <div
+                    class="border-input has-data-[state=checked]:border-ring relative flex w-full items-center gap-2 rounded-md border p-2 shadow-sm"
+                >
+                    <RadioGroupItem
+                        value="link"
+                        id="setup-link"
+                        class="order-1 after:absolute after:inset-0"
+                        disabled={loading}
+                    />
+                    <div class="flex grow items-center gap-2">
+                        <Link size="16" class="text-muted-foreground" />
+                        <Label
+                            for="setup-link"
+                            class="text-sm font-medium cursor-pointer"
+                        >
+                            Send setup link
+                        </Label>
+                    </div>
+                </div>
+            </RadioGroup>
+        </div>
     {/if}
 
     <!-- Password Fields -->
-    {#if !createWithoutPassword}
-        <div class="space-y-4">
+    {#if setupMethod === "immediate" || isEditing}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Password Field with Strength Indicator -->
             <div class="space-y-2">
                 <Label for="password">
-                    {isEditing
-                        ? "New Password (leave empty to keep current)"
-                        : "Password *"}
+                    {isEditing ? "New Password (optional)" : "Password *"}
                 </Label>
-                <Input
+                <PasswordInput
                     id="password"
-                    type="password"
                     bind:value={password}
                     placeholder={isEditing
-                        ? "Enter new password (optional)"
+                        ? "Enter new password"
                         : "Enter password"}
                     required={passwordRequired}
-                    class={errors.password ? "border-destructive" : ""}
-                    disabled={loading}
+                    className={errors.password ? "border-destructive" : ""}
                 />
                 {#if errors.password}
-                    <p class="text-sm text-destructive">{errors.password}</p>
-                {/if}
-                {#if !isEditing}
-                    <p class="text-sm text-muted-foreground">
-                        Password must be at least 8 characters long
+                    <p class="text-sm text-destructive">
+                        {errors.password}
                     </p>
                 {/if}
             </div>
 
+            <!-- Confirm Password Field -->
             <div class="space-y-2">
                 <Label for="confirmPassword">
-                    {isEditing ? "Confirm New Password" : "Confirm Password *"}
+                    Confirm Password {passwordRequired ? "*" : ""}
                 </Label>
                 <Input
                     id="confirmPassword"
                     type="password"
                     bind:value={confirmPassword}
-                    placeholder={isEditing
-                        ? "Confirm new password"
-                        : "Confirm password"}
+                    placeholder="Confirm password"
                     required={passwordRequired || !!password}
                     class={errors.confirmPassword ? "border-destructive" : ""}
                     disabled={loading}
@@ -266,6 +285,15 @@
                     </p>
                 {/if}
             </div>
+        </div>
+    {:else}
+        <div
+            class="bg-muted/30 border border-dashed rounded-lg p-4 text-center"
+        >
+            <Link class="mx-auto h-6 w-6 text-muted-foreground mb-2" />
+            <p class="text-sm text-muted-foreground">
+                Setup link will be generated
+            </p>
         </div>
     {/if}
 
