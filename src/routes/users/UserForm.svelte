@@ -184,68 +184,98 @@
     />
 
     {#if !isEditing}
-        <!-- Setup Method Selection -->
+        <!-- Setup Method Selection - Two Column Layout -->
         <div class="space-y-2">
             <Label class="text-sm font-medium">Setup Method</Label>
-            <RadioGroup bind:value={setupMethod} class="gap-1">
-                <!-- Set Password Now -->
-                <div
-                    class="border-input has-data-[state=checked]:border-ring relative flex w-full items-center gap-2 rounded-md border p-2 shadow-sm"
-                >
-                    <RadioGroupItem
-                        value="immediate"
-                        id="setup-immediate"
-                        class="order-1 after:absolute after:inset-0"
-                        disabled={loading}
-                    />
-                    <div class="flex grow items-center gap-2">
-                        <Lock size="16" class="text-muted-foreground" />
-                        <Label
-                            for="setup-immediate"
-                            class="text-sm font-medium cursor-pointer"
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Left Column: Radio Buttons -->
+                <div class="space-y-1">
+                    <RadioGroup bind:value={setupMethod} class="gap-1">
+                        <!-- Set Password Now -->
+                        <div
+                            class="border-input has-data-[state=checked]:border-ring relative flex w-full items-center gap-2 rounded-md border p-2 shadow-sm"
                         >
-                            Set password now
-                        </Label>
-                    </div>
+                            <RadioGroupItem
+                                value="immediate"
+                                id="setup-immediate"
+                                class="order-1 after:absolute after:inset-0"
+                                disabled={loading}
+                            />
+                            <div class="flex grow items-center gap-2">
+                                <Lock size="16" class="text-muted-foreground" />
+                                <Label
+                                    for="setup-immediate"
+                                    class="text-sm font-medium cursor-pointer"
+                                >
+                                    Set password now
+                                </Label>
+                            </div>
+                        </div>
+
+                        <!-- Send Setup Link -->
+                        <div
+                            class="border-input has-data-[state=checked]:border-ring relative flex w-full items-center gap-2 rounded-md border p-2 shadow-sm"
+                        >
+                            <RadioGroupItem
+                                value="link"
+                                id="setup-link"
+                                class="order-1 after:absolute after:inset-0"
+                                disabled={loading}
+                            />
+                            <div class="flex grow items-center gap-2">
+                                <Link size="16" class="text-muted-foreground" />
+                                <Label
+                                    for="setup-link"
+                                    class="text-sm font-medium cursor-pointer"
+                                >
+                                    Send setup link
+                                </Label>
+                            </div>
+                        </div>
+                    </RadioGroup>
                 </div>
 
-                <!-- Send Setup Link -->
-                <div
-                    class="border-input has-data-[state=checked]:border-ring relative flex w-full items-center gap-2 rounded-md border p-2 shadow-sm"
-                >
-                    <RadioGroupItem
-                        value="link"
-                        id="setup-link"
-                        class="order-1 after:absolute after:inset-0"
-                        disabled={loading}
-                    />
-                    <div class="flex grow items-center gap-2">
-                        <Link size="16" class="text-muted-foreground" />
-                        <Label
-                            for="setup-link"
-                            class="text-sm font-medium cursor-pointer"
+                <!-- Right Column: Password Input or Notice (Fixed Height) -->
+                <div class="min-h-[120px] flex flex-col justify-start">
+                    {#if setupMethod === "immediate"}
+                        <div class="space-y-2">
+                            <Label for="password">Password *</Label>
+                            <PasswordInput
+                                id="password"
+                                bind:value={password}
+                                placeholder="Enter password"
+                                required={passwordRequired}
+                                className={errors.password
+                                    ? "border-destructive"
+                                    : ""}
+                            />
+                            {#if errors.password}
+                                <p class="text-sm text-destructive">
+                                    {errors.password}
+                                </p>
+                            {/if}
+                        </div>
+                    {:else}
+                        <div
+                            class="bg-muted/30 border border-dashed rounded-lg p-4 text-center h-full flex flex-col items-center justify-center"
                         >
-                            Send setup link
-                        </Label>
-                    </div>
+                            <Link class="h-6 w-6 text-muted-foreground mb-2" />
+                            <p class="text-sm text-muted-foreground">
+                                Setup link will be generated
+                            </p>
+                        </div>
+                    {/if}
                 </div>
-            </RadioGroup>
+            </div>
         </div>
-    {/if}
-
-    <!-- Password Fields -->
-    {#if setupMethod === "immediate" || isEditing}
+    {:else}
+        <!-- Password Fields for Editing -->
         <div class="space-y-2">
-            <!-- Password Field with Strength Indicator -->
-            <Label for="password">
-                {isEditing ? "New Password (optional)" : "Password *"}
-            </Label>
+            <Label for="password">New Password (optional)</Label>
             <PasswordInput
                 id="password"
                 bind:value={password}
-                placeholder={isEditing
-                    ? "Enter new password"
-                    : "Enter password"}
+                placeholder="Enter new password"
                 required={passwordRequired}
                 className={errors.password ? "border-destructive" : ""}
             />
@@ -254,15 +284,6 @@
                     {errors.password}
                 </p>
             {/if}
-        </div>
-    {:else}
-        <div
-            class="bg-muted/30 border border-dashed rounded-lg p-4 text-center"
-        >
-            <Link class="mx-auto h-6 w-6 text-muted-foreground mb-2" />
-            <p class="text-sm text-muted-foreground">
-                Setup link will be generated
-            </p>
         </div>
     {/if}
 
