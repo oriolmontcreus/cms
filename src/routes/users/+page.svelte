@@ -26,6 +26,9 @@
     import DotsVerticalIcon from "@tabler/icons-svelte/icons/dots-vertical";
     import EditIcon from "@tabler/icons-svelte/icons/edit";
     import TrashIcon from "@tabler/icons-svelte/icons/trash";
+    import ReloadIcon from "@tabler/icons-svelte/icons/refresh";
+    import Check from "@tabler/icons-svelte/icons/check";
+    import Copy from "@tabler/icons-svelte/icons/copy";
     import {
         handleGetAllUsers,
         handleDeleteUser,
@@ -33,6 +36,7 @@
     } from "@/services/user.service";
     import type { User } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
+    import { cn } from "$lib/utils";
 
     let users: User[] = [];
     let loading = true;
@@ -41,6 +45,7 @@
     let editDialogOpen = false;
     let setupLinkDialogOpen = false;
     let selectedUser: User | null = null;
+    let copied = false;
 
     const roleLabels = new Map([
         [Roles.SUPER_ADMIN, "Super Admin"],
@@ -118,6 +123,16 @@
         const date = new Date(dateString);
         return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     };
+
+    async function handleCopy() {
+        if (setupResult?.setupUrl) {
+            await navigator.clipboard.writeText(setupResult.setupUrl);
+            copied = true;
+            setTimeout(() => {
+                copied = false;
+            }, 1500);
+        }
+    }
 </script>
 
 <SiteHeader title="Users" />
@@ -289,11 +304,11 @@
                                                                         user,
                                                                     )}
                                                             >
-                                                                <PlusIcon
+                                                                <ReloadIcon
                                                                     class="h-4 w-4 mr-2"
                                                                 />
-                                                                Regenerate Setup
-                                                                Link
+                                                                Regenerate setup
+                                                                link
                                                             </DropdownMenu.Item>
                                                         {/if}
                                                         <DropdownMenu.Separator
@@ -390,27 +405,61 @@
                         <Label for="setup-url" class="text-sm font-medium"
                             >Setup URL:</Label
                         >
-                        <div class="flex gap-2">
+                        <div class="relative">
                             <Input
                                 id="setup-url"
                                 value={setupResult.setupUrl}
                                 readonly
-                                class="text-sm font-mono"
+                                class="text-sm font-mono pe-9"
                                 onclick={(e) =>
                                     (e.target as HTMLInputElement)?.select()}
                             />
-                            <Button
-                                size="sm"
-                                onclick={async () => {
-                                    if (setupResult?.setupUrl) {
-                                        await navigator.clipboard.writeText(
-                                            setupResult.setupUrl,
-                                        );
-                                    }
-                                }}
-                            >
-                                Copy
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        {#snippet child({ props })}
+                                            <button
+                                                {...props}
+                                                onclick={handleCopy}
+                                                class="text-muted-foreground/80 ring-offset-background hover:text-foreground focus-visible:border-ring focus-visible:text-foreground focus-visible:ring-ring/30 absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-lg border border-transparent transition-shadow focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:cursor-not-allowed"
+                                                aria-label={copied
+                                                    ? "Copied"
+                                                    : "Copy to clipboard"}
+                                                disabled={copied}
+                                            >
+                                                <div
+                                                    class={cn(
+                                                        "transition-all",
+                                                        copied
+                                                            ? "scale-100 opacity-100"
+                                                            : "scale-0 opacity-0",
+                                                    )}
+                                                >
+                                                    <Check
+                                                        class="stroke-emerald-500"
+                                                        size={16}
+                                                    />
+                                                </div>
+                                                <div
+                                                    class={cn(
+                                                        "absolute transition-all",
+                                                        copied
+                                                            ? "scale-0 opacity-0"
+                                                            : "scale-100 opacity-100",
+                                                    )}
+                                                >
+                                                    <Copy size={16} />
+                                                </div>
+                                            </button>
+                                        {/snippet}
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        class="border-input bg-popover text-muted-foreground border px-2 py-1 text-xs"
+                                    >
+                                        Copy to clipboard
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                         <p class="text-xs text-muted-foreground">
                             ⚠️ This link expires in 48 hours for security
