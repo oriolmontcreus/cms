@@ -36,7 +36,6 @@
     let name = "";
     let email = "";
     let password = "";
-    let confirmPassword = "";
     let permissions = Roles.CLIENT;
     let loading = false;
     let setupMethod = "immediate"; // "immediate" or "link"
@@ -73,16 +72,8 @@
             } else if (password.length < 8) {
                 errors.password = "Password must be at least 8 characters long";
             }
-
-            if (!confirmPassword) {
-                errors.confirmPassword = "Please confirm your password";
-            } else if (password !== confirmPassword) {
-                errors.confirmPassword = "Passwords do not match";
-            }
         } else if (password && password.length < 8) {
             errors.password = "Password must be at least 8 characters long";
-        } else if (password && password !== confirmPassword) {
-            errors.confirmPassword = "Passwords do not match";
         }
 
         return Object.keys(errors).length === 0;
@@ -244,48 +235,25 @@
 
     <!-- Password Fields -->
     {#if setupMethod === "immediate" || isEditing}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-2">
             <!-- Password Field with Strength Indicator -->
-            <div class="space-y-2">
-                <Label for="password">
-                    {isEditing ? "New Password (optional)" : "Password *"}
-                </Label>
-                <PasswordInput
-                    id="password"
-                    bind:value={password}
-                    placeholder={isEditing
-                        ? "Enter new password"
-                        : "Enter password"}
-                    required={passwordRequired}
-                    className={errors.password ? "border-destructive" : ""}
-                />
-                {#if errors.password}
-                    <p class="text-sm text-destructive">
-                        {errors.password}
-                    </p>
-                {/if}
-            </div>
-
-            <!-- Confirm Password Field -->
-            <div class="space-y-2">
-                <Label for="confirmPassword">
-                    Confirm Password {passwordRequired ? "*" : ""}
-                </Label>
-                <Input
-                    id="confirmPassword"
-                    type="password"
-                    bind:value={confirmPassword}
-                    placeholder="Confirm password"
-                    required={passwordRequired || !!password}
-                    class={errors.confirmPassword ? "border-destructive" : ""}
-                    disabled={loading}
-                />
-                {#if errors.confirmPassword}
-                    <p class="text-sm text-destructive">
-                        {errors.confirmPassword}
-                    </p>
-                {/if}
-            </div>
+            <Label for="password">
+                {isEditing ? "New Password (optional)" : "Password *"}
+            </Label>
+            <PasswordInput
+                id="password"
+                bind:value={password}
+                placeholder={isEditing
+                    ? "Enter new password"
+                    : "Enter password"}
+                required={passwordRequired}
+                className={errors.password ? "border-destructive" : ""}
+            />
+            {#if errors.password}
+                <p class="text-sm text-destructive">
+                    {errors.password}
+                </p>
+            {/if}
         </div>
     {:else}
         <div
