@@ -112,7 +112,9 @@
                     <TooltipContent class="py-3 max-w-xs" sideOffset={4}>
                         <ul class="grid gap-3 text-xs">
                             <li class="grid gap-0.5">
-                                <span class="text-muted-foreground">Client</span
+                                <span
+                                    class="text-muted-foreground font-semibold"
+                                    >Client</span
                                 >
                                 <span class="font-medium"
                                     >Basic access to view content and limited
@@ -121,7 +123,8 @@
                             </li>
                             <hr />
                             <li class="grid gap-0.5">
-                                <span class="text-muted-foreground"
+                                <span
+                                    class="text-muted-foreground font-semibold"
                                     >Developer</span
                                 >
                                 <span class="font-medium"
@@ -131,7 +134,8 @@
                             </li>
                             <hr />
                             <li class="grid gap-0.5">
-                                <span class="text-muted-foreground"
+                                <span
+                                    class="text-muted-foreground font-semibold"
                                     >Super Admin</span
                                 >
                                 <span class="font-medium"

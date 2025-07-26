@@ -238,8 +238,9 @@
                 <!-- Right Column: Password Input or Notice (Fixed Height) -->
                 <div class="min-h-[120px] flex flex-col justify-start">
                     {#if setupMethod === "immediate"}
-                        <div class="space-y-2">
-                            <Label for="password">Password *</Label>
+                        <div
+                            class="space-y-2 bg-muted dark:bg-muted/30 border rounded-lg p-8 text-center h-full flex flex-col items-center justify-center"
+                        >
                             <Popover.Root>
                                 <Popover.Trigger
                                     class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full gap-2"
@@ -281,7 +282,7 @@
                         </div>
                     {:else}
                         <div
-                            class="bg-muted/30 border rounded-lg p-4 text-center h-full flex flex-col items-center justify-center"
+                            class="bg-muted dark:bg-muted/30 border rounded-lg p-4 text-center h-full flex flex-col items-center justify-center"
                         >
                             <Link class="h-6 w-6 text-muted-foreground mb-2" />
                             <p class="text-sm text-muted-foreground">
