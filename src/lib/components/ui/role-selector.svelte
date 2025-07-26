@@ -7,7 +7,7 @@
     export let value: number = Roles.CLIENT;
     export let onValueChange: (value: number) => void;
     export let disabled: boolean = false;
-    export let label: string = "Role *";
+    export let label: string = "Role";
     export let id: string = "role";
 
     // Role configuration

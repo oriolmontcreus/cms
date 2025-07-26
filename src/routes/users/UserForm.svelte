@@ -26,6 +26,12 @@
     import InfoCircle from "@tabler/icons-svelte/icons/info-circle";
     import Lock from "@tabler/icons-svelte/icons/lock";
     import Link from "@tabler/icons-svelte/icons/link";
+    import {
+        Tooltip,
+        TooltipContent,
+        TooltipProvider,
+        TooltipTrigger,
+    } from "$lib/components/ui/tooltip";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
@@ -183,13 +189,59 @@
     </div>
 
     <!-- Role Selection -->
-    <RoleSelector
-        bind:value={permissions}
-        onValueChange={(value) => (permissions = value)}
-        disabled={loading}
-        label="Role"
-        id="role"
-    />
+    <div class="space-y-2">
+        <div class="flex items-center gap-2">
+            <RoleSelector
+                bind:value={permissions}
+                onValueChange={(value) => (permissions = value)}
+                disabled={loading}
+                id="role"
+            />
+            <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                    <TooltipTrigger>
+                        {#snippet child({ props })}
+                            <InfoCircle
+                                size="16"
+                                class="text-muted-foreground hover:text-foreground cursor-help transition-colors"
+                                {...props}
+                            />
+                        {/snippet}
+                    </TooltipTrigger>
+                    <TooltipContent class="py-3 max-w-xs">
+                        <ul class="grid gap-3 text-xs">
+                            <li class="grid gap-0.5">
+                                <span class="text-muted-foreground">Client</span
+                                >
+                                <span class="font-medium"
+                                    >Basic access to view content and limited
+                                    functionality</span
+                                >
+                            </li>
+                            <li class="grid gap-0.5">
+                                <span class="text-muted-foreground"
+                                    >Developer</span
+                                >
+                                <span class="font-medium"
+                                    >Access to content management, page
+                                    creation, and development tools</span
+                                >
+                            </li>
+                            <li class="grid gap-0.5">
+                                <span class="text-muted-foreground"
+                                    >Super Admin</span
+                                >
+                                <span class="font-medium"
+                                    >Full system access including user
+                                    management and system settings</span
+                                >
+                            </li>
+                        </ul>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
+    </div>
 
     {#if !isEditing}
         <!-- Setup Method Selection -->
@@ -296,29 +348,6 @@
             </p>
         </div>
     {/if}
-
-    <!-- Role Description -->
-    <div class="bg-muted/50 p-4 rounded-lg space-y-2">
-        <h4 class="text-sm font-medium">Role Permissions:</h4>
-        <div class="text-sm text-muted-foreground space-y-1">
-            {#if permissions === Roles.CLIENT}
-                <p>
-                    <strong>Client:</strong> Basic access to view content and limited
-                    functionality.
-                </p>
-            {:else if permissions === Roles.DEVELOPER}
-                <p>
-                    <strong>Developer:</strong> Access to content management, page
-                    creation, and development tools.
-                </p>
-            {:else if permissions === Roles.SUPER_ADMIN}
-                <p>
-                    <strong>Super Admin:</strong> Full system access including user
-                    management and system settings.
-                </p>
-            {/if}
-        </div>
-    </div>
 
     <!-- Form Actions -->
     <div class="flex justify-end gap-3 pt-4 border-t">
