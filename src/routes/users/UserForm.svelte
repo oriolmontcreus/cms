@@ -25,6 +25,12 @@
     import Lock from "@tabler/icons-svelte/icons/lock";
     import Link from "@tabler/icons-svelte/icons/link";
     import Dice from "@tabler/icons-svelte/icons/dice";
+    import Dice1 from "@tabler/icons-svelte/icons/dice-1";
+    import Dice2 from "@tabler/icons-svelte/icons/dice-2";
+    import Dice3 from "@tabler/icons-svelte/icons/dice-3";
+    import Dice4 from "@tabler/icons-svelte/icons/dice-4";
+    import Dice5 from "@tabler/icons-svelte/icons/dice-5";
+    import Dice6 from "@tabler/icons-svelte/icons/dice-6";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
@@ -41,6 +47,12 @@
 
     // Validation state
     let errors: Record<string, string> = {};
+
+    // Dice animation state
+    let isRolling = false;
+    let currentDiceIcon = 0;
+
+    const diceIcons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6];
 
     const isEditing = !!user;
 
@@ -80,13 +92,9 @@
 
     async function handleSubmit(e: SubmitEvent) {
         e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         loading = true;
-
         let success = false;
         let result: any = null;
 
@@ -97,10 +105,7 @@
                 permissions,
             };
 
-            // Only include password if it's provided
-            if (password) {
-                (updateData as any).password = password;
-            }
+            if (password) (updateData as any).password = password;
 
             result = await handleUpdateUser(user._id, updateData);
             success = !!result;
@@ -126,10 +131,7 @@
         }
 
         loading = false;
-
-        if (success) {
-            onSuccess(result);
-        }
+        if (success) onSuccess(result);
     }
 
     $: passwordRequired = !isEditing && setupMethod === "immediate";
@@ -160,11 +162,32 @@
     }
 
     function handleGeneratePassword() {
-        password = generateRandomPassword();
-        if (errors.password) {
-            errors = { ...errors };
-            delete errors.password;
-        }
+        if (isRolling) return;
+        isRolling = true;
+
+        let rollCount = 0;
+        const maxRolls = 4; // Fewer rolls for speed
+        const rollInterval = 80; // Faster transitions
+
+        const rollAnimation = setInterval(() => {
+            currentDiceIcon = Math.floor(Math.random() * 6);
+            rollCount++;
+
+            if (rollCount >= maxRolls) {
+                clearInterval(rollAnimation);
+
+                password = generateRandomPassword();
+                if (errors.password) {
+                    errors = { ...errors };
+                    delete errors.password;
+                }
+
+                setTimeout(() => {
+                    isRolling = false;
+                    currentDiceIcon = 0;
+                }, 100);
+            }
+        }, rollInterval);
     }
 </script>
 
@@ -299,11 +322,19 @@
                                                     variant="outline"
                                                     size="sm"
                                                     onclick={handleGeneratePassword}
-                                                    disabled={loading}
+                                                    disabled={loading ||
+                                                        isRolling}
                                                     class="px-3 h-9 shrink-0"
                                                     title="Generate random password"
                                                 >
-                                                    <Dice size="16" />
+                                                    <svelte:component
+                                                        this={isRolling
+                                                            ? diceIcons[
+                                                                  currentDiceIcon
+                                                              ]
+                                                            : Dice}
+                                                        size="16"
+                                                    />
                                                 </Button>
                                             </div>
                                             {#if errors.password}
@@ -353,11 +384,14 @@
                     variant="outline"
                     size="sm"
                     onclick={handleGeneratePassword}
-                    disabled={loading}
+                    disabled={loading || isRolling}
                     class="px-3 h-9 shrink-0"
                     title="Generate random password"
                 >
-                    <Dice size="16" />
+                    <svelte:component
+                        this={isRolling ? diceIcons[currentDiceIcon] : Dice}
+                        size="16"
+                    />
                 </Button>
             </div>
             {#if errors.password}
