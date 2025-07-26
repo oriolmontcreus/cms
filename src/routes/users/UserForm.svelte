@@ -2,14 +2,12 @@
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import * as Select from "$lib/components/ui/select";
-    import * as Checkbox from "$lib/components/ui/checkbox";
     import {
         RadioGroup,
         RadioGroupItem,
     } from "$lib/components/ui/radio-group/index.js";
     import * as Popover from "$lib/components/ui/popover/index.js";
-    import RoleSelector from "$lib/components/ui/role-selector.svelte";
+    import RoleSelector from "@components/RoleSelector.svelte";
     import PasswordInput from "$lib/components/PasswordInput.svelte";
     import {
         handleCreateUser,

@@ -2,13 +2,7 @@
     import * as Select from "$lib/components/ui/select";
     import { Label } from "$lib/components/ui/label";
     import { Roles } from "@shared/constants/role.type";
-    import InfoCircle from "@tabler/icons-svelte/icons/info-circle";
-    import {
-        Tooltip,
-        TooltipContent,
-        TooltipProvider,
-        TooltipTrigger,
-    } from "$lib/components/ui/tooltip";
+    import InfoTooltip from "$lib/components/InfoTooltip.svelte";
 
     // Props
     export let value: number = Roles.CLIENT;
@@ -102,51 +96,39 @@
         </Select.Root>
 
         {#if showTooltip}
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger>
-                        <InfoCircle
-                            class="text-blue-500 hover:text-blue-500/60 cursor-help transition-colors"
-                        />
-                    </TooltipTrigger>
-                    <TooltipContent class="py-3 max-w-xs" sideOffset={4}>
-                        <ul class="grid gap-3 text-xs">
-                            <li class="grid gap-0.5">
-                                <span
-                                    class="text-muted-foreground font-semibold"
-                                    >Client</span
-                                >
-                                <span class="font-medium"
-                                    >Basic access to view content and limited
-                                    functionality</span
-                                >
-                            </li>
-                            <hr />
-                            <li class="grid gap-0.5">
-                                <span
-                                    class="text-muted-foreground font-semibold"
-                                    >Developer</span
-                                >
-                                <span class="font-medium"
-                                    >Access to content management, page
-                                    creation, and development tools</span
-                                >
-                            </li>
-                            <hr />
-                            <li class="grid gap-0.5">
-                                <span
-                                    class="text-muted-foreground font-semibold"
-                                    >Super Admin</span
-                                >
-                                <span class="font-medium"
-                                    >Full system access including user
-                                    management and system settings</span
-                                >
-                            </li>
-                        </ul>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <InfoTooltip>
+                <ul class="grid gap-3 text-xs">
+                    <li class="grid gap-0.5">
+                        <span class="text-muted-foreground font-semibold"
+                            >Client</span
+                        >
+                        <span class="font-medium"
+                            >Basic access to view content and limited
+                            functionality</span
+                        >
+                    </li>
+                    <hr />
+                    <li class="grid gap-0.5">
+                        <span class="text-muted-foreground font-semibold"
+                            >Developer</span
+                        >
+                        <span class="font-medium"
+                            >Access to content management, page creation, and
+                            development tools</span
+                        >
+                    </li>
+                    <hr />
+                    <li class="grid gap-0.5">
+                        <span class="text-muted-foreground font-semibold"
+                            >Super Admin</span
+                        >
+                        <span class="font-medium"
+                            >Full system access including user management and
+                            system settings</span
+                        >
+                    </li>
+                </ul>
+            </InfoTooltip>
         {/if}
     </div>
 </div>
