@@ -100,7 +100,7 @@ export async function handleSetupUserAccount(token: string, setupData: UserSetup
 export async function handleRegenerateSetupToken(userId: string, userName?: string): Promise<{ setupToken: string; setupUrl: string } | null> {
     const [data, err] = await fetchWithToast(regenerateSetupToken(userId), {
         loading: 'Regenerating setup link...',
-        success: () => `Setup link regenerated for ${userName ? `"${userName}"` : 'user'}.`,
+        success: () => `Setup link regenerated for ${userName ? `"${userName}"` : 'user'}`,
         error: 'Failed to regenerate setup link. Please try again.'
     });
     return data || null;

@@ -37,6 +37,7 @@
     import type { User } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
     import { cn } from "$lib/utils";
+    import { successToast } from "@/services/toast.service";
 
     let users: User[] = [];
     let loading = true;
@@ -128,6 +129,7 @@
         if (setupResult?.setupUrl) {
             await navigator.clipboard.writeText(setupResult.setupUrl);
             copied = true;
+            successToast("Setup link copied to clipboard");
             setTimeout(() => {
                 copied = false;
             }, 1500);
@@ -402,9 +404,6 @@
                         communication method.
                     </p>
                     <div class="space-y-2">
-                        <Label for="setup-url" class="text-sm font-medium"
-                            >Setup URL:</Label
-                        >
                         <div class="relative">
                             <Input
                                 id="setup-url"

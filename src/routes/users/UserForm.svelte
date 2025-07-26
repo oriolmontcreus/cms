@@ -18,6 +18,7 @@
     } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
     import { onMount } from "svelte";
+    import InfoCircle from "@tabler/icons-svelte/icons/info-circle";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
@@ -199,14 +200,16 @@
             </Label>
         </div>
         {#if createWithoutPassword}
-            <div
-                class="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg"
-            >
-                <p class="text-sm text-blue-800 dark:text-blue-300">
-                    <strong>Setup Link Mode:</strong> A secure setup link will be
-                    generated that you can copy and send to the user. The user will
-                    use this link to create their own password. The link expires
-                    in 48 hours for security.
+            <div class="border-border rounded-lg border px-4 py-3">
+                <p class="text-sm">
+                    <InfoCircle
+                        class="-mt-0.5 inline-flex text-blue-500"
+                        size={16}
+                        aria-hidden="true"
+                    />
+                    A secure setup link will be generated that you can copy and send
+                    to the user. The user will use this link to create their own
+                    password. The link expires in 48 hours for security.
                 </p>
             </div>
         {/if}
