@@ -26,6 +26,7 @@
     import { onMount } from "svelte";
     import Lock from "@tabler/icons-svelte/icons/lock";
     import Link from "@tabler/icons-svelte/icons/link";
+    import Dice from "@tabler/icons-svelte/icons/dice";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
@@ -134,6 +135,39 @@
     }
 
     $: passwordRequired = !isEditing && setupMethod === "immediate";
+
+    function generateRandomPassword(): string {
+        const lowercase = "abcdefghijklmnopqrstuvwxyz";
+        const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const numbers = "0123456789";
+        const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+        let password = "";
+        password += lowercase[Math.floor(Math.random() * lowercase.length)];
+        password += uppercase[Math.floor(Math.random() * uppercase.length)];
+        password += numbers[Math.floor(Math.random() * numbers.length)];
+        password += symbols[Math.floor(Math.random() * symbols.length)];
+
+        const allChars = lowercase + uppercase + numbers + symbols;
+        const passwordLength = 12;
+
+        for (let i = password.length; i < passwordLength; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+
+        return password
+            .split("")
+            .sort(() => Math.random() - 0.5)
+            .join("");
+    }
+
+    function handleGeneratePassword() {
+        password = generateRandomPassword();
+        if (errors.password) {
+            errors = { ...errors };
+            delete errors.password;
+        }
+    }
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-4">
@@ -247,22 +281,33 @@
                                     disabled={loading}
                                 >
                                     <Lock size="16" />
-                                    {password
-                                        ? "Password set"
-                                        : "Choose password"}
+                                    Choose password
                                 </Popover.Trigger>
                                 <Popover.Content class="w-80">
                                     <div class="grid gap-4">
                                         <div class="space-y-2">
-                                            <PasswordInput
-                                                id="popover-password"
-                                                bind:value={password}
-                                                placeholder="Enter password"
-                                                required={passwordRequired}
-                                                className={errors.password
-                                                    ? "border-destructive"
-                                                    : ""}
-                                            />
+                                            <div class="flex gap-2">
+                                                <PasswordInput
+                                                    id="popover-password"
+                                                    bind:value={password}
+                                                    placeholder="Enter password"
+                                                    required={passwordRequired}
+                                                    className={errors.password
+                                                        ? "border-destructive"
+                                                        : ""}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onclick={handleGeneratePassword}
+                                                    disabled={loading}
+                                                    class="px-3 h-9 shrink-0"
+                                                    title="Generate random password"
+                                                >
+                                                    <Dice size="16" />
+                                                </Button>
+                                            </div>
                                             {#if errors.password}
                                                 <p
                                                     class="text-sm text-destructive"
@@ -297,13 +342,26 @@
         <!-- Password Fields for Editing -->
         <div class="space-y-2">
             <Label for="password">New Password (optional)</Label>
-            <PasswordInput
-                id="password"
-                bind:value={password}
-                placeholder="Enter new password"
-                required={passwordRequired}
-                className={errors.password ? "border-destructive" : ""}
-            />
+            <div class="flex gap-2">
+                <PasswordInput
+                    id="password"
+                    bind:value={password}
+                    placeholder="Enter new password"
+                    required={passwordRequired}
+                    className={errors.password ? "border-destructive" : ""}
+                />
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onclick={handleGeneratePassword}
+                    disabled={loading}
+                    class="px-3 h-9 shrink-0"
+                    title="Generate random password"
+                >
+                    <Dice size="16" />
+                </Button>
+            </div>
             {#if errors.password}
                 <p class="text-sm text-destructive">
                     {errors.password}
