@@ -239,7 +239,7 @@
                                                                 <div
                                                                     class="inline-flex items-center justify-center w-3 h-3 rounded-full cursor-help transition-colors {user.isInitialized
                                                                         ? 'bg-green-500/60'
-                                                                        : 'bg-red-500/60'}"
+                                                                        : 'bg-yellow-500/60'}"
                                                                     {...props}
                                                                 ></div>
                                                             {/snippet}
@@ -249,7 +249,7 @@
                                                         >
                                                             {user.isInitialized
                                                                 ? "Active"
-                                                                : "Pending Setup"}
+                                                                : "Pending setup"}
                                                         </TooltipContent>
                                                     </Tooltip>
                                                 </TooltipProvider>
