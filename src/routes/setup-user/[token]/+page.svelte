@@ -36,11 +36,11 @@
 
     const steps = [
         {
-            title: "Complete Your Account Setup",
+            title: "Complete your account setup",
             description: "Welcome! Let's finish setting up your account.",
         },
         {
-            title: "Setup Complete!",
+            title: "Setup complete",
             description: "Your account is ready to use",
         },
     ];
