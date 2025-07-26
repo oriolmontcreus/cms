@@ -8,6 +8,7 @@
         RadioGroup,
         RadioGroupItem,
     } from "$lib/components/ui/radio-group/index.js";
+    import * as Popover from "$lib/components/ui/popover/index.js";
     import RoleSelector from "$lib/components/ui/role-selector.svelte";
     import PasswordInput from "$lib/components/PasswordInput.svelte";
     import {
@@ -23,7 +24,6 @@
     } from "@shared/types/user.type";
     import { Roles } from "@shared/constants/role.type";
     import { onMount } from "svelte";
-    import InfoCircle from "@tabler/icons-svelte/icons/info-circle";
     import Lock from "@tabler/icons-svelte/icons/lock";
     import Link from "@tabler/icons-svelte/icons/link";
 
@@ -240,15 +240,39 @@
                     {#if setupMethod === "immediate"}
                         <div class="space-y-2">
                             <Label for="password">Password *</Label>
-                            <PasswordInput
-                                id="password"
-                                bind:value={password}
-                                placeholder="Enter password"
-                                required={passwordRequired}
-                                className={errors.password
-                                    ? "border-destructive"
-                                    : ""}
-                            />
+                            <Popover.Root>
+                                <Popover.Trigger
+                                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full gap-2"
+                                    disabled={loading}
+                                >
+                                    <Lock size="16" />
+                                    {password
+                                        ? "Password set"
+                                        : "Choose password"}
+                                </Popover.Trigger>
+                                <Popover.Content class="w-80">
+                                    <div class="grid gap-4">
+                                        <div class="space-y-2">
+                                            <PasswordInput
+                                                id="popover-password"
+                                                bind:value={password}
+                                                placeholder="Enter password"
+                                                required={passwordRequired}
+                                                className={errors.password
+                                                    ? "border-destructive"
+                                                    : ""}
+                                            />
+                                            {#if errors.password}
+                                                <p
+                                                    class="text-sm text-destructive"
+                                                >
+                                                    {errors.password}
+                                                </p>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </Popover.Content>
+                            </Popover.Root>
                             {#if errors.password}
                                 <p class="text-sm text-destructive">
                                     {errors.password}
@@ -257,7 +281,7 @@
                         </div>
                     {:else}
                         <div
-                            class="bg-muted/30 border border-dashed rounded-lg p-4 text-center h-full flex flex-col items-center justify-center"
+                            class="bg-muted/30 border rounded-lg p-4 text-center h-full flex flex-col items-center justify-center"
                         >
                             <Link class="h-6 w-6 text-muted-foreground mb-2" />
                             <p class="text-sm text-muted-foreground">
