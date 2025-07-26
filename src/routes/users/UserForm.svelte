@@ -31,6 +31,7 @@
     import Dice4 from "@tabler/icons-svelte/icons/dice-4";
     import Dice5 from "@tabler/icons-svelte/icons/dice-5";
     import Dice6 from "@tabler/icons-svelte/icons/dice-6";
+    import { buttonVariants } from "$lib/components/ui/button/button.svelte";
 
     // Props
     export let user: User | null = null; // If provided, we're editing
@@ -298,7 +299,10 @@
                         >
                             <Popover.Root>
                                 <Popover.Trigger
-                                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-3 w-full gap-2"
+                                    class={buttonVariants({
+                                        variant: "outline",
+                                        size: "sm",
+                                    })}
                                     disabled={loading}
                                 >
                                     <Lock size="16" />
