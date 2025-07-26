@@ -342,7 +342,7 @@
 <Dialog.Root bind:open={createDialogOpen}>
     <Dialog.Content class="sm:max-w-[600px]">
         <Dialog.Header>
-            <Dialog.Title>Create New User</Dialog.Title>
+            <Dialog.Title>Create new user</Dialog.Title>
             <Dialog.Description
                 >Add a new user to the system. Fill in the required information
                 below.</Dialog.Description
@@ -359,7 +359,7 @@
 <Dialog.Root bind:open={editDialogOpen}>
     <Dialog.Content class="sm:max-w-[600px]">
         <Dialog.Header>
-            <Dialog.Title>Edit User</Dialog.Title>
+            <Dialog.Title>Edit user</Dialog.Title>
             <Dialog.Description
                 >Update user information and permissions.</Dialog.Description
             >
@@ -376,7 +376,7 @@
 <Dialog.Root bind:open={setupLinkDialogOpen}>
     <Dialog.Content class="sm:max-w-[500px]">
         <Dialog.Header>
-            <Dialog.Title>User Setup Link Generated</Dialog.Title>
+            <Dialog.Title>Generated setup link</Dialog.Title>
             <Dialog.Description
                 >Copy this secure link and send it to the user to complete their
                 account setup.</Dialog.Description
@@ -421,10 +421,6 @@
                         <p class="text-xs text-muted-foreground">
                             ⚠️ This link expires in 48 hours for security
                             reasons.
-                        </p>
-                        <p class="text-xs text-muted-foreground">
-                            💡 Send this link to the user via email, Slack, or
-                            your preferred communication method.
                         </p>
                     </div>
                 </div>
