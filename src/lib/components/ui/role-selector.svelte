@@ -2,6 +2,13 @@
     import * as Select from "$lib/components/ui/select";
     import { Label } from "$lib/components/ui/label";
     import { Roles } from "@shared/constants/role.type";
+    import InfoCircle from "@tabler/icons-svelte/icons/info-circle";
+    import {
+        Tooltip,
+        TooltipContent,
+        TooltipProvider,
+        TooltipTrigger,
+    } from "$lib/components/ui/tooltip";
 
     // Props
     export let value: number = Roles.CLIENT;
@@ -9,6 +16,7 @@
     export let disabled: boolean = false;
     export let label: string = "Role";
     export let id: string = "role";
+    export let showTooltip: boolean = true;
 
     // Role configuration
     const roleOptions = [
@@ -47,48 +55,96 @@
 
 <div class="space-y-2">
     <Label for={id}>{label}</Label>
-    <Select.Root
-        type="single"
-        value={selectedRoleValue}
-        onValueChange={(selectedValue) => {
-            if (selectedValue) {
-                onValueChange(parseInt(selectedValue));
-            }
-        }}
-    >
-        <Select.Trigger {id} {disabled}>
-            <div class="flex items-center gap-2">
-                <div
-                    class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold transition-colors {getRoleStyle(
-                        value,
-                    )}"
-                >
-                    {getRoleCharacter(value)}
-                </div>
-                <span>{getRoleLabel(value)}</span>
-            </div>
-        </Select.Trigger>
-        <Select.Content>
-            <Select.Group>
-                <Select.Label>User Roles</Select.Label>
-                {#each roleOptions as role (role.value)}
-                    <Select.Item
-                        value={role.value.toString()}
-                        label={role.label}
+    <div class="flex items-center gap-2">
+        <Select.Root
+            type="single"
+            value={selectedRoleValue}
+            onValueChange={(selectedValue) => {
+                if (selectedValue) {
+                    onValueChange(parseInt(selectedValue));
+                }
+            }}
+        >
+            <Select.Trigger {id} {disabled}>
+                <div class="flex items-center gap-2">
+                    <div
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold transition-colors {getRoleStyle(
+                            value,
+                        )}"
                     >
-                        <div class="flex items-center gap-2">
-                            <div
-                                class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold transition-colors {getRoleStyle(
-                                    role.value,
-                                )}"
-                            >
-                                {getRoleCharacter(role.value)}
+                        {getRoleCharacter(value)}
+                    </div>
+                    <span>{getRoleLabel(value)}</span>
+                </div>
+            </Select.Trigger>
+            <Select.Content>
+                <Select.Group>
+                    <Select.Label>User Roles</Select.Label>
+                    {#each roleOptions as role (role.value)}
+                        <Select.Item
+                            value={role.value.toString()}
+                            label={role.label}
+                        >
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold transition-colors {getRoleStyle(
+                                        role.value,
+                                    )}"
+                                >
+                                    {getRoleCharacter(role.value)}
+                                </div>
+                                <span>{role.label}</span>
                             </div>
-                            <span>{role.label}</span>
-                        </div>
-                    </Select.Item>
-                {/each}
-            </Select.Group>
-        </Select.Content>
-    </Select.Root>
+                        </Select.Item>
+                    {/each}
+                </Select.Group>
+            </Select.Content>
+        </Select.Root>
+
+        {#if showTooltip}
+            <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                    <TooltipTrigger>
+                        {#snippet child({ props })}
+                            <InfoCircle
+                                size="16"
+                                class="text-muted-foreground hover:text-foreground cursor-help transition-colors"
+                                {...props}
+                            />
+                        {/snippet}
+                    </TooltipTrigger>
+                    <TooltipContent class="py-3 max-w-xs">
+                        <ul class="grid gap-3 text-xs">
+                            <li class="grid gap-0.5">
+                                <span class="text-muted-foreground">Client</span
+                                >
+                                <span class="font-medium"
+                                    >Basic access to view content and limited
+                                    functionality</span
+                                >
+                            </li>
+                            <li class="grid gap-0.5">
+                                <span class="text-muted-foreground"
+                                    >Developer</span
+                                >
+                                <span class="font-medium"
+                                    >Access to content management, page
+                                    creation, and development tools</span
+                                >
+                            </li>
+                            <li class="grid gap-0.5">
+                                <span class="text-muted-foreground"
+                                    >Super Admin</span
+                                >
+                                <span class="font-medium"
+                                    >Full system access including user
+                                    management and system settings</span
+                                >
+                            </li>
+                        </ul>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        {/if}
+    </div>
 </div>
