@@ -127,13 +127,7 @@
     >
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 class="text-2xl font-bold">User Management</h1>
-                        <p class="text-muted-foreground">
-                            Manage system users and their permissions
-                        </p>
-                    </div>
+                <div class="flex justify-end items-center mb-8">
                     <Button
                         onclick={openCreateDialog}
                         effect="expandIcon"
