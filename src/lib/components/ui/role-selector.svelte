@@ -79,7 +79,7 @@
             </Select.Trigger>
             <Select.Content>
                 <Select.Group>
-                    <Select.Label>User Roles</Select.Label>
+                    <Select.Label>User roles</Select.Label>
                     {#each roleOptions as role (role.value)}
                         <Select.Item
                             value={role.value.toString()}
@@ -102,18 +102,14 @@
         </Select.Root>
 
         {#if showTooltip}
-            <TooltipProvider delayDuration={0}>
+            <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger>
-                        {#snippet child({ props })}
-                            <InfoCircle
-                                size="16"
-                                class="text-muted-foreground hover:text-foreground cursor-help transition-colors"
-                                {...props}
-                            />
-                        {/snippet}
+                        <InfoCircle
+                            class="text-blue-500 hover:text-blue-500/60 cursor-help transition-colors"
+                        />
                     </TooltipTrigger>
-                    <TooltipContent class="py-3 max-w-xs">
+                    <TooltipContent class="py-3 max-w-xs" sideOffset={4}>
                         <ul class="grid gap-3 text-xs">
                             <li class="grid gap-0.5">
                                 <span class="text-muted-foreground">Client</span
@@ -123,6 +119,7 @@
                                     functionality</span
                                 >
                             </li>
+                            <hr />
                             <li class="grid gap-0.5">
                                 <span class="text-muted-foreground"
                                     >Developer</span
@@ -132,6 +129,7 @@
                                     creation, and development tools</span
                                 >
                             </li>
+                            <hr />
                             <li class="grid gap-0.5">
                                 <span class="text-muted-foreground"
                                     >Super Admin</span
