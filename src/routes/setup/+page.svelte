@@ -14,34 +14,39 @@
         StepperTitle,
         StepperTrigger,
     } from "$lib/components/ui/stepper";
+    import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
+    import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left";
     import CheckCircleIcon from "@lucide/svelte/icons/check-circle";
     import {
         handleSetupSuperAdmin,
         checkSetupStatus,
     } from "@/services/auth.service";
     import { usePasswordStrength } from "$lib/hooks/usePasswordStrength.svelte";
+    import { setMode } from "mode-watcher";
 
     let step = $state(0);
-    let welcomeName = $state("");
+    let name = $state("");
     let email = $state("");
     let password = $state("");
     let confirmPassword = $state("");
     let isLoading = $state(false);
-    let passwordError = $state("");
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isValidEmail = $derived(
         email.trim() && emailRegex.test(email.trim()),
     );
-
-    // Create password strength instance for validation
     const passwordStrength = usePasswordStrength({ id: "setup-password" });
 
-    // Sync password state with strength validator
     $effect(() => {
         passwordStrength.password = password;
     });
+
+    const isPasswordValid = $derived(
+        password &&
+            confirmPassword &&
+            password === confirmPassword &&
+            passwordStrength.strengthScore >= 4,
+    );
 
     const steps = [
         {
@@ -56,68 +61,31 @@
     ];
 
     onMount(async () => {
-        // Check if setup is actually needed
+        setMode("dark");
         const status = await checkSetupStatus();
-        if (!status.needsSetup) {
-            goto("/login");
-            return;
-        }
+        if (!status.needsSetup) goto("/login");
     });
 
-    function validatePasswords() {
-        if (password !== confirmPassword) {
-            passwordError = "Passwords do not match";
-            return false;
-        }
+    const nextStep = () => step++;
+    const prevStep = () => step--;
 
-        // Sync password with strength validator
-        passwordStrength.password = password;
+    const handleNext = () => {
+        if (name.trim() && isValidEmail) nextStep();
+    };
 
-        if (passwordStrength.strengthScore < 4) {
-            passwordError =
-                "Please ensure your password meets all requirements";
-            return false;
-        }
-
-        passwordError = "";
-        return true;
-    }
-
-    function handleWelcomeNext() {
-        if (welcomeName.trim() && isValidEmail) {
-            step = 1;
-        }
-    }
-
-    function handleBack() {
-        if (step > 0) {
-            step--;
-        }
-    }
-
-    async function handleSubmit() {
-        if (!validatePasswords()) return;
+    const handleSubmit = async () => {
+        if (!isPasswordValid) return;
 
         isLoading = true;
-        // Use welcomeName as the name for the admin account
-        await handleSetupSuperAdmin(email, password, welcomeName);
-        step = 2;
+        await handleSetupSuperAdmin(email, password, name, true);
+        nextStep();
         isLoading = false;
 
-        // Redirect to home after showing success
-        setTimeout(() => {
-            goto("/");
-        }, 3000);
-    }
-
-    function nextStep() {
-        if (step < steps.length - 1) {
-            step++;
-        }
-    }
+        setTimeout(() => goto("/"), 3000);
+    };
 </script>
 
-<div class="min-h-screen w-full relative bg-black">
+<div class="min-h-screen w-full relative bg-black dark">
     <div
         class="absolute inset-0 z-0"
         style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 90%), #000000;"
@@ -127,7 +95,6 @@
         class="relative z-10 flex items-center justify-center p-4 min-h-screen"
     >
         <div class="w-full max-w-md mx-auto relative z-10">
-            <!-- Step indicator -->
             {#if step > 0}
                 <div
                     class="mx-auto max-w-xl space-y-8 mb-8"
@@ -154,10 +121,8 @@
                 </div>
             {/if}
 
-            <!-- Step content -->
             {#if step === 0}
                 <div in:fade={{ duration: 600 }} class="text-center space-y-8">
-                    <!-- Welcome message -->
                     <div class="space-y-6">
                         <h1
                             class="text-4xl font-light text-white tracking-tight"
@@ -169,36 +134,36 @@
                         </p>
                     </div>
 
-                    <!-- Input section -->
                     <div class="max-w-sm mx-auto space-y-6">
                         <Input
-                            id="welcomeName"
+                            id="name"
                             type="text"
-                            placeholder="Mr./Ms./Dr. [Your name]"
-                            bind:value={welcomeName}
+                            placeholder="I'm ..."
+                            bind:value={name}
                             class="text-center"
                         />
 
                         <Input
                             id="email"
                             type="email"
-                            placeholder="admin@example.com"
+                            placeholder="My email is ..."
                             bind:value={email}
                             class="text-center"
                         />
 
                         <div class="flex justify-end">
                             <Button
-                                onclick={handleWelcomeNext}
+                                onclick={handleNext}
                                 variant="ghost"
-                                class="text-gray-300 hover:text-white hover:bg-gray-700/50 px-6 transition-opacity duration-300"
-                                style="opacity: {welcomeName.trim() &&
-                                isValidEmail
+                                effect="expandIcon"
+                                iconPlacement="right"
+                                icon={ArrowRightIcon}
+                                style="opacity: {name.trim() && isValidEmail
                                     ? '1'
                                     : '0'}"
-                                disabled={!welcomeName.trim() || !isValidEmail}
+                                disabled={!name.trim() || !isValidEmail}
                             >
-                                Continue →
+                                Continue
                             </Button>
                         </div>
                     </div>
@@ -236,27 +201,32 @@
                             required
                         />
 
-                        {#if passwordError}
+                        {#if password && confirmPassword && password !== confirmPassword}
                             <p class="text-red-500 text-sm text-center">
-                                {passwordError}
+                                Passwords do not match
+                            </p>
+                        {/if}
+
+                        {#if password && passwordStrength.strengthScore < 4}
+                            <p class="text-red-500 text-sm text-center">
+                                Password too weak
                             </p>
                         {/if}
 
                         <div class="flex gap-3">
                             <Button
-                                onclick={handleBack}
+                                onclick={prevStep}
                                 variant="ghost"
-                                class="flex-1 text-gray-300 hover:text-white hover:bg-gray-700/50"
+                                class="flex-1"
+                                effect="expandIcon"
+                                iconPlacement="left"
+                                icon={ArrowLeftIcon}
                             >
-                                ← Back
+                                Back
                             </Button>
                             <Button
                                 onclick={handleSubmit}
-                                disabled={isLoading ||
-                                    !password ||
-                                    !confirmPassword ||
-                                    passwordStrength.strengthScore < 4 ||
-                                    password !== confirmPassword}
+                                disabled={isLoading || !isPasswordValid}
                                 class="flex-1"
                             >
                                 {#if isLoading}

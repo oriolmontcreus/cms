@@ -22,7 +22,13 @@ export async function login(
     "+password",
   );
 
-  if (!user || !password || !await user.comparePassword(password)) {
+  if (!user) throw new Unauthorized();
+
+  if (!user.isInitialized) {
+    throw new Unauthorized("Account not initialized. Please complete setup first.");
+  }
+
+  if (!password || !await user.comparePassword(password)) {
     throw new Unauthorized();
   }
 
@@ -82,23 +88,32 @@ export async function hasUsers(): Promise<boolean> {
   return userCount > 0;
 }
 
-export async function setupSuperAdmin(r: UserRegisterPayload): Promise<User> {
+export async function setupSuperAdmin(r: UserRegisterPayload): Promise<{ token: string; user: User }> {
   const hasAnyUsers = await hasUsers();
   if (hasAnyUsers) {
     throw new AlreadyExists("System has already been set up");
   }
 
   // Create the superadmin user
-  const superAdminPayload: UserRegisterPayload = {
+  const superAdminPayload: UserRegisterPayload & { isInitialized: boolean } = {
     name: r.name,
     email: r.email,
     password: r.password,
+    isInitialized: true,
     permissions: Roles.SUPER_ADMIN,
   };
 
   const newUser = new UserModel(superAdminPayload);
-  const res = await newUser.save();
-  return res.toJSON();
+  const savedUser = await newUser.save();
+
+  const payload: DecodedSession = {
+    email: savedUser.email,
+    _id: savedUser._id.toString(),
+  };
+  const token = await createToken(payload);
+  const userObj = savedUser.toJSON();
+
+  return { token, user: userObj };
 }
 
 /**

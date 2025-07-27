@@ -25,6 +25,7 @@ export async function checkSetupStatus(): Promise<{ needsSetup: boolean }> {
 
 export async function setupSuperAdmin(email: string, password: string, name: string): Promise<User> {
     const { data } = await api.post<User>(`${root}/setup/superadmin`, { email, password, name });
+    loggedUser.set(data);
     return data;
 }
 //endregion
@@ -55,7 +56,7 @@ export async function autoLogin(): Promise<User | null> {
     } finally {
         if (get(loggedUser) === null) {
             const currentPath = window.location.pathname;
-            if (currentPath !== '/setup' && !setupStatus.needsSetup) goto('/login');
+            if (currentPath !== '/setup' && !setupStatus!.needsSetup) goto('/login');
         }
         clearTimeout(timeoutId);
     }
@@ -87,7 +88,8 @@ export async function handleSetupSuperAdmin(email: string, password: string, nam
         error: 'Error setting up your account. Please try again.'
     });
     if (!err) {
-        if (redirect) goto('/login');
+        // User is now automatically logged in by setupSuperAdmin
+        if (redirect) goto('/');
     }
 }
 //endregion

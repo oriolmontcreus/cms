@@ -3,6 +3,43 @@
 @import "tw-animate-css";
 @source inline('{sm:,md:,lg:,xl:,}grid-cols-{1,2,3,4,5,6,7,8,9,10,11,12}');
 
+/* Custom animations for button effects */
+@keyframes shine {
+  0% {
+    background-position: 200% 0;
+  }
+
+  25% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Define custom CSS variables for gradient colors */
+:root {
+  --gradient-lime: #84cc16;
+  --gradient-ocean: #0891b2;
+  --gradient-wine: #be185d;
+  --gradient-rust: #ea580c;
+}
+
 ::selection {
   background-color: var(--primary);
   color: var(--primary-foreground);
@@ -179,6 +216,7 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -207,6 +245,7 @@ body {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -216,6 +255,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

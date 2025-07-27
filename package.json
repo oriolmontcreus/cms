@@ -31,6 +31,7 @@
 		"tailwindcss": "^4.1.9"
 	},
 	"devDependencies": {
+		"@castlenine/svelte-qrcode": "^2.3.0",
 		"@dnd-kit-svelte/core": "^0.0.8",
 		"@dnd-kit-svelte/modifiers": "^0.0.8",
 		"@dnd-kit-svelte/sortable": "^0.0.8",
