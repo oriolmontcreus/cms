@@ -2,11 +2,9 @@
     import { onMount } from "svelte";
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
-    import { Label } from "$lib/components/ui/label";
     import * as Table from "$lib/components/ui/table";
     import * as Dialog from "$lib/components/ui/dialog";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-    import { Badge } from "$lib/components/ui/badge";
     import {
         Tooltip,
         TooltipContent,
@@ -38,6 +36,7 @@
     import { Roles } from "@shared/constants/role.type";
     import { cn } from "$lib/utils";
     import { successToast } from "@/services/toast.service";
+    import QRCode from "@castlenine/svelte-qrcode";
 
     let users: User[] = [];
     let loading = true;
@@ -403,6 +402,14 @@
                         the link below and send it to the user through your preferred
                         communication method.
                     </p>
+
+                    <!-- QR Code Section -->
+                    <div class="flex justify-center mb-4">
+                        <div class="bg-white p-4 rounded-lg border">
+                            <QRCode data={setupResult.setupUrl} size={200} />
+                        </div>
+                    </div>
+
                     <div class="space-y-2">
                         <div class="relative">
                             <Input
