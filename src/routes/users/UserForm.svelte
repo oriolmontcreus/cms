@@ -417,7 +417,7 @@
             Cancel
         </Button>
         <Button type="submit" disabled={loading}>
-            {isEditing ? "Update User" : "Create User"}
+            {isEditing ? "Update user" : "Create user"}
         </Button>
     </div>
 </form>
