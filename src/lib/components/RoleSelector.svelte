@@ -2,7 +2,6 @@
     import * as Select from "$lib/components/ui/select";
     import { Label } from "$lib/components/ui/label";
     import { Roles } from "@shared/constants/role.type";
-    import InfoTooltip from "$lib/components/InfoTooltip.svelte";
 
     // Props
     export let value: number = Roles.CLIENT;
@@ -10,13 +9,27 @@
     export let disabled: boolean = false;
     export let label: string = "Role";
     export let id: string = "role";
-    export let showTooltip: boolean = true;
 
     // Role configuration
     const roleOptions = [
-        { value: Roles.CLIENT, label: "Client" },
-        { value: Roles.DEVELOPER, label: "Developer" },
-        { value: Roles.SUPER_ADMIN, label: "Super Admin" },
+        {
+            value: Roles.CLIENT,
+            label: "Client",
+            description:
+                "Basic access to view content and limited functionality",
+        },
+        {
+            value: Roles.DEVELOPER,
+            label: "Developer",
+            description:
+                "Access to content management, page creation, and development tools",
+        },
+        {
+            value: Roles.SUPER_ADMIN,
+            label: "Super Admin",
+            description:
+                "Full system access including user management and system settings",
+        },
     ];
 
     const roleCharacters = new Map([
@@ -59,7 +72,7 @@
                 }
             }}
         >
-            <Select.Trigger {id} {disabled}>
+            <Select.Trigger {id} {disabled} class="w-42">
                 <div class="flex items-center gap-2">
                     <div
                         class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold transition-colors {getRoleStyle(
@@ -79,7 +92,7 @@
                             value={role.value.toString()}
                             label={role.label}
                         >
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-start gap-3 py-1">
                                 <div
                                     class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold transition-colors {getRoleStyle(
                                         role.value,
@@ -87,48 +100,18 @@
                                 >
                                     {getRoleCharacter(role.value)}
                                 </div>
-                                <span>{role.label}</span>
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="font-medium">{role.label}</span
+                                    >
+                                    <span class="text-xs text-muted-foreground"
+                                        >{role.description}</span
+                                    >
+                                </div>
                             </div>
                         </Select.Item>
                     {/each}
                 </Select.Group>
             </Select.Content>
         </Select.Root>
-
-        {#if showTooltip}
-            <InfoTooltip>
-                <ul class="grid gap-3 text-xs">
-                    <li class="grid gap-0.5">
-                        <span class="text-muted-foreground font-semibold"
-                            >Client</span
-                        >
-                        <span class="font-medium"
-                            >Basic access to view content and limited
-                            functionality</span
-                        >
-                    </li>
-                    <hr />
-                    <li class="grid gap-0.5">
-                        <span class="text-muted-foreground font-semibold"
-                            >Developer</span
-                        >
-                        <span class="font-medium"
-                            >Access to content management, page creation, and
-                            development tools</span
-                        >
-                    </li>
-                    <hr />
-                    <li class="grid gap-0.5">
-                        <span class="text-muted-foreground font-semibold"
-                            >Super Admin</span
-                        >
-                        <span class="font-medium"
-                            >Full system access including user management and
-                            system settings</span
-                        >
-                    </li>
-                </ul>
-            </InfoTooltip>
-        {/if}
     </div>
 </div>
