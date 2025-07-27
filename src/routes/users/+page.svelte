@@ -388,21 +388,15 @@
         <Dialog.Header>
             <Dialog.Title>Generated setup link</Dialog.Title>
             <Dialog.Description
-                >Copy this secure link and send it to the user to complete their
-                account setup.</Dialog.Description
+                >Copy this secure link or share the QR code with the user to
+                complete their account setup.</Dialog.Description
             >
         </Dialog.Header>
         {#if setupResult}
             <div class="space-y-4">
                 <div
-                    class="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4 rounded-lg"
+                    class="bg-green-50 dark:bg-primary/30 border border-primary p-4 rounded-lg"
                 >
-                    <p class="text-sm text-green-800 dark:text-green-300 mb-3">
-                        <strong>Setup link generated successfully!</strong> Copy
-                        the link below and send it to the user through your preferred
-                        communication method.
-                    </p>
-
                     <!-- QR Code Section -->
                     <div class="flex justify-center mb-4">
                         <div class="bg-white p-4 rounded-lg border">
