@@ -1,7 +1,6 @@
 import enquirer from 'enquirer';
 import chalk from 'chalk';
 import boxen from 'boxen';
-import ora from 'ora';
 import Table from 'cli-table3';
 import { UserModel } from '../src/models/user.model.js';
 import { UserRegisterPayload } from '@shared/types/user.type.js';
@@ -64,6 +63,23 @@ function getRoleDisplayName(role: string): string {
     return style.color(style.label);
 }
 
+// Progress indication utilities for VS Code terminal compatibility
+function logStep(message: string, type: 'start' | 'success' | 'error' = 'start') {
+    const icons = {
+        start: chalk.blue('◐'),
+        success: chalk.green('✓'),
+        error: chalk.red('✗')
+    };
+
+    const colors = {
+        start: chalk.blue,
+        success: chalk.green,
+        error: chalk.red
+    };
+
+    console.log(`${icons[type]} ${colors[type](message)}`);
+}
+
 function printHeader() {
     const title = chalk.bold.cyan('🚀 USER CREATION WIZARD');
     console.log('\n' + boxen(title, {
@@ -76,12 +92,12 @@ function printHeader() {
 }
 
 async function connectToDatabase() {
-    const spinner = ora('Connecting to MongoDB...').start();
+    logStep('Connecting to database...');
     try {
         await mongoose.connect(MONGODB_URI);
-        spinner.succeed(chalk.green('Connected to MongoDB successfully'));
+        logStep('Connected to database successfully', 'success');
     } catch (error) {
-        spinner.fail(chalk.red('Failed to connect to MongoDB'));
+        logStep('Failed to connect to database', 'error');
         console.error(chalk.red('❌ Error:'), error);
         process.exit(1);
     }
@@ -164,7 +180,7 @@ async function createUser() {
         const existingUser = await UserModel.findOne({ email: response.email });
         if (existingUser) {
             console.log('\n' + boxen(
-                chalk.red('❌ User Already Exists') + '\n\n' +
+                chalk.red('❌ User already exists') + '\n\n' +
                 chalk.yellow(`User: ${existingUser.name} (${existingUser.email})`),
                 {
                     padding: 1,
@@ -176,7 +192,7 @@ async function createUser() {
         }
 
         // Show confirmation with beautiful table
-        console.log('\n' + chalk.cyan.bold('📋 User Creation Summary'));
+        console.log('\n' + chalk.cyan.bold('📋 User creation summary'));
 
         const summaryTable = new Table({
             colWidths: [15, 50],
@@ -222,11 +238,11 @@ async function createUser() {
             isInitialized: response.isInitialized
         };
 
-        // Create the user with spinner
-        const createSpinner = ora('Creating user...').start();
+        // Create the user with progress indication
+        logStep('Creating user...');
         const newUser = new UserModel(userData);
         const savedUser = await newUser.save();
-        createSpinner.succeed(chalk.green('User created successfully!'));
+        logStep('User created successfully!', 'success');
 
         // Ask if user wants to see the password
         const showPasswordPrompt = await enquirer.prompt<{ showPassword: boolean }>({
@@ -254,7 +270,7 @@ async function createUser() {
         );
 
         console.log('\n' + boxen(
-            chalk.green.bold('� User Created Successfully!') + '\n\n' + userDetailsTable.toString(),
+            chalk.green.bold('✅ User created successfully!') + '\n\n' + userDetailsTable.toString(),
             {
                 padding: 1,
                 borderStyle: 'round',
