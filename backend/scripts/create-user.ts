@@ -1,5 +1,8 @@
 import enquirer from 'enquirer';
-import colors from 'colors';
+import chalk from 'chalk';
+import boxen from 'boxen';
+import ora from 'ora';
+import Table from 'cli-table3';
 import { UserModel } from '../src/models/user.model.js';
 import { UserRegisterPayload } from '@shared/types/user.type.js';
 import { Roles } from '@shared/constants/role.type.js';
@@ -8,11 +11,26 @@ import mongoose from 'mongoose';
 // Mongoose connection configuration (matching your main app config)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/froggy';
 
-// Role styling configuration matching frontend
+// Role styling configuration with chalk
 const roleStyles = new Map([
-    [Roles.SUPER_ADMIN, { color: 'magenta', label: 'Super Admin', description: 'Full system access and administration' }],
-    [Roles.DEVELOPER, { color: 'blue', label: 'Developer', description: 'Content management and development tools' }],
-    [Roles.CLIENT, { color: 'green', label: 'Client', description: 'Basic content viewing and interaction' }],
+    [Roles.SUPER_ADMIN, {
+        color: chalk.magenta,
+        label: 'Super Admin',
+        description: 'Full system access and administration',
+        emoji: '👑'
+    }],
+    [Roles.DEVELOPER, {
+        color: chalk.blue,
+        label: 'Developer',
+        description: 'Content management and development tools',
+        emoji: '⚡'
+    }],
+    [Roles.CLIENT, {
+        color: chalk.green,
+        label: 'Client',
+        description: 'Basic content viewing and interaction',
+        emoji: '👤'
+    }],
 ]);
 
 interface UserCreationData {
@@ -43,29 +61,28 @@ function getRoleStyle(role: string) {
 
 function getRoleDisplayName(role: string): string {
     const style = getRoleStyle(role);
-    switch (style.color) {
-        case 'magenta':
-            return colors.magenta(style.label);
-        case 'blue':
-            return colors.blue(style.label);
-        case 'green':
-            return colors.green(style.label);
-        default:
-            return colors.green(style.label);
-    }
+    return style.color(style.label);
 }
 
 function printHeader() {
-    console.log(colors.cyan('\n╔═══════════════════════════════════════╗'));
-    console.log(colors.cyan('║') + colors.bold.white('           USER CREATION WIZARD        ') + colors.cyan('║'));
-    console.log(colors.cyan('╚═══════════════════════════════════════╝\n'));
+    const title = chalk.bold.cyan('🚀 USER CREATION WIZARD');
+    console.log('\n' + boxen(title, {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'round',
+        borderColor: 'cyan',
+        backgroundColor: 'black'
+    }));
 }
 
 async function connectToDatabase() {
+    const spinner = ora('Connecting to MongoDB...').start();
     try {
         await mongoose.connect(MONGODB_URI);
+        spinner.succeed(chalk.green('Connected to MongoDB successfully'));
     } catch (error) {
-        console.error(colors.red('❌ Error connecting to MongoDB:'), error);
+        spinner.fail(chalk.red('Failed to connect to MongoDB'));
+        console.error(chalk.red('❌ Error:'), error);
         process.exit(1);
     }
 }
@@ -80,10 +97,10 @@ async function createUser() {
             {
                 type: 'input',
                 name: 'name',
-                message: colors.cyan('👤 What is the user\'s full name?'),
+                message: chalk.cyan('👤 What is the user\'s full name?'),
                 validate: (value: string) => {
-                    if (!value.trim()) return colors.red('❌ Name is required');
-                    if (value.trim().length < 2) return colors.red('❌ Name must be at least 2 characters long');
+                    if (!value.trim()) return chalk.red('❌ Name is required');
+                    if (value.trim().length < 2) return chalk.red('❌ Name must be at least 2 characters long');
                     return true;
                 },
                 result: (value: string) => value.trim()
@@ -91,12 +108,12 @@ async function createUser() {
             {
                 type: 'input',
                 name: 'email',
-                message: colors.cyan('📧 What is the user\'s email address?'),
+                message: chalk.cyan('📧 What is the user\'s email address?'),
                 validate: (value: string) => {
-                    if (!value.trim()) return colors.red('❌ Email is required');
+                    if (!value.trim()) return chalk.red('❌ Email is required');
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (!emailRegex.test(value)) {
-                        return colors.red('❌ Please enter a valid email address');
+                        return chalk.red('❌ Please enter a valid email address');
                     }
                     return true;
                 },
@@ -105,18 +122,18 @@ async function createUser() {
             {
                 type: 'password',
                 name: 'password',
-                message: colors.cyan('🔐 Enter a password for the user:'),
+                message: chalk.cyan('🔐 Enter a password for the user:'),
                 validate: (value: string) => {
-                    if (!value) return colors.red('❌ Password is required');
-                    if (value.length < 6) return colors.red('❌ Password must be at least 6 characters long');
-                    if (value.length > 128) return colors.red('❌ Password is too long (max 128 characters)');
+                    if (!value) return chalk.red('❌ Password is required');
+                    if (value.length < 6) return chalk.red('❌ Password must be at least 6 characters long');
+                    if (value.length > 128) return chalk.red('❌ Password is too long (max 128 characters)');
                     return true;
                 }
             },
             {
                 type: 'select',
                 name: 'role',
-                message: colors.cyan('🎭 What role should this user have?'),
+                message: chalk.cyan('🎭 What role should this user have?'),
                 choices: [
                     {
                         name: 'client',
@@ -138,7 +155,7 @@ async function createUser() {
             {
                 type: 'confirm',
                 name: 'isInitialized',
-                message: colors.cyan('✨ Should this user be fully initialized (ready to use)?'),
+                message: chalk.cyan('✨ Should this user be fully initialized (ready to use)?'),
                 initial: true
             }
         ]);
@@ -146,29 +163,53 @@ async function createUser() {
         // Check if user already exists with enhanced feedback
         const existingUser = await UserModel.findOne({ email: response.email });
         if (existingUser) {
-            console.log(colors.red('\n❌ A user with this email already exists!'));
-            console.log(colors.yellow(`   User: ${existingUser.name} (${existingUser.email})`));
+            console.log('\n' + boxen(
+                chalk.red('❌ User Already Exists') + '\n\n' +
+                chalk.yellow(`User: ${existingUser.name} (${existingUser.email})`),
+                {
+                    padding: 1,
+                    borderStyle: 'round',
+                    borderColor: 'red'
+                }
+            ));
             process.exit(1);
         }
 
-        // Show confirmation before creating user
-        console.log(colors.cyan('\n📋 User Creation Summary:'));
-        console.log(colors.gray('─'.repeat(40)));
-        console.log(colors.white(`   Name: ${colors.bold(response.name)}`));
-        console.log(colors.white(`   Email: ${colors.bold(response.email)}`));
-        console.log(colors.white(`   Role: ${getRoleDisplayName(response.role)}`));
-        console.log(colors.white(`   Initialized: ${response.isInitialized ? colors.green('✓ Yes') : colors.yellow('⚠ No (requires setup)')}`));
-        console.log(colors.gray('─'.repeat(40)));
+        // Show confirmation with beautiful table
+        console.log('\n' + chalk.cyan.bold('📋 User Creation Summary'));
+
+        const summaryTable = new Table({
+            colWidths: [15, 50],
+            style: {
+                border: ['gray']
+            }
+        });
+
+        summaryTable.push(
+            [chalk.blue('Name'), chalk.bold(response.name)],
+            [chalk.blue('Email'), chalk.bold(response.email)],
+            [chalk.blue('Role'), getRoleDisplayName(response.role)],
+            [chalk.blue('Initialized'), response.isInitialized ? chalk.green('✓ Yes') : chalk.yellow('⚠ No (requires setup)')]
+        );
+
+        console.log(summaryTable.toString());
 
         const confirmCreation = await enquirer.prompt<{ confirm: boolean }>({
             type: 'confirm',
             name: 'confirm',
-            message: colors.cyan('🚀 Proceed with user creation?'),
+            message: chalk.cyan('🚀 Proceed with user creation?'),
             initial: true
         });
 
         if (!confirmCreation.confirm) {
-            console.log(colors.yellow('\n⏹️  User creation cancelled'));
+            console.log('\n' + boxen(
+                chalk.yellow('⏹️  User creation cancelled'),
+                {
+                    padding: 1,
+                    borderStyle: 'round',
+                    borderColor: 'yellow'
+                }
+            ));
             return;
         }
 
@@ -181,59 +222,103 @@ async function createUser() {
             isInitialized: response.isInitialized
         };
 
-        // Create the user
+        // Create the user with spinner
+        const createSpinner = ora('Creating user...').start();
         const newUser = new UserModel(userData);
         const savedUser = await newUser.save();
+        createSpinner.succeed(chalk.green('User created successfully!'));
 
         // Ask if user wants to see the password
         const showPasswordPrompt = await enquirer.prompt<{ showPassword: boolean }>({
             type: 'confirm',
             name: 'showPassword',
-            message: colors.cyan('👁️  Would you like to display the password in the summary?'),
+            message: chalk.cyan('👁️  Would you like to display the password in the summary?'),
             initial: false
         });
 
-        // Success message with enhanced styling
-        console.log(colors.green('\n🎉 User created successfully!'));
-        console.log(colors.cyan('\n╔═══════════════════════════════════════╗'));
-        console.log(colors.cyan('║') + colors.bold.white('           USER DETAILS                ') + colors.cyan('║'));
-        console.log(colors.cyan('╠═══════════════════════════════════════╣'));
-        console.log(colors.cyan('║') + colors.white(` 📧 Email: ${savedUser.email}`.padEnd(38)) + colors.cyan('║'));
-        console.log(colors.cyan('║') + colors.white(` 👤 Name: ${savedUser.name}`.padEnd(38)) + colors.cyan('║'));
-        if (showPasswordPrompt.showPassword) {
-            console.log(colors.cyan('║') + colors.white(` 🔐 Password: ${response.password}`.padEnd(38)) + colors.cyan('║'));
-        }
-        console.log(colors.cyan('║') + ` 🎭 Role: ${getRoleDisplayName(response.role)}`.padEnd(47) + colors.cyan('║'));
-        console.log(colors.cyan('║') + colors.white(` ✨ Initialized: ${savedUser.isInitialized ? colors.green('Yes') : colors.yellow('No')}`.padEnd(47)) + colors.cyan('║'));
-        console.log(colors.cyan('║') + colors.white(` 🆔 User ID: ${savedUser._id}`.padEnd(38)) + colors.cyan('║'));
-        console.log(colors.cyan('╚═══════════════════════════════════════╝'));
+        // Success message with beautiful table
+        const userDetailsTable = new Table({
+            colWidths: [15, 50],
+            style: {
+                border: ['gray']
+            }
+        });
+
+        userDetailsTable.push(
+            [chalk.blue('Email'), savedUser.email],
+            [chalk.blue('Name'), savedUser.name],
+            ...(showPasswordPrompt.showPassword ? [[chalk.blue('Password'), response.password]] : []),
+            [chalk.blue('Role'), getRoleDisplayName(response.role)],
+            [chalk.blue('Initialized'), savedUser.isInitialized ? chalk.green('Yes') : chalk.yellow('No')],
+            [chalk.blue('User ID'), savedUser._id.toString()]
+        );
+
+        console.log('\n' + boxen(
+            chalk.green.bold('� User Created Successfully!') + '\n\n' + userDetailsTable.toString(),
+            {
+                padding: 1,
+                borderStyle: 'round',
+                borderColor: 'green'
+            }
+        ));
 
         if (!savedUser.isInitialized) {
-            console.log(colors.yellow('\n💡 This user will need to complete setup before they can log in.'));
-        } else {
-            console.log(colors.green('\n✅ User is ready to log in immediately!'));
+            console.log('\n' + boxen(
+                chalk.yellow('💡 This user will need to complete setup before they can log in.'),
+                {
+                    padding: 1,
+                    borderStyle: 'round',
+                    borderColor: 'yellow'
+                }
+            ));
         }
 
     } catch (error) {
         if (error instanceof Error && error.message === 'canceled') {
-            console.log(colors.yellow('\n⏹️  User creation cancelled by user'));
+            console.log('\n' + boxen(
+                chalk.yellow('⏹️  User creation cancelled by user'),
+                {
+                    padding: 1,
+                    borderStyle: 'round',
+                    borderColor: 'yellow'
+                }
+            ));
         } else {
-            console.log(colors.red('\n💥 Error creating user:'));
-            console.error(colors.red('   '), error);
+            console.log('\n' + boxen(
+                chalk.red('💥 Error creating user') + '\n\n' + chalk.red(String(error)),
+                {
+                    padding: 1,
+                    borderStyle: 'round',
+                    borderColor: 'red'
+                }
+            ));
         }
     } finally {
         await mongoose.disconnect();
-        console.log(colors.cyan('\n👋 Thanks for using the User Creation Wizard!\n'));
     }
 }
 
 // Handle command line execution with enhanced error handling
 createUser().catch(error => {
     if (error instanceof Error && error.message === 'canceled') {
-        console.log(colors.yellow('\n⏹️  User creation cancelled'));
+        console.log('\n' + boxen(
+            chalk.yellow('⏹️  User creation cancelled'),
+            {
+                padding: 1,
+                borderStyle: 'round',
+                borderColor: 'yellow'
+            }
+        ));
         return;
     }
-    console.error(colors.red('\n💥 Unexpected error:'), error);
+    console.log('\n' + boxen(
+        chalk.red('💥 Unexpected error') + '\n\n' + chalk.red(String(error)),
+        {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'red'
+        }
+    ));
     process.exit(1);
 });
 
