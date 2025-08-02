@@ -82,9 +82,9 @@ function logStep(message: string, type: 'start' | 'success' | 'error' = 'start')
 
 function printHeader() {
     const title = chalk.bold.cyan('🚀 USER CREATION WIZARD');
-    console.log('\n' + boxen(title, {
+    console.log(boxen(title, {
         padding: 1,
-        margin: 1,
+        margin: 0,
         borderStyle: 'round',
         borderColor: 'cyan',
         backgroundColor: 'black'
@@ -179,11 +179,12 @@ async function createUser() {
         // Check if user already exists with enhanced feedback
         const existingUser = await UserModel.findOne({ email: response.email });
         if (existingUser) {
-            console.log('\n' + boxen(
-                chalk.red('❌ User already exists') + '\n\n' +
+            console.log(boxen(
+                chalk.red('❌ User already exists') + '\n' +
                 chalk.yellow(`User: ${existingUser.name} (${existingUser.email})`),
                 {
                     padding: 1,
+                    margin: 0,
                     borderStyle: 'round',
                     borderColor: 'red'
                 }
@@ -218,10 +219,11 @@ async function createUser() {
         });
 
         if (!confirmCreation.confirm) {
-            console.log('\n' + boxen(
+            console.log(boxen(
                 chalk.yellow('⏹️  User creation cancelled'),
                 {
                     padding: 1,
+                    margin: 0,
                     borderStyle: 'round',
                     borderColor: 'yellow'
                 }
@@ -269,20 +271,22 @@ async function createUser() {
             [chalk.blue('User ID'), savedUser._id.toString()]
         );
 
-        console.log('\n' + boxen(
+        console.log(boxen(
             chalk.green.bold('✅ User created successfully!') + '\n\n' + userDetailsTable.toString(),
             {
                 padding: 1,
+                margin: 0,
                 borderStyle: 'round',
                 borderColor: 'green'
             }
         ));
 
         if (!savedUser.isInitialized) {
-            console.log('\n' + boxen(
+            console.log(boxen(
                 chalk.yellow('💡 This user will need to complete setup before they can log in.'),
                 {
                     padding: 1,
+                    margin: 0,
                     borderStyle: 'round',
                     borderColor: 'yellow'
                 }
@@ -291,19 +295,21 @@ async function createUser() {
 
     } catch (error) {
         if (error instanceof Error && error.message === 'canceled') {
-            console.log('\n' + boxen(
+            console.log(boxen(
                 chalk.yellow('⏹️  User creation cancelled by user'),
                 {
                     padding: 1,
+                    margin: 0,
                     borderStyle: 'round',
                     borderColor: 'yellow'
                 }
             ));
         } else {
-            console.log('\n' + boxen(
-                chalk.red('💥 Error creating user') + '\n\n' + chalk.red(String(error)),
+            console.log(boxen(
+                chalk.red('💥 Error creating user') + '\n' + chalk.red(String(error)),
                 {
                     padding: 1,
+                    margin: 0,
                     borderStyle: 'round',
                     borderColor: 'red'
                 }
@@ -317,20 +323,22 @@ async function createUser() {
 // Handle command line execution with enhanced error handling
 createUser().catch(error => {
     if (error instanceof Error && error.message === 'canceled') {
-        console.log('\n' + boxen(
+        console.log(boxen(
             chalk.yellow('⏹️  User creation cancelled'),
             {
                 padding: 1,
+                margin: 0,
                 borderStyle: 'round',
                 borderColor: 'yellow'
             }
         ));
         return;
     }
-    console.log('\n' + boxen(
-        chalk.red('💥 Unexpected error') + '\n\n' + chalk.red(String(error)),
+    console.log(boxen(
+        chalk.red('💥 Unexpected error') + '\n' + chalk.red(String(error)),
         {
             padding: 1,
+            margin: 0,
             borderStyle: 'round',
             borderColor: 'red'
         }
