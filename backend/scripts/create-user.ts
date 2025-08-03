@@ -77,7 +77,7 @@ async function connectToDatabase() {
 }
 
 async function createUser() {
-    printHeader('🚀 USER CREATION WIZARD', 'cyan');
+    printHeader('USER CREATION WIZARD', 'cyan');
     await connectToDatabase();
 
     try {
