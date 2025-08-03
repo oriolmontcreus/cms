@@ -83,7 +83,7 @@ async function updatePageRegistry(slug: string) {
     } catch (error) {
         logStep('Error updating page registry', 'error');
         printWarningBox(
-            '⚠️  Manual Update Required',
+            'Manual Update Required',
             chalk.white('Please manually add the following to src/lib/page-registry.ts:') + '\n\n' +
             chalk.cyan(`Import: `) + chalk.gray(`import { config as ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config } from '../pages/${slug}';`) + '\n' +
             chalk.cyan(`Config: `) + chalk.gray(`'${slug}': ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config,`)
@@ -92,7 +92,7 @@ async function updatePageRegistry(slug: string) {
 }
 
 async function createPage() {
-    printHeader('📄 PAGE CREATION WIZARD', 'magenta');
+    printHeader('PAGE CREATION WIZARD', 'magenta');
 
     try {
         // Helper function to convert title to slug
@@ -110,10 +110,10 @@ async function createPage() {
         const titleResponse = await enquirer.prompt<{ title: string }>({
             type: 'input',
             name: 'title',
-            message: chalk.cyan('📝 What is the title of your page?'),
+            message: chalk.cyan('What is the title of your page?'),
             validate: (value: string) => {
-                if (!value.trim()) return chalk.red('❌ Title is required');
-                if (value.trim().length < 2) return chalk.red('❌ Title must be at least 2 characters long');
+                if (!value.trim()) return chalk.red('Title is required');
+                if (value.trim().length < 2) return chalk.red('Title must be at least 2 characters long');
                 return true;
             },
             result: (value: string) => value.trim()
@@ -124,14 +124,14 @@ async function createPage() {
         const slugResponse = await enquirer.prompt<{ slug: string }>({
             type: 'input',
             name: 'slug',
-            message: chalk.cyan('🔗 What is the slug for the page URL? (e.g., "about" for /about)'),
+            message: chalk.cyan('What is the slug for the page URL? (e.g., "about" for /about)'),
             initial: suggestedSlug,
             validate: (value: string) => {
-                if (!value.trim()) return chalk.red('❌ Slug is required');
+                if (!value.trim()) return chalk.red('Slug is required');
                 if (!/^[a-z0-9-]+$/.test(value.trim())) {
-                    return chalk.red('❌ Slug must contain only lowercase letters, numbers, and hyphens');
+                    return chalk.red('Slug must contain only lowercase letters, numbers, and hyphens');
                 }
-                if (value.trim().length > 50) return chalk.red('❌ Slug is too long (max 50 characters)');
+                if (value.trim().length > 50) return chalk.red('Slug is too long (max 50 characters)');
                 return true;
             },
             result: (value: string) => value.trim().toLowerCase()
@@ -151,7 +151,7 @@ async function createPage() {
         try {
             await readFile(pageConfigPath, 'utf-8');
             printErrorBox(
-                '❌ Page already exists',
+                'Page already exists',
                 chalk.yellow(`A page with slug "${response.slug}" already exists at:` + '\n' +
                     chalk.gray(pageConfigPath))
             );
@@ -161,7 +161,7 @@ async function createPage() {
         }
 
         // Show confirmation with beautiful table
-        console.log('\n' + chalk.cyan.bold('📋 Page creation summary'));
+        console.log('\n' + chalk.cyan.bold('Page creation summary'));
 
         const summaryTable = new Table({
             colWidths: [15, 50],
@@ -182,7 +182,7 @@ async function createPage() {
         const confirmCreation = await enquirer.prompt<{ confirm: boolean }>({
             type: 'confirm',
             name: 'confirm',
-            message: chalk.cyan('🚀 Proceed with page creation?'),
+            message: chalk.cyan('Proceed with page creation?'),
             initial: true
         });
 
@@ -234,10 +234,10 @@ export const config: PageConfig = {
             [chalk.blue('Status'), chalk.green('Ready to use')]
         );
 
-        printSuccessBox('✅ Page created successfully!', detailsTable.toString());
+        printSuccessBox('Page created successfully!', detailsTable.toString());
 
         printInfoBox(
-            '💡 Next steps:',
+            'Next steps:',
             chalk.white('1. Use the ') + chalk.yellow('create-component') + chalk.white(' script to add form components to this page') + '\n' +
             chalk.white('2. Restart your CMS to see the new page in the interface') + '\n' +
             chalk.white('3. Visit ') + chalk.cyan(`/pages/${response.slug}`) + chalk.white(' in your CMS')
@@ -247,7 +247,7 @@ export const config: PageConfig = {
         if (error instanceof Error && error.message === 'canceled') {
             printCancelledBox('Page creation cancelled by user');
         } else {
-            printErrorBox('💥 Error creating page', String(error));
+            printErrorBox('Error creating page', String(error));
         }
     }
 }

@@ -4,10 +4,10 @@ import boxen from 'boxen';
 // Progress indication utilities for VS Code terminal compatibility
 export function logStep(message: string, type: 'start' | 'success' | 'error' | 'info' = 'start') {
     const icons = {
-        start: chalk.blue('◐'),
+        start: chalk.blue('>'),
         success: chalk.green('✓'),
-        error: chalk.red('✗'),
-        info: chalk.cyan('ℹ')
+        error: chalk.red('X'),
+        info: chalk.cyan('i')
     };
 
     const colors = {
@@ -26,8 +26,7 @@ export function printHeader(title: string, color: 'cyan' | 'magenta' | 'blue' | 
         padding: 1,
         margin: 0,
         borderStyle: 'round',
-        borderColor: color,
-        backgroundColor: 'black'
+        borderColor: color
     }));
 }
 
@@ -62,10 +61,8 @@ export function printWarningBox(title: string, content: string) {
         {
             padding: 1,
             margin: 0,
-            borderStyle: 'round',
-            borderColor: 'yellow',
-            textAlignment: 'left',
-            width: 78
+            borderStyle: 'single',
+            borderColor: 'yellow'
         }
     ));
 }
@@ -85,7 +82,7 @@ export function printInfoBox(title: string, content: string) {
 
 export function printCancelledBox(message: string = 'Operation cancelled') {
     console.log(boxen(
-        chalk.yellow(`⏹️  ${message}`),
+        chalk.yellow(`${message}`),
         {
             padding: 1,
             margin: 0,
@@ -101,6 +98,6 @@ export function handleScriptError(error: unknown, scriptName: string) {
         printCancelledBox(`${scriptName} cancelled`);
         return;
     }
-    printErrorBox('💥 Unexpected error', String(error));
+    printErrorBox('Unexpected error', String(error));
     process.exit(1);
 }
