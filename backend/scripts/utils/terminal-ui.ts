@@ -45,7 +45,7 @@ export function printSuccessBox(title: string, content: string) {
 
 export function printErrorBox(title: string, content: string) {
     console.log(boxen(
-        chalk.red.bold(title) + '\n' + chalk.red(content),
+        chalk.red.bold(title) + chalk.red(content),
         {
             padding: 1,
             margin: 0,
