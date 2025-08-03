@@ -94,10 +94,42 @@ export function printCancelledBox(message: string = 'Operation cancelled') {
 
 // Handle script execution errors with consistent styling
 export function handleScriptError(error: unknown, scriptName: string) {
-    if (error instanceof Error && error.message === 'canceled') {
+    // Debug log to understand the error structure
+    console.log('DEBUG - Error received:', { error, type: typeof error, message: error instanceof Error ? error.message : 'N/A' });
+
+    // Handle various cancellation scenarios
+    if (error instanceof Error) {
+        // Check for common cancellation patterns
+        if (error.message === 'canceled' ||
+            error.message.includes('canceled') ||
+            error.message.includes('cancelled') ||
+            error.name === 'ExitPromptError' ||
+            error.message.includes('User force closed the prompt') ||
+            error.message.includes('User interrupted the prompt') ||
+            error.message.includes('Prompt was cancelled')) {
+            printCancelledBox(`${scriptName} cancelled`);
+            return;
+        }
+
+        // Check for empty/undefined error message (common with Ctrl+C)
+        if (!error.message || error.message.trim() === '') {
+            printCancelledBox(`${scriptName} interrupted`);
+            return;
+        }
+    }
+
+    // Handle SIGINT (Ctrl+C) and other process interruptions
+    if (typeof error === 'string' && (error.includes('SIGINT') || error.includes('interrupted'))) {
+        printCancelledBox(`${scriptName} interrupted`);
+        return;
+    }
+
+    // Handle empty/null errors as cancellations
+    if (!error || error === '') {
         printCancelledBox(`${scriptName} cancelled`);
         return;
     }
-    printErrorBox('Unexpected error', String(error));
+
+    printErrorBox('Unexpected error', `\n${String(error)}`);
     process.exit(1);
 }

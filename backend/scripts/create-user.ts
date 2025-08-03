@@ -1,6 +1,5 @@
 import enquirer from 'enquirer';
 import chalk from 'chalk';
-import boxen from 'boxen';
 import Table from 'cli-table3';
 import { UserModel } from '../src/models/user.model.js';
 import { UserRegisterPayload } from '@shared/types/user.type.js';
@@ -152,16 +151,10 @@ async function createUser() {
         // Check if user already exists with enhanced feedback
         const existingUser = await UserModel.findOne({ email: response.email });
         if (existingUser) {
-            console.log(boxen(
-                chalk.red('❌ User already exists') + '\n' +
-                chalk.yellow(`User: ${existingUser.name} (${existingUser.email})`),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'red'
-                }
-            ));
+            printErrorBox(
+                '❌ User already exists',
+                `\nUser: ${existingUser.name} (${existingUser.email})`
+            );
             process.exit(1);
         }
 
@@ -192,15 +185,7 @@ async function createUser() {
         });
 
         if (!confirmCreation.confirm) {
-            console.log(boxen(
-                chalk.yellow('⏹️  User creation cancelled'),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'yellow'
-                }
-            ));
+            printCancelledBox('User creation cancelled');
             return;
         }
 
@@ -244,50 +229,26 @@ async function createUser() {
             [chalk.blue('User ID'), savedUser._id.toString()]
         );
 
-        console.log(boxen(
-            chalk.green.bold('✅ User created successfully!') + '\n\n' + userDetailsTable.toString(),
-            {
-                padding: 1,
-                margin: 0,
-                borderStyle: 'round',
-                borderColor: 'green'
-            }
-        ));
+        printSuccessBox(
+            '✅ User created successfully!',
+            userDetailsTable.toString()
+        );
 
         if (!savedUser.isInitialized) {
-            console.log(boxen(
-                chalk.yellow('💡 This user will need to complete setup before they can log in.'),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'yellow'
-                }
-            ));
+            printWarningBox(
+                '💡 Setup required',
+                'This user will need to complete setup before they can log in.'
+            );
         }
 
     } catch (error) {
-        if (error instanceof Error && error.message === 'canceled') {
-            console.log(boxen(
-                chalk.yellow('⏹️  User creation cancelled by user'),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'yellow'
-                }
-            ));
-        } else {
-            console.log(boxen(
-                chalk.red('💥 Error creating user') + chalk.red(String(error)),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'red'
-                }
-            ));
+        // Special handling for enquirer interruptions
+        if (!error || error === '' ||
+            (error instanceof Error && (!error.message || error.message.trim() === ''))) {
+            printCancelledBox('User creation cancelled');
+            return;
         }
+        handleScriptError(error, 'User creation');
     } finally {
         await mongoose.disconnect();
     }
@@ -295,28 +256,18 @@ async function createUser() {
 
 // Handle command line execution with enhanced error handling
 createUser().catch(error => {
-    if (error instanceof Error && error.message === 'canceled') {
-        console.log(boxen(
-            chalk.yellow('⏹️  User creation cancelled'),
-            {
-                padding: 1,
-                margin: 0,
-                borderStyle: 'round',
-                borderColor: 'yellow'
-            }
-        ));
-        return;
-    }
-    console.log(boxen(
-        chalk.red('💥 Unexpected error') + '\n' + chalk.red(String(error)),
-        {
-            padding: 1,
-            margin: 0,
-            borderStyle: 'round',
-            borderColor: 'red'
-        }
-    ));
-    process.exit(1);
+    handleScriptError(error, 'User creation');
+});
+
+// Handle process interruption gracefully
+process.on('SIGINT', () => {
+    printCancelledBox('User creation interrupted');
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    printCancelledBox('User creation terminated');
+    process.exit(0);
 });
 
 export { createUser };
