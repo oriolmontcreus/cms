@@ -12,7 +12,7 @@ interface PageConfig {
 }
 
 async function updatePageRegistry(slug: string) {
-    const registryPath = join(process.cwd(), '..', 'src', 'lib', 'page-registry.ts');
+    const registryPath = join(process.cwd(), '..', 'cms', 'src', 'lib', 'page-registry.ts');
 
     logStep('Updating page registry...');
     try {

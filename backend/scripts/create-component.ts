@@ -1,21 +1,22 @@
 import enquirer from 'enquirer';
+import chalk from 'chalk';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { printHeader, logStep, printSuccessBox, handleScriptError } from './utils/terminal-ui.js';
 
 async function createComponent() {
-    printHeader('⚙️ COMPONENT CREATION WIZARD', 'blue');
+    printHeader('COMPONENT CREATION WIZARD', 'blue');
 
     try {
         // Get component name
         const { componentName } = await enquirer.prompt<{ componentName: string }>({
             type: 'input',
             name: 'componentName',
-            message: 'What is the name of your component? (e.g., "UserInfo", "ProductDetails")',
+            message: chalk.cyan('What is the name of your component? (e.g., "UserInfo", "ProductDetails")'),
             validate: (value: string) => {
-                if (!value) return 'Component name is required';
+                if (!value) return chalk.red('Component name is required');
                 if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
-                    return 'Component name must start with uppercase letter and contain only letters and numbers';
+                    return chalk.red('Component name must start with uppercase letter and contain only letters and numbers');
                 }
                 return true;
             }
