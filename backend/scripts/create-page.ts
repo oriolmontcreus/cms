@@ -164,7 +164,7 @@ async function createPage() {
         console.log('\n' + chalk.cyan.bold('Page creation summary'));
 
         const summaryTable = new Table({
-            colWidths: [15, 50],
+            colWidths: [15, 80],
             style: {
                 border: ['gray']
             }
@@ -220,7 +220,7 @@ export const config: PageConfig = {
 
         // Success message with beautiful table
         const detailsTable = new Table({
-            colWidths: [15, 50],
+            colWidths: [15, 80],
             style: {
                 border: ['gray']
             }

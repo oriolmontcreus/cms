@@ -279,7 +279,7 @@ async function createUser() {
             ));
         } else {
             console.log(boxen(
-                chalk.red('💥 Error creating user') + '\n' + chalk.red(String(error)),
+                chalk.red('💥 Error creating user') + chalk.red(String(error)),
                 {
                     padding: 1,
                     margin: 0,
