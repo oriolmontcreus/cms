@@ -95,34 +95,52 @@ async function createPage() {
     printHeader('📄 PAGE CREATION WIZARD', 'magenta');
 
     try {
+        // Helper function to convert title to slug
+        const titleToSlug = (title: string): string => {
+            return title
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        };
+
         // Get basic page info with enhanced prompts
-        const response = await enquirer.prompt<{ title: string; slug: string }>([
-            {
-                type: 'input',
-                name: 'title',
-                message: chalk.cyan('📝 What is the title of your page?'),
-                validate: (value: string) => {
-                    if (!value.trim()) return chalk.red('❌ Title is required');
-                    if (value.trim().length < 2) return chalk.red('❌ Title must be at least 2 characters long');
-                    return true;
-                },
-                result: (value: string) => value.trim()
+        const titleResponse = await enquirer.prompt<{ title: string }>({
+            type: 'input',
+            name: 'title',
+            message: chalk.cyan('📝 What is the title of your page?'),
+            validate: (value: string) => {
+                if (!value.trim()) return chalk.red('❌ Title is required');
+                if (value.trim().length < 2) return chalk.red('❌ Title must be at least 2 characters long');
+                return true;
             },
-            {
-                type: 'input',
-                name: 'slug',
-                message: chalk.cyan('🔗 What is the slug for the page URL? (e.g., "about" for /about)'),
-                validate: (value: string) => {
-                    if (!value.trim()) return chalk.red('❌ Slug is required');
-                    if (!/^[a-z0-9-]+$/.test(value.trim())) {
-                        return chalk.red('❌ Slug must contain only lowercase letters, numbers, and hyphens');
-                    }
-                    if (value.trim().length > 50) return chalk.red('❌ Slug is too long (max 50 characters)');
-                    return true;
-                },
-                result: (value: string) => value.trim().toLowerCase()
-            }
-        ]);
+            result: (value: string) => value.trim()
+        });
+
+        const suggestedSlug = titleToSlug(titleResponse.title);
+
+        const slugResponse = await enquirer.prompt<{ slug: string }>({
+            type: 'input',
+            name: 'slug',
+            message: chalk.cyan('🔗 What is the slug for the page URL? (e.g., "about" for /about)'),
+            initial: suggestedSlug,
+            validate: (value: string) => {
+                if (!value.trim()) return chalk.red('❌ Slug is required');
+                if (!/^[a-z0-9-]+$/.test(value.trim())) {
+                    return chalk.red('❌ Slug must contain only lowercase letters, numbers, and hyphens');
+                }
+                if (value.trim().length > 50) return chalk.red('❌ Slug is too long (max 50 characters)');
+                return true;
+            },
+            result: (value: string) => value.trim().toLowerCase()
+        });
+
+        const response = {
+            title: titleResponse.title,
+            slug: slugResponse.slug
+        };
 
         // Create the pages directory if it doesn't exist first
         const pagesDir = join(process.cwd(), '..', 'src', 'pages');
