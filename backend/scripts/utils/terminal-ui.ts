@@ -38,7 +38,8 @@ export function printSuccessBox(title: string, content: string) {
             padding: 1,
             margin: 0,
             borderStyle: 'round',
-            borderColor: 'green'
+            borderColor: 'green',
+            textAlignment: 'left'
         }
     ));
 }
@@ -62,7 +63,9 @@ export function printWarningBox(title: string, content: string) {
             padding: 1,
             margin: 0,
             borderStyle: 'round',
-            borderColor: 'yellow'
+            borderColor: 'yellow',
+            textAlignment: 'left',
+            width: 78
         }
     ));
 }
@@ -74,7 +77,8 @@ export function printInfoBox(title: string, content: string) {
             padding: 1,
             margin: 0,
             borderStyle: 'round',
-            borderColor: 'cyan'
+            borderColor: 'cyan',
+            textAlignment: 'left'
         }
     ));
 }

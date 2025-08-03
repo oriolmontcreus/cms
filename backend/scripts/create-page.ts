@@ -12,7 +12,7 @@ interface PageConfig {
 }
 
 async function updatePageRegistry(slug: string) {
-    const registryPath = join(process.cwd(), '..', 'cms', 'src', 'lib', 'page-registry.ts');
+    const registryPath = join(process.cwd(), '..', 'src', 'lib', 'page-registry.ts');
 
     logStep('Updating page registry...');
     try {
@@ -125,7 +125,7 @@ async function createPage() {
         ]);
 
         // Create the pages directory if it doesn't exist first
-        const pagesDir = join(process.cwd(), '..', 'cms', 'src', 'pages');
+        const pagesDir = join(process.cwd(), '..', 'src', 'pages');
         await mkdir(pagesDir, { recursive: true });
 
         // Check if page already exists
