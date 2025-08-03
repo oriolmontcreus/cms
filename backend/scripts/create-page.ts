@@ -219,7 +219,7 @@ export const config: PageConfig = {
         printSuccessBox('✅ Page created successfully!', detailsTable.toString());
 
         printInfoBox(
-            '💡 Next Steps:',
+            '💡 Next steps:',
             chalk.white('1. Use the ') + chalk.yellow('create-component') + chalk.white(' script to add form components to this page') + '\n' +
             chalk.white('2. Restart your CMS to see the new page in the interface') + '\n' +
             chalk.white('3. Visit ') + chalk.cyan(`/pages/${response.slug}`) + chalk.white(' in your CMS')
