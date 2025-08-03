@@ -4,40 +4,11 @@ import boxen from 'boxen';
 import Table from 'cli-table3';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { logStep, printHeader, printSuccessBox, printErrorBox, printWarningBox, printInfoBox, printCancelledBox, handleScriptError } from './utils/terminal-ui.js';
 
 interface PageConfig {
     title: string;
     slug: string;
-}
-
-// Progress indication utilities for VS Code terminal compatibility
-function logStep(message: string, type: 'start' | 'success' | 'error' | 'info' = 'start') {
-    const icons = {
-        start: chalk.blue('◐'),
-        success: chalk.green('✓'),
-        error: chalk.red('✗'),
-        info: chalk.cyan('ℹ')
-    };
-
-    const colors = {
-        start: chalk.blue,
-        success: chalk.green,
-        error: chalk.red,
-        info: chalk.cyan
-    };
-
-    console.log(`${icons[type]} ${colors[type](message)}`);
-}
-
-function printHeader() {
-    const title = chalk.bold.magenta('📄 PAGE CREATION WIZARD');
-    console.log(boxen(title, {
-        padding: 1,
-        margin: 0,
-        borderStyle: 'round',
-        borderColor: 'magenta',
-        backgroundColor: 'black'
-    }));
 }
 
 async function updatePageRegistry(slug: string) {
@@ -111,23 +82,17 @@ async function updatePageRegistry(slug: string) {
         logStep('Page registry updated successfully', 'success');
     } catch (error) {
         logStep('Error updating page registry', 'error');
-        console.log(boxen(
-            chalk.yellow('⚠️  Manual Update Required') + '\n\n' +
+        printWarningBox(
+            '⚠️  Manual Update Required',
             chalk.white('Please manually add the following to src/lib/page-registry.ts:') + '\n\n' +
             chalk.cyan(`Import: `) + chalk.gray(`import { config as ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config } from '../pages/${slug}';`) + '\n' +
-            chalk.cyan(`Config: `) + chalk.gray(`'${slug}': ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config,`),
-            {
-                padding: 1,
-                margin: 0,
-                borderStyle: 'round',
-                borderColor: 'yellow'
-            }
-        ));
+            chalk.cyan(`Config: `) + chalk.gray(`'${slug}': ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config,`)
+        );
     }
 }
 
 async function createPage() {
-    printHeader();
+    printHeader('📄 PAGE CREATION WIZARD', 'magenta');
 
     try {
         // Get basic page info with enhanced prompts
@@ -167,17 +132,11 @@ async function createPage() {
         const pageConfigPath = join(pagesDir, `${response.slug}.ts`);
         try {
             await readFile(pageConfigPath, 'utf-8');
-            console.log(boxen(
-                chalk.red('❌ Page already exists') + '\n' +
+            printErrorBox(
+                '❌ Page already exists',
                 chalk.yellow(`A page with slug "${response.slug}" already exists at:` + '\n' +
-                    chalk.gray(pageConfigPath)),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'red'
-                }
-            ));
+                    chalk.gray(pageConfigPath))
+            );
             process.exit(1);
         } catch (error) {
             // File doesn't exist, which is what we want
@@ -210,15 +169,7 @@ async function createPage() {
         });
 
         if (!confirmCreation.confirm) {
-            console.log(boxen(
-                chalk.yellow('⏹️  Page creation cancelled'),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'yellow'
-                }
-            ));
+            printCancelledBox('Page creation cancelled');
             return;
         }
 
@@ -265,78 +216,25 @@ export const config: PageConfig = {
             [chalk.blue('Status'), chalk.green('Ready to use')]
         );
 
-        console.log(boxen(
-            chalk.green.bold('✅ Page created successfully!') + '\n\n' + detailsTable.toString(),
-            {
-                padding: 1,
-                margin: 0,
-                borderStyle: 'round',
-                borderColor: 'green'
-            }
-        ));
+        printSuccessBox('✅ Page created successfully!', detailsTable.toString());
 
-        console.log(boxen(
-            chalk.cyan('💡 Next Steps:') + '\n\n' +
+        printInfoBox(
+            '💡 Next Steps:',
             chalk.white('1. Use the ') + chalk.yellow('create-component') + chalk.white(' script to add form components to this page') + '\n' +
             chalk.white('2. Restart your CMS to see the new page in the interface') + '\n' +
-            chalk.white('3. Visit ') + chalk.cyan(`/pages/${response.slug}`) + chalk.white(' in your CMS'),
-            {
-                padding: 1,
-                margin: 0,
-                borderStyle: 'round',
-                borderColor: 'cyan'
-            }
-        ));
+            chalk.white('3. Visit ') + chalk.cyan(`/pages/${response.slug}`) + chalk.white(' in your CMS')
+        );
 
     } catch (error) {
         if (error instanceof Error && error.message === 'canceled') {
-            console.log(boxen(
-                chalk.yellow('⏹️  Page creation cancelled by user'),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'yellow'
-                }
-            ));
+            printCancelledBox('Page creation cancelled by user');
         } else {
-            console.log(boxen(
-                chalk.red('💥 Error creating page') + '\n' + chalk.red(String(error)),
-                {
-                    padding: 1,
-                    margin: 0,
-                    borderStyle: 'round',
-                    borderColor: 'red'
-                }
-            ));
+            printErrorBox('💥 Error creating page', String(error));
         }
     }
 }
 
 // Handle command line execution with enhanced error handling
-createPage().catch(error => {
-    if (error instanceof Error && error.message === 'canceled') {
-        console.log(boxen(
-            chalk.yellow('⏹️  Page creation cancelled'),
-            {
-                padding: 1,
-                margin: 0,
-                borderStyle: 'round',
-                borderColor: 'yellow'
-            }
-        ));
-        return;
-    }
-    console.log(boxen(
-        chalk.red('💥 Unexpected error') + '\n' + chalk.red(String(error)),
-        {
-            padding: 1,
-            margin: 0,
-            borderStyle: 'round',
-            borderColor: 'red'
-        }
-    ));
-    process.exit(1);
-});
+createPage().catch(error => handleScriptError(error, 'Page creation'));
 
 export { createPage }; 

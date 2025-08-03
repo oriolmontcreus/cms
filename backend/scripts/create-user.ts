@@ -6,6 +6,7 @@ import { UserModel } from '../src/models/user.model.js';
 import { UserRegisterPayload } from '@shared/types/user.type.js';
 import { Roles } from '@shared/constants/role.type.js';
 import mongoose from 'mongoose';
+import { logStep, printHeader, printSuccessBox, printErrorBox, printWarningBox, printInfoBox, printCancelledBox, handleScriptError } from './utils/terminal-ui.js';
 
 // Mongoose connection configuration (matching your main app config)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/froggy';
@@ -63,34 +64,6 @@ function getRoleDisplayName(role: string): string {
     return style.color(style.label);
 }
 
-// Progress indication utilities for VS Code terminal compatibility
-function logStep(message: string, type: 'start' | 'success' | 'error' = 'start') {
-    const icons = {
-        start: chalk.blue('◐'),
-        success: chalk.green('✓'),
-        error: chalk.red('✗')
-    };
-
-    const colors = {
-        start: chalk.blue,
-        success: chalk.green,
-        error: chalk.red
-    };
-
-    console.log(`${icons[type]} ${colors[type](message)}`);
-}
-
-function printHeader() {
-    const title = chalk.bold.cyan('🚀 USER CREATION WIZARD');
-    console.log(boxen(title, {
-        padding: 1,
-        margin: 0,
-        borderStyle: 'round',
-        borderColor: 'cyan',
-        backgroundColor: 'black'
-    }));
-}
-
 async function connectToDatabase() {
     logStep('Connecting to database...');
     try {
@@ -104,7 +77,7 @@ async function connectToDatabase() {
 }
 
 async function createUser() {
-    printHeader();
+    printHeader('🚀 USER CREATION WIZARD', 'cyan');
     await connectToDatabase();
 
     try {

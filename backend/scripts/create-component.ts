@@ -1,35 +1,47 @@
 import enquirer from 'enquirer';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { printHeader, logStep, printSuccessBox, handleScriptError } from './utils/terminal-ui.js';
 
 async function createComponent() {
-    // Get component name
-    const { componentName } = await enquirer.prompt<{ componentName: string }>({
-        type: 'input',
-        name: 'componentName',
-        message: 'What is the name of your component? (e.g., "UserInfo", "ProductDetails")',
-        validate: (value: string) => {
-            if (!value) return 'Component name is required';
-            if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
-                return 'Component name must start with uppercase letter and contain only letters and numbers';
+    printHeader('⚙️ COMPONENT CREATION WIZARD', 'blue');
+
+    try {
+        // Get component name
+        const { componentName } = await enquirer.prompt<{ componentName: string }>({
+            type: 'input',
+            name: 'componentName',
+            message: 'What is the name of your component? (e.g., "UserInfo", "ProductDetails")',
+            validate: (value: string) => {
+                if (!value) return 'Component name is required';
+                if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
+                    return 'Component name must start with uppercase letter and contain only letters and numbers';
+                }
+                return true;
             }
-            return true;
-        }
-    });
+        });
 
-    // Create components directory if it doesn't exist
-    const componentsDir = join(process.cwd(), '..', 'cms', 'src', 'components');
-    await mkdir(componentsDir, { recursive: true });
+        // Create components directory if it doesn't exist
+        logStep('Creating components directory...');
+        const componentsDir = join(process.cwd(), '..', 'cms', 'src', 'components');
+        await mkdir(componentsDir, { recursive: true });
+        logStep('Components directory ready', 'success');
 
-    // Generate component content
-    const componentContent = generateComponentContent(componentName);
+        // Generate component content
+        logStep('Generating component file...');
+        const componentContent = generateComponentContent(componentName);
 
-    const componentPath = join(componentsDir, `${componentName}.ts`);
-    await writeFile(componentPath, componentContent);
+        const componentPath = join(componentsDir, `${componentName}.ts`);
+        await writeFile(componentPath, componentContent);
+        logStep('Component file created', 'success');
 
-    console.log(`✅ Component "${componentName}" created successfully!`);
-    console.log(`🔗 Component file created at: ${componentPath}`);
-    console.log('💡 You can now import and use this component in your pages.');
+        printSuccessBox(
+            '✅ Component created successfully!',
+            `Component "${componentName}" has been created at:\n${componentPath}`
+        );
+    } catch (error) {
+        handleScriptError(error, 'Component creation');
+    }
 }
 
 function generateComponentContent(componentName: string): string {
@@ -44,10 +56,5 @@ export const ${componentName}Component: Component = {
 `;
 }
 
-createComponent().catch(error => {
-    if (error instanceof Error && error.message === 'canceled') {
-        console.log('❌ Component creation cancelled');
-        return;
-    }
-    console.error('❌ Error creating component:', error);
-}); 
+// Handle command line execution
+createComponent().catch(error => handleScriptError(error, 'Component creation')); 
