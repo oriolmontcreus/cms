@@ -56,9 +56,6 @@
                                 🚀 Publish Site
                             {/if}
                         </Button>
-                        <Button onclick={() => goto("/pages/new")}
-                            >Create New Page</Button
-                        >
                     </div>
                 </div>
 
