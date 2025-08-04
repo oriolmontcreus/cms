@@ -22,7 +22,16 @@ async function updatePageRegistry(slug: string, parentSlug?: string) {
         // Convert slug to camelCase for the config variable name
         // For nested pages, we need to include the parent in the variable name
         const fullSlug = parentSlug ? `${parentSlug}/${slug}` : slug;
-        const configVarName = fullSlug.replace(/[/-]/g, (match) => match === '/' ? '' : match).replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
+        // Convert path segments and hyphens to camelCase: home/services/service-1 -> homeServicesService1Config
+        const configVarName = fullSlug
+            .split('/')
+            .map((segment, index) => {
+                // Convert kebab-case to camelCase for each segment, handling letters and numbers
+                const camelSegment = segment.replace(/-([a-z0-9])/gi, (_, char) => char.toUpperCase());
+                // Capitalize first letter of segments after the first one
+                return index === 0 ? camelSegment : camelSegment.charAt(0).toUpperCase() + camelSegment.slice(1);
+            })
+            .join('') + 'Config';
 
         const lines = registryContent.split('\n');
         let updatedLines = [...lines];
@@ -88,7 +97,16 @@ async function updatePageRegistry(slug: string, parentSlug?: string) {
     } catch (error) {
         logStep('Error updating page registry', 'error');
         const fullSlug = parentSlug ? `${parentSlug}/${slug}` : slug;
-        const configVarName = fullSlug.replace(/[/-]/g, (match) => match === '/' ? '' : match).replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
+        // Convert path segments and hyphens to camelCase: home/services/service-1 -> homeServicesService1Config
+        const configVarName = fullSlug
+            .split('/')
+            .map((segment, index) => {
+                // Convert kebab-case to camelCase for each segment, handling letters and numbers
+                const camelSegment = segment.replace(/-([a-z0-9])/gi, (_, char) => char.toUpperCase());
+                // Capitalize first letter of segments after the first one
+                return index === 0 ? camelSegment : camelSegment.charAt(0).toUpperCase() + camelSegment.slice(1);
+            })
+            .join('') + 'Config';
         const importPath = parentSlug ? `../pages/${parentSlug}/${slug}` : `../pages/${slug}`;
 
         printWarningBox(
@@ -128,85 +146,35 @@ async function createPage() {
             result: (value: string) => value.trim()
         });
 
-        // Ask if this is a child page
-        const isChildPageResponse = await enquirer.prompt<{ isChild: boolean }>({
-            type: 'confirm',
-            name: 'isChild',
-            message: chalk.cyan('Is this a child page of an existing page?'),
-            initial: false
-        });
+        console.log('\n' + chalk.gray('Page path examples:'));
+        console.log(chalk.gray('  • "about" - creates a top-level page'));
+        console.log(chalk.gray('  • "home/services" - creates services under home'));
+        console.log(chalk.gray('  • "products/software/enterprise" - creates deeply nested pages'));
+        console.log('');
 
-        let parentSlug: string | undefined;
-
-        if (isChildPageResponse.isChild) {
-            // Get list of existing pages for parent selection
-            try {
-                const existingPages: string[] = [];
-
-                // Read page registry to get existing pages
-                const registryPath = join(process.cwd(), 'src', 'lib', 'page-registry.ts');
-                const registryContent = await readFile(registryPath, 'utf-8');
-
-                // Extract page slugs from the registry content
-                const pageConfigRegex = /'([^']+)':\s*\w+Config/g;
-                let match;
-                while ((match = pageConfigRegex.exec(registryContent)) !== null) {
-                    const slug = match[1];
-                    // Only include top-level pages (no slashes) as potential parents
-                    if (!slug.includes('/')) {
-                        existingPages.push(slug);
-                    }
-                }
-
-                if (existingPages.length === 0) {
-                    printWarningBox(
-                        'No Parent Pages Found',
-                        chalk.white('No existing pages found to use as parent. Creating as top-level page.')
-                    );
-                } else {
-                    const parentResponse = await enquirer.prompt<{ parent: string }>({
-                        type: 'select',
-                        name: 'parent',
-                        message: chalk.cyan('Select the parent page:'),
-                        choices: existingPages.map(page => ({
-                            name: page,
-                            value: page
-                        }))
-                    });
-                    parentSlug = parentResponse.parent;
-                }
-            } catch (error) {
-                printWarningBox(
-                    'Could not read existing pages',
-                    chalk.white('Unable to read existing pages. Creating as top-level page.')
-                );
-            }
-        }
-
-        const suggestedSlug = titleToSlug(titleResponse.title);
-
-        const slugResponse = await enquirer.prompt<{ slug: string }>({
+        const pagePathResponse = await enquirer.prompt<{ pagePath: string }>({
             type: 'input',
-            name: 'slug',
-            message: chalk.cyan(parentSlug
-                ? `What is the slug for the child page? (will be ${parentSlug}/[slug])`
-                : 'What is the slug for the page URL? (e.g., "about" for /about)'
-            ),
-            initial: suggestedSlug,
+            name: 'pagePath',
+            message: chalk.cyan('Enter the full page path:'),
             validate: (value: string) => {
-                if (!value.trim()) return chalk.red('Slug is required');
-                if (!/^[a-z0-9-]+$/.test(value.trim())) {
-                    return chalk.red('Slug must contain only lowercase letters, numbers, and hyphens');
+                if (!value.trim()) return chalk.red('Page path is required');
+                const cleanPath = value.trim().replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
+                if (!/^[a-z0-9-/]+$/.test(cleanPath)) {
+                    return chalk.red('Page path must contain only lowercase letters, numbers, hyphens, and forward slashes');
                 }
-                if (value.trim().length > 50) return chalk.red('Slug is too long (max 50 characters)');
                 return true;
             },
-            result: (value: string) => value.trim().toLowerCase()
+            result: (value: string) => value.trim().replace(/^\/+|\/+$/g, '') // Clean up the path
         });
+
+        // Automatically detect if it's a child page based on the presence of slashes
+        const pathParts = pagePathResponse.pagePath.split('/');
+        const slug = pathParts[pathParts.length - 1]; // Last part is the slug
+        const parentSlug = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : undefined;
 
         const response = {
             title: titleResponse.title,
-            slug: slugResponse.slug,
+            slug: slug,
             parentSlug
         };
 
@@ -292,7 +260,13 @@ async function createPage() {
         };
 
         // Determine correct import path based on nesting level
-        const importPath = response.parentSlug ? '../../lib/components/form-builder/types' : '../lib/components/form-builder/types';
+        let importPath = '../lib/components/form-builder/types'; // Default for top-level pages
+        if (response.parentSlug) {
+            // Count the number of nesting levels in the parent slug
+            const nestingLevels = response.parentSlug.split('/').length + 1; // +1 for the current page
+            const relativePrefix = '../'.repeat(nestingLevels);
+            importPath = `${relativePrefix}lib/components/form-builder/types`;
+        }
 
         const configContent = `import type { PageConfig } from '${importPath}';
 
