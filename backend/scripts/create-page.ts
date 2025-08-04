@@ -9,23 +9,27 @@ import { logStep, printHeader, printSuccessBox, printErrorBox, printWarningBox, 
 interface PageConfig {
     title: string;
     slug: string;
+    parentSlug?: string;
 }
 
-async function updatePageRegistry(slug: string) {
-    const registryPath = join(process.cwd(), '..', 'cms', 'src', 'lib', 'page-registry.ts');
+async function updatePageRegistry(slug: string, parentSlug?: string) {
+    const registryPath = join(process.cwd(), 'src', 'lib', 'page-registry.ts');
 
     logStep('Updating page registry...');
     try {
         const registryContent = await readFile(registryPath, 'utf-8');
 
         // Convert slug to camelCase for the config variable name
-        const configVarName = slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
+        // For nested pages, we need to include the parent in the variable name
+        const fullSlug = parentSlug ? `${parentSlug}/${slug}` : slug;
+        const configVarName = fullSlug.replace(/[/-]/g, (match) => match === '/' ? '' : match).replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
 
         const lines = registryContent.split('\n');
         let updatedLines = [...lines];
 
-        // Find where to add the import (after the last import statement)
-        const importLine = `import { config as ${configVarName} } from '../pages/${slug}';`;
+        // For nested pages, import from the nested directory structure
+        const importPath = parentSlug ? `../pages/${parentSlug}/${slug}` : `../pages/${slug}`;
+        const importLine = `import { config as ${configVarName} } from '${importPath}';`;
         let lastImportIndex = -1;
 
         for (let i = 0; i < lines.length; i++) {
@@ -44,8 +48,9 @@ async function updatePageRegistry(slug: string) {
             }
         }
 
-        // Find where to add the config entry 
-        const configEntry = `    [${configVarName}.slug]: ${configVarName},`;
+        // Find where to add the config entry - use full slug as key for nested pages
+        const configKey = parentSlug ? `${parentSlug}/${slug}` : slug;
+        const configEntry = `    '${configKey}': ${configVarName},`;
         let configObjectEndIndex = -1;
         let lastConfigLineIndex = -1;
 
@@ -82,11 +87,15 @@ async function updatePageRegistry(slug: string) {
         logStep('Page registry updated successfully', 'success');
     } catch (error) {
         logStep('Error updating page registry', 'error');
+        const fullSlug = parentSlug ? `${parentSlug}/${slug}` : slug;
+        const configVarName = fullSlug.replace(/[/-]/g, (match) => match === '/' ? '' : match).replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
+        const importPath = parentSlug ? `../pages/${parentSlug}/${slug}` : `../pages/${slug}`;
+
         printWarningBox(
             'Manual Update Required',
             chalk.white('Please manually add the following to src/lib/page-registry.ts:') + '\n\n' +
-            chalk.cyan(`Import: `) + chalk.gray(`import { config as ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config } from '../pages/${slug}';`) + '\n' +
-            chalk.cyan(`Config: `) + chalk.gray(`'${slug}': ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config,`)
+            chalk.cyan(`Import: `) + chalk.gray(`import { config as ${configVarName} } from '${importPath}';`) + '\n' +
+            chalk.cyan(`Config: `) + chalk.gray(`'${fullSlug}': ${configVarName},`)
         );
     }
 }
@@ -119,12 +128,70 @@ async function createPage() {
             result: (value: string) => value.trim()
         });
 
+        // Ask if this is a child page
+        const isChildPageResponse = await enquirer.prompt<{ isChild: boolean }>({
+            type: 'confirm',
+            name: 'isChild',
+            message: chalk.cyan('Is this a child page of an existing page?'),
+            initial: false
+        });
+
+        let parentSlug: string | undefined;
+
+        if (isChildPageResponse.isChild) {
+            // Get list of existing pages for parent selection
+            try {
+                const existingPages: string[] = [];
+
+                // Read page registry to get existing pages
+                const registryPath = join(process.cwd(), 'src', 'lib', 'page-registry.ts');
+                const registryContent = await readFile(registryPath, 'utf-8');
+
+                // Extract page slugs from the registry content
+                const pageConfigRegex = /'([^']+)':\s*\w+Config/g;
+                let match;
+                while ((match = pageConfigRegex.exec(registryContent)) !== null) {
+                    const slug = match[1];
+                    // Only include top-level pages (no slashes) as potential parents
+                    if (!slug.includes('/')) {
+                        existingPages.push(slug);
+                    }
+                }
+
+                if (existingPages.length === 0) {
+                    printWarningBox(
+                        'No Parent Pages Found',
+                        chalk.white('No existing pages found to use as parent. Creating as top-level page.')
+                    );
+                } else {
+                    const parentResponse = await enquirer.prompt<{ parent: string }>({
+                        type: 'select',
+                        name: 'parent',
+                        message: chalk.cyan('Select the parent page:'),
+                        choices: existingPages.map(page => ({
+                            name: page,
+                            value: page
+                        }))
+                    });
+                    parentSlug = parentResponse.parent;
+                }
+            } catch (error) {
+                printWarningBox(
+                    'Could not read existing pages',
+                    chalk.white('Unable to read existing pages. Creating as top-level page.')
+                );
+            }
+        }
+
         const suggestedSlug = titleToSlug(titleResponse.title);
 
         const slugResponse = await enquirer.prompt<{ slug: string }>({
             type: 'input',
             name: 'slug',
-            message: chalk.cyan('What is the slug for the page URL? (e.g., "about" for /about)'),
+            message: chalk.cyan(parentSlug
+                ? `What is the slug for the child page? (will be ${parentSlug}/[slug])`
+                : 'What is the slug for the page URL? (e.g., "about" for /about)'
+            ),
             initial: suggestedSlug,
             validate: (value: string) => {
                 if (!value.trim()) return chalk.red('Slug is required');
@@ -139,20 +206,36 @@ async function createPage() {
 
         const response = {
             title: titleResponse.title,
-            slug: slugResponse.slug
+            slug: slugResponse.slug,
+            parentSlug
         };
 
         // Create the pages directory if it doesn't exist first
-        const pagesDir = join(process.cwd(), '..', 'src', 'pages');
+        const pagesDir = join(process.cwd(), 'src', 'pages');
         await mkdir(pagesDir, { recursive: true });
 
+        // For nested pages, create the parent directory structure
+        let pageConfigPath: string;
+        let targetDir: string;
+
+        if (response.parentSlug) {
+            // Create nested structure: pages/parent/child.ts
+            targetDir = join(pagesDir, response.parentSlug);
+            await mkdir(targetDir, { recursive: true });
+            pageConfigPath = join(targetDir, `${response.slug}.ts`);
+        } else {
+            // Create flat structure: pages/slug.ts
+            targetDir = pagesDir;
+            pageConfigPath = join(targetDir, `${response.slug}.ts`);
+        }
+
         // Check if page already exists
-        const pageConfigPath = join(pagesDir, `${response.slug}.ts`);
         try {
             await readFile(pageConfigPath, 'utf-8');
+            const fullSlug = response.parentSlug ? `${response.parentSlug}/${response.slug}` : response.slug;
             printErrorBox(
                 'Page already exists',
-                chalk.yellow(`A page with slug "${response.slug}" already exists at:` + '\n' +
+                chalk.yellow(`A page with slug "${fullSlug}" already exists at:` + '\n' +
                     chalk.gray(pageConfigPath))
             );
             process.exit(1);
@@ -170,11 +253,15 @@ async function createPage() {
             }
         });
 
+        const fullSlug = response.parentSlug ? `${response.parentSlug}/${response.slug}` : response.slug;
+        const displayPath = response.parentSlug ? `src/pages/${response.parentSlug}/${response.slug}.ts` : `src/pages/${response.slug}.ts`;
+
         summaryTable.push(
             [chalk.blue('Title'), chalk.bold(response.title)],
             [chalk.blue('Slug'), chalk.bold(response.slug)],
-            [chalk.blue('URL'), chalk.cyan(`/pages/${response.slug}`)],
-            [chalk.blue('File path'), chalk.gray(`src/pages/${response.slug}.ts`)]
+            [chalk.blue('Parent'), response.parentSlug ? chalk.bold(response.parentSlug) : chalk.gray('None (top-level)')],
+            [chalk.blue('Full URL'), chalk.cyan(`/pages/${fullSlug}`)],
+            [chalk.blue('File path'), chalk.gray(displayPath)]
         );
 
         console.log(summaryTable.toString());
@@ -200,14 +287,18 @@ async function createPage() {
         logStep('Creating page configuration file...');
         const pageConfig: PageConfig = {
             title: response.title,
-            slug: response.slug
+            slug: response.slug,
+            parentSlug: response.parentSlug
         };
 
-        const configContent = `import type { PageConfig } from '../lib/components/form-builder/types';
+        // Determine correct import path based on nesting level
+        const importPath = response.parentSlug ? '../../lib/components/form-builder/types' : '../lib/components/form-builder/types';
+
+        const configContent = `import type { PageConfig } from '${importPath}';
 
 export const config: PageConfig = {
     title: "${pageConfig.title}",
-    slug: "${pageConfig.slug}",
+    slug: "${pageConfig.slug}",${pageConfig.parentSlug ? `\n    parentSlug: "${pageConfig.parentSlug}",` : ''}
     components: []
 };
 `;
@@ -216,7 +307,7 @@ export const config: PageConfig = {
         logStep('Page configuration file created', 'success');
 
         // Update the page registry AFTER creating the page file
-        await updatePageRegistry(response.slug);
+        await updatePageRegistry(response.slug, response.parentSlug);
 
         // Success message with beautiful table
         const detailsTable = new Table({
@@ -226,9 +317,13 @@ export const config: PageConfig = {
             }
         });
 
+        const finalSlug = response.parentSlug ? `${response.parentSlug}/${response.slug}` : response.slug;
+
         detailsTable.push(
             [chalk.blue('Title'), response.title],
             [chalk.blue('Slug'), response.slug],
+            [chalk.blue('Parent'), response.parentSlug || chalk.gray('None (top-level)')],
+            [chalk.blue('Full Path'), finalSlug],
             [chalk.blue('File'), chalk.gray(pageConfigPath)],
             [chalk.blue('Registry'), chalk.green('Updated')],
             [chalk.blue('Status'), chalk.green('Ready to use')]
@@ -240,7 +335,7 @@ export const config: PageConfig = {
             'Next steps:',
             chalk.white('1. Use the ') + chalk.yellow('create-component') + chalk.white(' script to add form components to this page') + '\n' +
             chalk.white('2. Restart your CMS to see the new page in the interface') + '\n' +
-            chalk.white('3. Visit ') + chalk.cyan(`/pages/${response.slug}`) + chalk.white(' in your CMS')
+            chalk.white('3. Visit ') + chalk.cyan(`/pages/${finalSlug}`) + chalk.white(' in your CMS')
         );
 
     } catch (error) {
