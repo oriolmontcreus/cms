@@ -32,9 +32,7 @@
 
     onMount(async () => {
         pages = await handleGetPages();
-        console.log("Pages received:", pages); // Debug log
         pageTree = buildPageTree(pages);
-        console.log("Page tree built:", pageTree); // Debug log
         loading = false;
     });
 
@@ -56,7 +54,7 @@
             const node = nodeMap.get(page.slug)!;
 
             if (page.parentSlug) {
-                // Find parent node by parentSlug
+                // Find parent node by parentSlug (not by full slug)
                 const parentNode = nodeMap.get(page.parentSlug);
                 if (parentNode) {
                     parentNode.children.push(node);
@@ -80,7 +78,7 @@
     }
 
     function getFullSlug(page: Page): string {
-        return page.parentSlug ? `${page.parentSlug}/${page.slug}` : page.slug;
+        return page.slug;
     }
 
     function handlePageClick(page: Page) {

@@ -22,7 +22,7 @@ async function getExistingPagesData(): Promise<Page[]> {
     }
 }
 
-function configToPageDTO(config: any, slug: string, existingPage?: Page): Page {
+function configToPageDTO(config: any, fullSlug: string, existingPage?: Page): Page {
     const components: Component[] = config.components.map((comp: any) => {
         // Find existing component data
         const existingComponent = existingPage?.components?.find((c: Component) => c.instanceId === comp.id);
@@ -36,9 +36,9 @@ function configToPageDTO(config: any, slug: string, existingPage?: Page): Page {
     });
 
     return {
-        _id: existingPage?._id || slug,
+        _id: existingPage?._id || fullSlug,
         title: config.title,
-        slug: config.slug,
+        slug: fullSlug, // Use the full slug (e.g., "home/services") instead of config.slug
         parentSlug: config.parentSlug,
         content: existingPage?.content || "",
         config: config,
