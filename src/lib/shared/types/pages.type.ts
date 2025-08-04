@@ -7,8 +7,13 @@ export interface Component {
 }
 
 export interface Page {
+    _id: string;
     slug: string;
-    title?: string;
+    title: string;
+    parentSlug?: string;
+    content?: string;
     config?: any;
     components: Component[];
+    createdAt: string;
+    updatedAt: string;
 }
