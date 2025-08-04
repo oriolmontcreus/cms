@@ -20,6 +20,7 @@ export interface GridLayout {
         lg?: number; // Columns on large screens
     };
     schema: FormField[]; // Fields contained in this grid
+    hidden?: boolean; // Whether this grid should be hidden from rendering
 }
 
 export interface TabsLayout {
@@ -55,6 +56,7 @@ export interface Tab {
     label: string;
     icon?: any;
     schema: SchemaItem[];
+    hidden?: boolean; // Whether this tab should be hidden from rendering
 }
 
 export interface TabsContainer {
@@ -62,6 +64,7 @@ export interface TabsContainer {
     name: string;
     tabs: Tab[];
     activeTab?: string;
+    hidden?: boolean; // Whether this tabs container should be hidden from rendering
 }
 
 export interface TabBuilder {
@@ -69,6 +72,7 @@ export interface TabBuilder {
     label(text: string): TabBuilder;
     icon(iconComponent: any): TabBuilder;
     schema(fields: SchemaItem[]): TabBuilder;
+    hidden(isHidden?: boolean): TabBuilder;
     toJSON(): Tab;
 }
 
@@ -76,6 +80,7 @@ export interface TabsBuilder {
     make(name: string): TabsBuilder;
     tabs(tabsArray: (Tab | TabBuilder)[]): TabsBuilder;
     activeTab(tabName: string): TabsBuilder;
+    hidden(isHidden?: boolean): TabsBuilder;
     toJSON(): TabsContainer;
 }
 
@@ -131,6 +136,8 @@ export interface FormField {
     tab?: string; // Tab name this field belongs to
     // Translation properties
     translatable?: boolean; // Whether this field supports translations
+    // Visibility properties
+    hidden?: boolean; // Whether this field should be hidden from rendering
 }
 
 // Type for FieldBuilder instances (for better type checking)
@@ -171,6 +178,7 @@ export interface FieldBuilder {
     tab(tabName: string): FieldBuilder;
     responsiveGrid(columns?: number, gap?: number, responsive?: { sm?: number; md?: number; lg?: number }): FieldBuilder;
     translatable(isTranslatable?: boolean): FieldBuilder;
+    hidden(isHidden?: boolean): FieldBuilder;
 }
 
 // Schema item can be either a field, field builder, tabs container, or grid layout

@@ -267,12 +267,23 @@ export function initializeTranslationDataOptimized(
  * Filter schema by mode efficiently
  */
 export function filterSchemaByModeOptimized(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
+    // First filter out hidden items for all modes
+    const visibleSchema = schema.filter(item => {
+        const field = toFormField(item);
+        if (field) return !field.hidden;
+        // Check for hidden structural elements
+        if (item && typeof item === 'object' && 'type' in item && 'hidden' in item) {
+            return !item.hidden;
+        }
+        return true; // Other items that don't have hidden property
+    });
+
     if (mode === RenderMode.CONTENT) {
-        return schema;
+        return visibleSchema;
     }
 
     // Translation mode - only include items with translatable content
-    return schema.filter(item => hasTranslatableContent(item));
+    return visibleSchema.filter(item => hasTranslatableContent(item));
 }
 
 function hasTranslatableContent(item: SchemaItem): boolean {
@@ -280,23 +291,23 @@ function hasTranslatableContent(item: SchemaItem): boolean {
 
     // Handle containers
     if ('type' in item) {
-        if (item.type === SCHEMA_TYPES.GRID && 'schema' in item) {
+        if (item.type === SCHEMA_TYPES.GRID && 'schema' in item && !item.hidden) {
             return (item.schema as FormField[]).some(f =>
-                f.translatable === true ||
-                (f.type === 'repeater' && f.schema && hasTranslatableFieldsInSchema(f.schema))
+                !f.hidden && (f.translatable === true ||
+                    (f.type === 'repeater' && f.schema && hasTranslatableFieldsInSchema(f.schema)))
             );
         }
 
-        if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
+        if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item && !item.hidden) {
             return (item as TabsContainer).tabs.some(tab =>
-                tab.schema.some(schemaItem => hasTranslatableContent(schemaItem))
+                !tab.hidden && tab.schema.some(schemaItem => hasTranslatableContent(schemaItem))
             );
         }
     }
 
     // Handle individual fields
     const field = toFormField(item);
-    if (field) {
+    if (field && !field.hidden) {
         if (field.translatable === true) return true;
 
         if (field.type === 'repeater' && field.schema) {

@@ -363,16 +363,28 @@ function getDefaultValue(field: FormField) {
  * In content mode, shows all fields
  */
 export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
+    // First filter out hidden items for all modes
+    const visibleSchema = schema.filter(item => {
+        const field = convertToFormField(item);
+        if (field) return !field.hidden;
+        // Check for hidden structural elements
+        if (item && typeof item === 'object' && 'type' in item && 'hidden' in item) {
+            return !item.hidden;
+        }
+        return true; // Other items that don't have hidden property
+    });
+
     if (mode === RenderMode.CONTENT) {
-        return schema;
+        return visibleSchema;
     }
 
     // Translation mode - filter to only translatable fields
-    return schema.filter(item => {
+    return visibleSchema.filter(item => {
         // First check for non-field items like grids, tabs, etc.
         if (item && typeof item === 'object' && 'type' in item) {
             if (item.type === SCHEMA_TYPES.GRID && 'schema' in item) {
                 const hasTranslatableFields = (item.schema as FormField[]).some(f => {
+                    if (f.hidden) return false; // Skip hidden fields
                     if (f.translatable === true) return true;
                     // Check if it's a repeater field with translatable nested content
                     if (f.type === 'repeater' && f.schema) {
@@ -385,6 +397,7 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
             }
             if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
                 const hasTranslatableFields = (item as TabsContainer).tabs.some(tab => {
+                    if (tab.hidden) return false; // Skip hidden tabs
                     const tabFiltered = filterSchemaByMode(tab.schema, mode);
                     return tabFiltered.length > 0;
                 });
@@ -418,12 +431,15 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
  * Filters fields within a grid or container based on render mode
  */
 export function filterFieldsByMode(fields: FormField[], mode: RenderMode): FormField[] {
+    //First filter out hidden fields regardless of mode
+    const visibleFields = fields.filter(field => !field.hidden);
+
     if (mode === RenderMode.CONTENT) {
-        return fields;
+        return visibleFields;
     }
 
     // Translation mode - only translatable fields
-    return fields.filter(field => field.translatable === true);
+    return visibleFields.filter(field => field.translatable === true);
 }
 
 /**

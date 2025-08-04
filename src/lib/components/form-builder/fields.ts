@@ -200,6 +200,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    hidden(isHidden: boolean = true): this {
+        this.field.hidden = isHidden;
+        return this;
+    }
+
     toJSON(): FormField { return this.field; }
     get type(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }
@@ -246,6 +251,11 @@ class TabBuilderImpl implements ITabBuilder {
         return this;
     }
 
+    hidden(isHidden: boolean = true): this {
+        this.tab.hidden = isHidden;
+        return this;
+    }
+
     toJSON(): Tab {
         return this.tab;
     }
@@ -275,6 +285,11 @@ class TabsBuilderImpl implements ITabsBuilder {
 
     activeTab(tabName: string): this {
         this.tabsContainer.activeTab = tabName;
+        return this;
+    }
+
+    hidden(isHidden: boolean = true): this {
+        this.tabsContainer.hidden = isHidden;
         return this;
     }
 
@@ -319,7 +334,8 @@ export function defineGrid(
     columns: number,
     gap: number,
     responsive?: { sm?: number; md?: number; lg?: number },
-    schema: FormField[]
+    schema: FormField[],
+    hidden?: boolean
 } {
     return {
         type: 'grid',
@@ -337,14 +353,20 @@ export function GridContainer(
 ) {
     const grid = defineGrid(columns, gap, responsive);
 
-    return {
+    const container = {
         ...grid,
-        add(...fields: (FormField | FieldBuilder)[]): typeof grid {
+        add(...fields: (FormField | FieldBuilder)[]) {
             fields.forEach(field => {
                 const formField = field instanceof FieldBuilder ? field.toJSON() : field;
                 grid.schema.push(formField);
             });
-            return grid;
+            return container;
+        },
+        hidden(isHidden: boolean = true) {
+            grid.hidden = isHidden;
+            return container;
         }
     };
+
+    return container;
 }

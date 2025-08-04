@@ -22,57 +22,58 @@ export const HeroComponent: Component = {
                     .label('Basic Settings')
                     .icon(SettingsIcon)
                     .schema([
-                        GridContainer(2, 4, { sm: 1, md: 2 }).add(
-                            TextInput('title2')
-                                .label('Secondary Title')
-                                .required()
-                                .min(3)
-                                .max(100)
-                                .placeholder('Enter the secondary title'),
+                        TextInput('title2')
+                            .label('Secondary Title')
+                            .required()
+                            .min(3)
+                            .max(100)
+                            .placeholder('Enter the secondary title'),
 
-                            TextInput('subtitle')
-                                .label('Subtitle')
-                                .placeholder('Enter a subtitle')
-                                .helperText('Appears below the main title')
-                                .translatable(),
+                        TextInput('subtitle')
+                            .label('Subtitle')
+                            .placeholder('Enter a subtitle')
+                            .helperText('Appears below the main title')
+                            .translatable(),
 
-                            FileInput('image')
-                                .label('Image')
-                                .helperText('Upload an image for the hero section')
-                                .allowedMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-                                .maxFileSize(1, 'mb')
-                        )
+                        FileInput('image')
+                            .label('Image')
+                            .helperText('Upload an image for the hero section')
+                            .allowedMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            .maxFileSize(1, 'mb')
                     ]),
 
                 TabField('styling')
                     .label('Styling Options')
                     .icon(PaletteIcon)
                     .schema([
-                        GridContainer(2, 4, { sm: 1, md: 2 }).add(
-                            ColorPicker('backgroundColor')
-                                .label('Background Color')
-                                .helperText('Choose the background color for the hero section'),
+                        ColorPicker('backgroundColor')
+                            .label('Background Color')
+                            .helperText('Choose the background color for the hero section'),
 
-                            ColorPicker('textColor')
-                                .label('Text Color')
-                                .helperText('Choose the text color for the hero section')
-                        )
+                        ColorPicker('textColor')
+                            .label('Text Color')
+                            .helperText('Choose the text color for the hero section')
                     ]),
 
                 TabField('settings')
                     .label('Advanced Settings')
                     .icon(WrenchIcon)
+                    .hidden() // This entire tab will be hidden
                     .schema([
-                        GridContainer(2, 4, { sm: 1, md: 2 }).add(
-                            Toggle('showButton')
-                                .label('Show Call-to-Action Button')
-                                .helperText('Display a button in the hero section'),
+                        Toggle('showButton')
+                            .label('Show Call-to-Action Button')
+                            .helperText('Display a button in the hero section'),
 
-                            Toggle('autoSave')
-                                .label('Auto Save')
-                                .helperText('Automatically save changes')
-                                .disabled()
-                        )
+                        Toggle('autoSave')
+                            .label('Auto Save')
+                            .helperText('Automatically save changes')
+                            .disabled(),
+
+                        TextInput('debugInfo')
+                            .label('Debug Information')
+                            .helperText('Internal debug information (hidden in production)')
+                            .placeholder('Debug data...')
+                            .hidden() // This field will be hidden from rendering
                     ]),
 
                 TabField('features')
@@ -104,7 +105,12 @@ export const HeroComponent: Component = {
 
                                 ColorPicker('accentColor')
                                     .label('Accent Color')
-                                    .helperText('Choose an accent color for this card')
+                                    .helperText('Choose an accent color for this card'),
+
+                                TextInput('debugField')
+                                    .label('Debug Field')
+                                    .placeholder('Debug info...')
+                                    .hidden() // This field within the repeater will be hidden
                             ])
                     ])
             ])

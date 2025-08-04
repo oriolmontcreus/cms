@@ -27,12 +27,16 @@
     $: filteredSchema = filterSchemaByModeOptimized(schema, mode);
 
     function isFormField(item: any): boolean {
-        return convertToFormField(item) !== null;
+        const field = convertToFormField(item);
+        return field !== null && !field.hidden;
     }
 
     function isGrid(item: any): boolean {
         return (
-            item && typeof item === "object" && item.type === SCHEMA_TYPES.GRID
+            item &&
+            typeof item === "object" &&
+            item.type === SCHEMA_TYPES.GRID &&
+            !item.hidden
         );
     }
 
@@ -40,7 +44,8 @@
         return (
             item &&
             typeof item === "object" &&
-            item.type === SCHEMA_TYPES.TABS_CONTAINER
+            item.type === SCHEMA_TYPES.TABS_CONTAINER &&
+            !item.hidden
         );
     }
 
@@ -77,28 +82,39 @@
 
         // Handle containers
         if ("type" in item) {
-            if (item.type === SCHEMA_TYPES.GRID && "schema" in item) {
+            if (
+                item.type === SCHEMA_TYPES.GRID &&
+                "schema" in item &&
+                !item.hidden
+            ) {
                 return (item.schema as FormField[]).some(
                     (f) =>
-                        f.translatable === true ||
-                        (f.type === "repeater" &&
-                            f.schema &&
-                            hasTranslatableFieldsInSchema(f.schema)),
+                        !f.hidden &&
+                        (f.translatable === true ||
+                            (f.type === "repeater" &&
+                                f.schema &&
+                                hasTranslatableFieldsInSchema(f.schema))),
                 );
             }
 
-            if (item.type === SCHEMA_TYPES.TABS_CONTAINER && "tabs" in item) {
-                return (item as TabsContainer).tabs.some((tab) =>
-                    tab.schema.some((schemaItem) =>
-                        hasTranslatableContent(schemaItem),
-                    ),
+            if (
+                item.type === SCHEMA_TYPES.TABS_CONTAINER &&
+                "tabs" in item &&
+                !item.hidden
+            ) {
+                return (item as TabsContainer).tabs.some(
+                    (tab) =>
+                        !tab.hidden &&
+                        tab.schema.some((schemaItem) =>
+                            hasTranslatableContent(schemaItem),
+                        ),
                 );
             }
         }
 
         // Handle individual fields
         const field = convertToFormField(item);
-        if (field) {
+        if (field && !field.hidden) {
             if (field.translatable === true) return true;
 
             if (field.type === "repeater" && field.schema) {
@@ -147,14 +163,17 @@
             />
         {:else if isTabsContainer(item)}
             {@const tabsContainer = item as TabsContainer}
+            {@const visibleTabs = tabsContainer.tabs.filter(
+                (tab) => !tab.hidden,
+            )}
             {@const filteredTabs =
                 mode === RenderMode.TRANSLATION
-                    ? tabsContainer.tabs.filter((tab) =>
+                    ? visibleTabs.filter((tab) =>
                           tab.schema.some((schemaItem) =>
                               hasTranslatableContent(schemaItem),
                           ),
                       )
-                    : tabsContainer.tabs}
+                    : visibleTabs}
 
             {#if filteredTabs.length > 0}
                 {@const defaultTab =
