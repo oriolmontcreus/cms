@@ -186,25 +186,15 @@ export type SchemaItem = FormField | FieldBuilder | TabsSelector | TabsContainer
 
 export interface Component {
     name: string;
-    schema: Layout | SchemaItem[]; // Can be a layout or mixed array of fields and placeholders
+    schema: SchemaItem[];
     tabs?: ComponentTab[]; // Component-level tab definitions
     activeTab?: string; // Name of the initially active tab
     validate?: (data: Record<string, any>) => string[];
     transform?: (data: Record<string, any>) => Record<string, any>;
 }
 
-// Interface for embeddable components that ensures schema is always an array
-export interface EmbeddableComponent {
-    name: string;
-    schema: SchemaItem[]; // Always an array for embedding
-    tabs?: ComponentTab[];
-    activeTab?: string;
-    validate?: (data: Record<string, any>) => string[];
-    transform?: (data: Record<string, any>) => Record<string, any>;
-}
-
 export interface ComponentInstance {
-    component: Component;
+    component: Component; // All components use the same interface now
     id: string; // Unique identifier for this instance
     displayName?: string; // Optional custom display name for this instance
 }

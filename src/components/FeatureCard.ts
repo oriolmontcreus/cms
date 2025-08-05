@@ -1,7 +1,7 @@
 import { TextInput, ColorPicker, FileInput } from '@/lib/components/form-builder/fields';
-import type { EmbeddableComponent } from '@/lib/components/form-builder/types';
+import type { Component } from '@/lib/components/form-builder/types';
 
-export const FeatureCard: EmbeddableComponent = {
+export const FeatureCard: Component = {
     name: 'FeatureCard',
     schema: [
         TextInput('title')

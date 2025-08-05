@@ -16,7 +16,8 @@ export const HeroComponent: Component = {
             .max(100)
             .placeholder('Enter the hero title')
             .helperText('This field is always visible regardless of the active tab')
-            .translatable(),
+            .translatable()
+            .toJSON(),
         Tabs('hero-tabs')
             .tabs([
                 TabField('basic')
