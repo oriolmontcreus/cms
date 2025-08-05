@@ -5,6 +5,9 @@ import LayersIcon from '@lucide/svelte/icons/layers';
 import { TextInput, ColorPicker, Toggle, Tabs, TabField, FileInput, Repeater, ComponentSchema } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 
+// Import FeatureCard to ensure its schema is registered before we use it
+import './FeatureCard';
+
 export const HeroComponent: Component = {
     name: 'Hero',
     schema: [

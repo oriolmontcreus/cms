@@ -224,8 +224,8 @@ export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 export const FileInput = (name: string) => new FieldBuilder('file', name);
 export const Repeater = (name: string) => new FieldBuilder('repeater', name);
 
-// Re-export ComponentSchema from the registry
-export { ComponentSchema } from './utils/componentSchemaRegistry';
+// Re-export ComponentSchema from the component registry
+export { ComponentSchema, registerComponentSchema } from './utils/component-registry';
 
 class TabBuilderImpl implements ITabBuilder {
     private tab: Tab;
