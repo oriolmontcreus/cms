@@ -1,7 +1,7 @@
-import { TextInput, ColorPicker, FileInput, registerComponentSchema } from '@/lib/components/form-builder/fields';
-import type { Component } from '@/lib/components/form-builder/types';
+import { TextInput, ColorPicker, FileInput } from '@/lib/components/form-builder/fields';
+import type { EmbeddableComponent } from '@/lib/components/form-builder/types';
 
-export const FeatureCardComponent: Component = {
+export const FeatureCard: EmbeddableComponent = {
     name: 'FeatureCard',
     schema: [
         TextInput('title')
@@ -28,6 +28,3 @@ export const FeatureCardComponent: Component = {
             .helperText('Choose an accent color for this card')
     ]
 };
-
-// Register the schema for reuse
-registerComponentSchema('FeatureCard', FeatureCardComponent.schema);

@@ -1,14 +1,15 @@
 import type { Component } from '@/lib/components/form-builder/types';
 import { ContactInfo } from './ContactInfo';
-import { FeatureCardComponent } from './FeatureCard';
-import { HeroComponent } from './Hero';
+import { FeatureCard } from './FeatureCard';
 
-// Registry of all available components
+// Registry of all available embeddable components
 export const COMPONENT_REGISTRY: Record<string, Component> = {
     'ContactInfo': ContactInfo,
-    'FeatureCard': FeatureCardComponent,
-    'Hero': HeroComponent
+    'FeatureCard': FeatureCard
 };
+
+// Export the embeddable components for direct use
+export { ContactInfo, FeatureCard };
 
 // Get all component names for selection
 export function getAvailableComponents(): string[] {

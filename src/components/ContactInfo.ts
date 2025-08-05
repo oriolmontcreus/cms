@@ -1,7 +1,7 @@
-import { TextInput, registerComponentSchema } from '@/lib/components/form-builder/fields';
-import type { Component } from '@/lib/components/form-builder/types';
+import { TextInput } from '@/lib/components/form-builder/fields';
+import type { EmbeddableComponent } from '@/lib/components/form-builder/types';
 
-export const ContactInfo: Component = {
+export const ContactInfo: EmbeddableComponent = {
     name: 'Contact information',
     schema: [
         TextInput('email')
@@ -12,6 +12,3 @@ export const ContactInfo: Component = {
             .placeholder('Enter the email address')
     ]
 };
-
-// Register the schema for reuse
-registerComponentSchema('ContactInfo', ContactInfo.schema);

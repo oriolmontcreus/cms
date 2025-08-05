@@ -2,11 +2,9 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import PaletteIcon from '@lucide/svelte/icons/palette';
 import WrenchIcon from '@lucide/svelte/icons/wrench';
 import LayersIcon from '@lucide/svelte/icons/layers';
-import { TextInput, ColorPicker, Toggle, Tabs, TabField, FileInput, Repeater, ComponentSchema } from '@/lib/components/form-builder/fields';
+import { TextInput, ColorPicker, Toggle, Tabs, TabField, FileInput, Repeater } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
-
-// Import FeatureCard to ensure its schema is registered before we use it
-import './FeatureCard';
+import { FeatureCard } from './FeatureCard';
 
 export const HeroComponent: Component = {
     name: 'Hero',
@@ -88,9 +86,7 @@ export const HeroComponent: Component = {
                             .helperText('Add feature cards to display in the hero section')
                             .contained()
                             .responsiveGrid(2, 4, { sm: 1, md: 2 })
-                            .schema([
-                                ...ComponentSchema('FeatureCard'),
-                            ])
+                            .schema(FeatureCard.schema)
                     ])
             ])
             .activeTab('basic')

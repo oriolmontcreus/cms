@@ -193,6 +193,16 @@ export interface Component {
     transform?: (data: Record<string, any>) => Record<string, any>;
 }
 
+// Interface for embeddable components that ensures schema is always an array
+export interface EmbeddableComponent {
+    name: string;
+    schema: SchemaItem[]; // Always an array for embedding
+    tabs?: ComponentTab[];
+    activeTab?: string;
+    validate?: (data: Record<string, any>) => string[];
+    transform?: (data: Record<string, any>) => Record<string, any>;
+}
+
 export interface ComponentInstance {
     component: Component;
     id: string; // Unique identifier for this instance
