@@ -118,13 +118,14 @@
                         localeTranslationData[translationKey] = {};
                     }
 
-                    const nestedFields = componentAnalysis.allFields.filter(
-                        (f) =>
-                            f.name.startsWith(repeaterField.name) &&
-                            f.translatable === true,
-                    );
+                    // Get nested translatable fields from the repeater's schema
+                    const analysis = getComponentAnalysis({
+                        schema: repeaterField.schema || [],
+                    });
+                    const nestedTranslatableFields =
+                        analysis.translatableFields;
 
-                    nestedFields.forEach((nestedField) => {
+                    nestedTranslatableFields.forEach((nestedField) => {
                         if (item[nestedField.name] !== undefined) {
                             localeTranslationData[translationKey][
                                 nestedField.name

@@ -499,4 +499,3 @@ export function convertTranslationDataForSaving(
 
     return convertedData;
 }
-
