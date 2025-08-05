@@ -13,7 +13,7 @@ async function getExistingPagesData(): Promise<Page[]> {
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache'
             }
-        });  
+        });
         if (!response.ok) throw new Error('Failed to fetch pages.json');
         return await response.json();
     } catch (error) {
@@ -22,11 +22,11 @@ async function getExistingPagesData(): Promise<Page[]> {
     }
 }
 
-function configToPageDTO(config: any, slug: string, existingPage?: Page): Page {
+function configToPageDTO(config: any, fullSlug: string, existingPage?: Page): Page {
     const components: Component[] = config.components.map((comp: any) => {
         // Find existing component data
         const existingComponent = existingPage?.components?.find((c: Component) => c.instanceId === comp.id);
-        
+
         return {
             componentName: comp.component.name,
             instanceId: comp.id,
@@ -36,9 +36,10 @@ function configToPageDTO(config: any, slug: string, existingPage?: Page): Page {
     });
 
     return {
-        _id: existingPage?._id || slug,
+        _id: existingPage?._id || fullSlug,
         title: config.title,
-        slug: config.slug,
+        slug: fullSlug, // Use the full slug (e.g., "home/services") instead of config.slug
+        parentSlug: config.parentSlug,
         content: existingPage?.content || "",
         config: config,
         components: components,
@@ -71,7 +72,7 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
 
     const existingPages = await getExistingPagesData();
     const existingPage = existingPages.find(p => p.slug === slug);
-    
+
     return configToPageDTO(config, slug, existingPage);
 }
 

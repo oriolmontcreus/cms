@@ -2,10 +2,12 @@ import type { PageConfig } from './components/form-builder/types';
 
 // Import all page configurations
 import { config as homeConfig } from '../pages/home';
+import { config as homeServicesConfig } from '../pages/home/services';
 
 // Page registry - add new pages here
 const pageConfigs: Record<string, PageConfig> = {
     'home': homeConfig,
+    'home/services': homeServicesConfig,
 };
 
 export function getPageConfig(slug: string): PageConfig | null {

@@ -25,8 +25,14 @@
 
     onMount(async () => {
         loading = true;
-        const slug = page.params.slug;
-        const [data, err] = await safeFetch(getPageBySlug(slug));
+        // Handle both single and nested slugs by joining the slug array
+        const slugParam = page.params.slug;
+        const fullSlug = Array.isArray(slugParam)
+            ? slugParam.join("/")
+            : slugParam;
+        console.log("Fetching page with slug:", fullSlug);
+
+        const [data, err] = await safeFetch(getPageBySlug(fullSlug));
         loading = false;
         if (data) {
             pageData = data;

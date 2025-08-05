@@ -9,23 +9,36 @@ import { logStep, printHeader, printSuccessBox, printErrorBox, printWarningBox, 
 interface PageConfig {
     title: string;
     slug: string;
+    parentSlug?: string;
 }
 
-async function updatePageRegistry(slug: string) {
-    const registryPath = join(process.cwd(), '..', 'cms', 'src', 'lib', 'page-registry.ts');
+async function updatePageRegistry(slug: string, parentSlug?: string) {
+    const registryPath = join(process.cwd(), 'src', 'lib', 'page-registry.ts');
 
     logStep('Updating page registry...');
     try {
         const registryContent = await readFile(registryPath, 'utf-8');
 
         // Convert slug to camelCase for the config variable name
-        const configVarName = slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase()) + 'Config';
+        // For nested pages, we need to include the parent in the variable name
+        const fullSlug = parentSlug ? `${parentSlug}/${slug}` : slug;
+        // Convert path segments and hyphens to camelCase: home/services/service-1 -> homeServicesService1Config
+        const configVarName = fullSlug
+            .split('/')
+            .map((segment, index) => {
+                // Convert kebab-case to camelCase for each segment, handling letters and numbers
+                const camelSegment = segment.replace(/-([a-z0-9])/gi, (_, char) => char.toUpperCase());
+                // Capitalize first letter of segments after the first one
+                return index === 0 ? camelSegment : camelSegment.charAt(0).toUpperCase() + camelSegment.slice(1);
+            })
+            .join('') + 'Config';
 
         const lines = registryContent.split('\n');
         let updatedLines = [...lines];
 
-        // Find where to add the import (after the last import statement)
-        const importLine = `import { config as ${configVarName} } from '../pages/${slug}';`;
+        // For nested pages, import from the nested directory structure
+        const importPath = parentSlug ? `../pages/${parentSlug}/${slug}` : `../pages/${slug}`;
+        const importLine = `import { config as ${configVarName} } from '${importPath}';`;
         let lastImportIndex = -1;
 
         for (let i = 0; i < lines.length; i++) {
@@ -44,8 +57,9 @@ async function updatePageRegistry(slug: string) {
             }
         }
 
-        // Find where to add the config entry 
-        const configEntry = `    [${configVarName}.slug]: ${configVarName},`;
+        // Find where to add the config entry - use full slug as key for nested pages
+        const configKey = parentSlug ? `${parentSlug}/${slug}` : slug;
+        const configEntry = `    '${configKey}': ${configVarName},`;
         let configObjectEndIndex = -1;
         let lastConfigLineIndex = -1;
 
@@ -82,11 +96,24 @@ async function updatePageRegistry(slug: string) {
         logStep('Page registry updated successfully', 'success');
     } catch (error) {
         logStep('Error updating page registry', 'error');
+        const fullSlug = parentSlug ? `${parentSlug}/${slug}` : slug;
+        // Convert path segments and hyphens to camelCase: home/services/service-1 -> homeServicesService1Config
+        const configVarName = fullSlug
+            .split('/')
+            .map((segment, index) => {
+                // Convert kebab-case to camelCase for each segment, handling letters and numbers
+                const camelSegment = segment.replace(/-([a-z0-9])/gi, (_, char) => char.toUpperCase());
+                // Capitalize first letter of segments after the first one
+                return index === 0 ? camelSegment : camelSegment.charAt(0).toUpperCase() + camelSegment.slice(1);
+            })
+            .join('') + 'Config';
+        const importPath = parentSlug ? `../pages/${parentSlug}/${slug}` : `../pages/${slug}`;
+
         printWarningBox(
             'Manual Update Required',
             chalk.white('Please manually add the following to src/lib/page-registry.ts:') + '\n\n' +
-            chalk.cyan(`Import: `) + chalk.gray(`import { config as ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config } from '../pages/${slug}';`) + '\n' +
-            chalk.cyan(`Config: `) + chalk.gray(`'${slug}': ${slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}Config,`)
+            chalk.cyan(`Import: `) + chalk.gray(`import { config as ${configVarName} } from '${importPath}';`) + '\n' +
+            chalk.cyan(`Config: `) + chalk.gray(`'${fullSlug}': ${configVarName},`)
         );
     }
 }
@@ -119,40 +146,64 @@ async function createPage() {
             result: (value: string) => value.trim()
         });
 
-        const suggestedSlug = titleToSlug(titleResponse.title);
+        console.log('\n' + chalk.gray('Page path examples:'));
+        console.log(chalk.gray('  • "about" - creates a top-level page'));
+        console.log(chalk.gray('  • "home/services" - creates services under home'));
+        console.log(chalk.gray('  • "products/software/enterprise" - creates deeply nested pages'));
+        console.log('');
 
-        const slugResponse = await enquirer.prompt<{ slug: string }>({
+        const pagePathResponse = await enquirer.prompt<{ pagePath: string }>({
             type: 'input',
-            name: 'slug',
-            message: chalk.cyan('What is the slug for the page URL? (e.g., "about" for /about)'),
-            initial: suggestedSlug,
+            name: 'pagePath',
+            message: chalk.cyan('Enter the full page path:'),
             validate: (value: string) => {
-                if (!value.trim()) return chalk.red('Slug is required');
-                if (!/^[a-z0-9-]+$/.test(value.trim())) {
-                    return chalk.red('Slug must contain only lowercase letters, numbers, and hyphens');
+                if (!value.trim()) return chalk.red('Page path is required');
+                const cleanPath = value.trim().replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
+                if (!/^[a-z0-9-/]+$/.test(cleanPath)) {
+                    return chalk.red('Page path must contain only lowercase letters, numbers, hyphens, and forward slashes');
                 }
-                if (value.trim().length > 50) return chalk.red('Slug is too long (max 50 characters)');
                 return true;
             },
-            result: (value: string) => value.trim().toLowerCase()
+            result: (value: string) => value.trim().replace(/^\/+|\/+$/g, '') // Clean up the path
         });
+
+        // Automatically detect if it's a child page based on the presence of slashes
+        const pathParts = pagePathResponse.pagePath.split('/');
+        const slug = pathParts[pathParts.length - 1]; // Last part is the slug
+        const parentSlug = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : undefined;
 
         const response = {
             title: titleResponse.title,
-            slug: slugResponse.slug
+            slug: slug,
+            parentSlug
         };
 
         // Create the pages directory if it doesn't exist first
-        const pagesDir = join(process.cwd(), '..', 'src', 'pages');
+        const pagesDir = join(process.cwd(), 'src', 'pages');
         await mkdir(pagesDir, { recursive: true });
 
+        // For nested pages, create the parent directory structure
+        let pageConfigPath: string;
+        let targetDir: string;
+
+        if (response.parentSlug) {
+            // Create nested structure: pages/parent/child.ts
+            targetDir = join(pagesDir, response.parentSlug);
+            await mkdir(targetDir, { recursive: true });
+            pageConfigPath = join(targetDir, `${response.slug}.ts`);
+        } else {
+            // Create flat structure: pages/slug.ts
+            targetDir = pagesDir;
+            pageConfigPath = join(targetDir, `${response.slug}.ts`);
+        }
+
         // Check if page already exists
-        const pageConfigPath = join(pagesDir, `${response.slug}.ts`);
         try {
             await readFile(pageConfigPath, 'utf-8');
+            const fullSlug = response.parentSlug ? `${response.parentSlug}/${response.slug}` : response.slug;
             printErrorBox(
                 'Page already exists',
-                chalk.yellow(`A page with slug "${response.slug}" already exists at:` + '\n' +
+                chalk.yellow(`A page with slug "${fullSlug}" already exists at:` + '\n' +
                     chalk.gray(pageConfigPath))
             );
             process.exit(1);
@@ -170,11 +221,15 @@ async function createPage() {
             }
         });
 
+        const fullSlug = response.parentSlug ? `${response.parentSlug}/${response.slug}` : response.slug;
+        const displayPath = response.parentSlug ? `src/pages/${response.parentSlug}/${response.slug}.ts` : `src/pages/${response.slug}.ts`;
+
         summaryTable.push(
             [chalk.blue('Title'), chalk.bold(response.title)],
             [chalk.blue('Slug'), chalk.bold(response.slug)],
-            [chalk.blue('URL'), chalk.cyan(`/pages/${response.slug}`)],
-            [chalk.blue('File path'), chalk.gray(`src/pages/${response.slug}.ts`)]
+            [chalk.blue('Parent'), response.parentSlug ? chalk.bold(response.parentSlug) : chalk.gray('None (top-level)')],
+            [chalk.blue('Full URL'), chalk.cyan(`/pages/${fullSlug}`)],
+            [chalk.blue('File path'), chalk.gray(displayPath)]
         );
 
         console.log(summaryTable.toString());
@@ -200,14 +255,24 @@ async function createPage() {
         logStep('Creating page configuration file...');
         const pageConfig: PageConfig = {
             title: response.title,
-            slug: response.slug
+            slug: response.slug,
+            parentSlug: response.parentSlug
         };
 
-        const configContent = `import type { PageConfig } from '../lib/components/form-builder/types';
+        // Determine correct import path based on nesting level
+        let importPath = '../lib/components/form-builder/types'; // Default for top-level pages
+        if (response.parentSlug) {
+            // Count the number of nesting levels in the parent slug
+            const nestingLevels = response.parentSlug.split('/').length + 1; // +1 for the current page
+            const relativePrefix = '../'.repeat(nestingLevels);
+            importPath = `${relativePrefix}lib/components/form-builder/types`;
+        }
+
+        const configContent = `import type { PageConfig } from '${importPath}';
 
 export const config: PageConfig = {
     title: "${pageConfig.title}",
-    slug: "${pageConfig.slug}",
+    slug: "${pageConfig.slug}",${pageConfig.parentSlug ? `\n    parentSlug: "${pageConfig.parentSlug}",` : ''}
     components: []
 };
 `;
@@ -216,7 +281,7 @@ export const config: PageConfig = {
         logStep('Page configuration file created', 'success');
 
         // Update the page registry AFTER creating the page file
-        await updatePageRegistry(response.slug);
+        await updatePageRegistry(response.slug, response.parentSlug);
 
         // Success message with beautiful table
         const detailsTable = new Table({
@@ -226,9 +291,13 @@ export const config: PageConfig = {
             }
         });
 
+        const finalSlug = response.parentSlug ? `${response.parentSlug}/${response.slug}` : response.slug;
+
         detailsTable.push(
             [chalk.blue('Title'), response.title],
             [chalk.blue('Slug'), response.slug],
+            [chalk.blue('Parent'), response.parentSlug || chalk.gray('None (top-level)')],
+            [chalk.blue('Full Path'), finalSlug],
             [chalk.blue('File'), chalk.gray(pageConfigPath)],
             [chalk.blue('Registry'), chalk.green('Updated')],
             [chalk.blue('Status'), chalk.green('Ready to use')]
@@ -240,7 +309,7 @@ export const config: PageConfig = {
             'Next steps:',
             chalk.white('1. Use the ') + chalk.yellow('create-component') + chalk.white(' script to add form components to this page') + '\n' +
             chalk.white('2. Restart your CMS to see the new page in the interface') + '\n' +
-            chalk.white('3. Visit ') + chalk.cyan(`/pages/${response.slug}`) + chalk.white(' in your CMS')
+            chalk.white('3. Visit ') + chalk.cyan(`/pages/${finalSlug}`) + chalk.white(' in your CMS')
         );
 
     } catch (error) {
