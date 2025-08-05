@@ -2,7 +2,7 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import PaletteIcon from '@lucide/svelte/icons/palette';
 import WrenchIcon from '@lucide/svelte/icons/wrench';
 import LayersIcon from '@lucide/svelte/icons/layers';
-import { TextInput, ColorPicker, Toggle, Tabs, TabField, GridContainer, FileInput, Repeater } from '@/lib/components/form-builder/fields';
+import { TextInput, ColorPicker, Toggle, Tabs, TabField, FileInput, Repeater, ComponentSchema } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 
 export const HeroComponent: Component = {
@@ -86,31 +86,7 @@ export const HeroComponent: Component = {
                             .contained()
                             .responsiveGrid(2, 4, { sm: 1, md: 2 })
                             .schema([
-                                TextInput('title')
-                                    .label('Card Title')
-                                    .required()
-                                    .placeholder('Enter card title')
-                                    .translatable(),
-
-                                TextInput('subtitle')
-                                    .label('Card Subtitle')
-                                    .placeholder('Enter card subtitle')
-                                    .translatable(),
-
-                                FileInput('icon')
-                                    .label('Card Icon')
-                                    .helperText('Upload an icon for this feature card')
-                                    .allowedMimeTypes(['image/svg+xml', 'image/png'])
-                                    .maxFileSize(100, 'kb'),
-
-                                ColorPicker('accentColor')
-                                    .label('Accent Color')
-                                    .helperText('Choose an accent color for this card'),
-
-                                TextInput('debugField')
-                                    .label('Debug Field')
-                                    .placeholder('Debug info...')
-                                    .hidden() // This field within the repeater will be hidden
+                                ...ComponentSchema('FeatureCard'),
                             ])
                     ])
             ])
