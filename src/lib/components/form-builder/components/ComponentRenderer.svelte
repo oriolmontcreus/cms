@@ -4,14 +4,7 @@
     import UnifiedRenderer from "./UnifiedRenderer.svelte";
     import TranslationModeWrapper from "./TranslationModeWrapper.svelte";
     import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
-    import GridLayout from "../layouts/GridLayout.svelte";
-    import TabsLayout from "../layouts/TabsLayout.svelte";
-    import {
-        usesFilamentTabsOptimized,
-        usesMixedSchemaOptimized,
-        getComponentAnalysis,
-    } from "../utils/optimizedSchemaProcessor";
-    import { CSS_CLASSES, SCHEMA_TYPES } from "../constants";
+    import { CSS_CLASSES } from "../constants";
 
     export let componentInstance: any;
     export let formData: FormData;
