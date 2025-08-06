@@ -14,6 +14,7 @@
         usesFilamentTabsOptimized as usesFilamentTabs,
         usesMixedSchemaOptimized as usesMixedSchema,
         getComponentAnalysis,
+        getFieldDefaultValue,
     } from "../utils/optimizedSchemaProcessor";
     import { CSS_CLASSES, SCHEMA_TYPES } from "../constants";
     import { CMS_LOCALE } from "@/lib/shared/env";
@@ -60,11 +61,12 @@
             const mergedData = { ...contentData };
 
             regularTranslatableFields.forEach((field) => {
-                if (
-                    field.type !== "repeater" &&
-                    localeTranslationData[field.name] !== undefined
-                ) {
-                    mergedData[field.name] = localeTranslationData[field.name];
+                if (field.type !== "repeater") {
+                    // For non-default locales, use translation data or empty string for translatable fields
+                    mergedData[field.name] =
+                        localeTranslationData[field.name] !== undefined
+                            ? localeTranslationData[field.name]
+                            : getFieldDefaultValue(field);
                 }
             });
 
@@ -77,7 +79,39 @@
                             const itemTranslations =
                                 localeTranslationData[translationKey] || {};
 
-                            return { ...item, ...itemTranslations };
+                            // For nested translatable fields, use translation or default value
+                            const translatedItem = { ...item };
+
+                            // Get translatable fields from the repeater's schema
+                            const nestedTranslatableFields =
+                                componentAnalysis.allFields.filter(
+                                    (f) =>
+                                        f.translatable === true &&
+                                        repeaterField.schema?.some(
+                                            (schemaField) => {
+                                                const convertedField =
+                                                    typeof schemaField ===
+                                                        "object" &&
+                                                    "name" in schemaField
+                                                        ? schemaField
+                                                        : null;
+                                                return (
+                                                    convertedField?.name ===
+                                                    f.name
+                                                );
+                                            },
+                                        ),
+                                );
+
+                            nestedTranslatableFields.forEach((nestedField) => {
+                                translatedItem[nestedField.name] =
+                                    itemTranslations[nestedField.name] !==
+                                    undefined
+                                        ? itemTranslations[nestedField.name]
+                                        : getFieldDefaultValue(nestedField);
+                            });
+
+                            return translatedItem;
                         },
                     );
                     mergedData[repeaterField.name] = translatedItems;
