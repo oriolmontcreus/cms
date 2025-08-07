@@ -25,15 +25,10 @@
     export let locales: readonly { code: string; name: string }[] = [];
 
     $: componentAnalysis = getComponentAnalysis(componentInstance.component);
-    $: regularTranslatableFields = componentAnalysis.translatableFields;
-    $: repeaterFieldsWithTranslatableContent =
-        componentAnalysis.repeaterFields.filter(
-            (f) =>
-                f.schema &&
-                componentAnalysis.allFields.some(
-                    (af) => af.translatable === true,
-                ),
-        );
+    $: regularTranslatableFields = componentAnalysis.translatableFields.filter(
+        (f) => f.type !== "repeater",
+    );
+    $: repeaterFieldsWithTranslatableContent = componentAnalysis.repeaterFields;
     $: hasTranslatableContent =
         regularTranslatableFields.length > 0 ||
         repeaterFieldsWithTranslatableContent.length > 0;
@@ -51,65 +46,134 @@
 
     let localeFormData: Record<string, any> = {};
 
+    // Simple approach: just work with the existing translation structure
     $: {
-        if (activeLocale === CMS_LOCALE) {
-            localeFormData = formData[componentInstance.id] || {};
+        const contentData = formData[componentInstance.id] || {};
+        const isDefaultLocale = activeLocale === CMS_LOCALE;
+
+        if (isDefaultLocale) {
+            localeFormData = contentData;
         } else {
-            const contentData = formData[componentInstance.id] || {};
-            const localeTranslationData =
-                translationData[componentInstance.id]?.[activeLocale] || {};
+            // Get translations from the legacy format
+            const translations = contentData.translations?.[activeLocale] || {};
             const mergedData = { ...contentData };
 
+            // Apply translations for regular translatable fields
             regularTranslatableFields.forEach((field) => {
-                if (field.type !== "repeater") {
-                    // For non-default locales, use translation data or empty string for translatable fields
-                    mergedData[field.name] =
-                        localeTranslationData[field.name] !== undefined
-                            ? localeTranslationData[field.name]
-                            : getFieldDefaultValue(field);
+                if (translations[field.name] !== undefined) {
+                    mergedData[field.name] = translations[field.name];
+                } else {
+                    mergedData[field.name] = getFieldDefaultValue(field);
                 }
             });
 
+            // Apply translations for repeater fields
             repeaterFieldsWithTranslatableContent.forEach((repeaterField) => {
                 const repeaterItems = contentData[repeaterField.name] || [];
                 if (Array.isArray(repeaterItems)) {
                     const translatedItems = repeaterItems.map(
                         (item, itemIndex) => {
-                            const translationKey = `${repeaterField.name}_${itemIndex}`;
-                            const itemTranslations =
-                                localeTranslationData[translationKey] || {};
-
-                            // For nested translatable fields, use translation or default value
+                            const itemTranslation =
+                                translations[repeaterField.name]?.[itemIndex] ||
+                                {};
                             const translatedItem = { ...item };
 
-                            // Get translatable fields from the repeater's schema
-                            const nestedTranslatableFields =
-                                componentAnalysis.allFields.filter(
-                                    (f) =>
-                                        f.translatable === true &&
-                                        repeaterField.schema?.some(
-                                            (schemaField) => {
-                                                const convertedField =
-                                                    typeof schemaField ===
-                                                        "object" &&
-                                                    "name" in schemaField
-                                                        ? schemaField
-                                                        : null;
-                                                return (
-                                                    convertedField?.name ===
-                                                    f.name
-                                                );
-                                            },
-                                        ),
-                                );
-
-                            nestedTranslatableFields.forEach((nestedField) => {
-                                translatedItem[nestedField.name] =
-                                    itemTranslations[nestedField.name] !==
-                                    undefined
-                                        ? itemTranslations[nestedField.name]
-                                        : getFieldDefaultValue(nestedField);
+                            // Get all translatable fields in this repeater's schema
+                            const nestedAnalysis = getComponentAnalysis({
+                                schema: repeaterField.schema || [],
                             });
+
+                            nestedAnalysis.translatableFields.forEach(
+                                (nestedField) => {
+                                    if (nestedField.type !== "repeater") {
+                                        if (
+                                            itemTranslation[
+                                                nestedField.name
+                                            ] !== undefined
+                                        ) {
+                                            translatedItem[nestedField.name] =
+                                                itemTranslation[
+                                                    nestedField.name
+                                                ];
+                                        } else {
+                                            translatedItem[nestedField.name] =
+                                                getFieldDefaultValue(
+                                                    nestedField,
+                                                );
+                                        }
+                                    }
+                                },
+                            );
+
+                            // Handle nested repeater fields (like featureCards inside heroSections)
+                            nestedAnalysis.repeaterFields.forEach(
+                                (nestedRepeaterField) => {
+                                    const nestedRepeaterItems =
+                                        item[nestedRepeaterField.name] || [];
+                                    if (Array.isArray(nestedRepeaterItems)) {
+                                        const translatedNestedItems =
+                                            nestedRepeaterItems.map(
+                                                (
+                                                    nestedItem,
+                                                    nestedItemIndex,
+                                                ) => {
+                                                    const nestedItemTranslation =
+                                                        itemTranslation[
+                                                            nestedRepeaterField
+                                                                .name
+                                                        ]?.[nestedItemIndex] ||
+                                                        {};
+                                                    const translatedNestedItem =
+                                                        { ...nestedItem };
+
+                                                    // Get translatable fields in the nested repeater
+                                                    const deepAnalysis =
+                                                        getComponentAnalysis({
+                                                            schema:
+                                                                nestedRepeaterField.schema ||
+                                                                [],
+                                                        });
+
+                                                    deepAnalysis.translatableFields.forEach(
+                                                        (deepField) => {
+                                                            if (
+                                                                deepField.type !==
+                                                                "repeater"
+                                                            ) {
+                                                                if (
+                                                                    nestedItemTranslation[
+                                                                        deepField
+                                                                            .name
+                                                                    ] !==
+                                                                    undefined
+                                                                ) {
+                                                                    translatedNestedItem[
+                                                                        deepField.name
+                                                                    ] =
+                                                                        nestedItemTranslation[
+                                                                            deepField.name
+                                                                        ];
+                                                                } else {
+                                                                    translatedNestedItem[
+                                                                        deepField.name
+                                                                    ] =
+                                                                        getFieldDefaultValue(
+                                                                            deepField,
+                                                                        );
+                                                                }
+                                                            }
+                                                        },
+                                                    );
+
+                                                    return translatedNestedItem;
+                                                },
+                                            );
+                                        translatedItem[
+                                            nestedRepeaterField.name
+                                        ] = translatedNestedItems;
+                                    }
+                                },
+                            );
 
                             return translatedItem;
                         },
@@ -122,50 +186,116 @@
         }
     }
 
+    // Save translations back to the legacy format when form data changes
     $: if (activeLocale !== CMS_LOCALE && localeFormData) {
-        if (!translationData[componentInstance.id]) {
-            translationData[componentInstance.id] = {};
+        const contentData = formData[componentInstance.id] || {};
+
+        if (!contentData.translations) {
+            contentData.translations = {};
         }
-        if (!translationData[componentInstance.id][activeLocale]) {
-            translationData[componentInstance.id][activeLocale] = {};
+        if (!contentData.translations[activeLocale]) {
+            contentData.translations[activeLocale] = {};
         }
 
-        const localeTranslationData =
-            translationData[componentInstance.id][activeLocale];
+        const translations = contentData.translations[activeLocale];
 
+        // Save regular translatable fields
         regularTranslatableFields.forEach((field) => {
-            if (
-                field.type !== "repeater" &&
-                localeFormData[field.name] !== undefined
-            ) {
-                localeTranslationData[field.name] = localeFormData[field.name];
+            if (localeFormData[field.name] !== undefined) {
+                translations[field.name] = localeFormData[field.name];
             }
         });
 
+        // Save repeater field translations
         repeaterFieldsWithTranslatableContent.forEach((repeaterField) => {
             const repeaterItems = localeFormData[repeaterField.name] || [];
             if (Array.isArray(repeaterItems)) {
-                repeaterItems.forEach((item, itemIndex) => {
-                    const translationKey = `${repeaterField.name}_${itemIndex}`;
+                if (!translations[repeaterField.name]) {
+                    translations[repeaterField.name] = [];
+                }
 
-                    if (!localeTranslationData[translationKey]) {
-                        localeTranslationData[translationKey] = {};
+                repeaterItems.forEach((item, itemIndex) => {
+                    if (!translations[repeaterField.name][itemIndex]) {
+                        translations[repeaterField.name][itemIndex] = {};
                     }
 
-                    // Get nested translatable fields from the repeater's schema
-                    const analysis = getComponentAnalysis({
+                    const itemTranslation =
+                        translations[repeaterField.name][itemIndex];
+
+                    // Save translatable fields from this repeater item
+                    const nestedAnalysis = getComponentAnalysis({
                         schema: repeaterField.schema || [],
                     });
-                    const nestedTranslatableFields =
-                        analysis.translatableFields;
-
-                    nestedTranslatableFields.forEach((nestedField) => {
-                        if (item[nestedField.name] !== undefined) {
-                            localeTranslationData[translationKey][
-                                nestedField.name
-                            ] = item[nestedField.name];
+                    nestedAnalysis.translatableFields.forEach((nestedField) => {
+                        if (
+                            nestedField.type !== "repeater" &&
+                            item[nestedField.name] !== undefined
+                        ) {
+                            itemTranslation[nestedField.name] =
+                                item[nestedField.name];
                         }
                     });
+
+                    // Save nested repeater field translations
+                    nestedAnalysis.repeaterFields.forEach(
+                        (nestedRepeaterField) => {
+                            const nestedRepeaterItems =
+                                item[nestedRepeaterField.name] || [];
+                            if (Array.isArray(nestedRepeaterItems)) {
+                                if (
+                                    !itemTranslation[nestedRepeaterField.name]
+                                ) {
+                                    itemTranslation[nestedRepeaterField.name] =
+                                        [];
+                                }
+
+                                nestedRepeaterItems.forEach(
+                                    (nestedItem, nestedItemIndex) => {
+                                        if (
+                                            !itemTranslation[
+                                                nestedRepeaterField.name
+                                            ][nestedItemIndex]
+                                        ) {
+                                            itemTranslation[
+                                                nestedRepeaterField.name
+                                            ][nestedItemIndex] = {};
+                                        }
+
+                                        const nestedItemTranslation =
+                                            itemTranslation[
+                                                nestedRepeaterField.name
+                                            ][nestedItemIndex];
+
+                                        // Save deep translatable fields
+                                        const deepAnalysis =
+                                            getComponentAnalysis({
+                                                schema:
+                                                    nestedRepeaterField.schema ||
+                                                    [],
+                                            });
+                                        deepAnalysis.translatableFields.forEach(
+                                            (deepField) => {
+                                                if (
+                                                    deepField.type !==
+                                                        "repeater" &&
+                                                    nestedItem[
+                                                        deepField.name
+                                                    ] !== undefined
+                                                ) {
+                                                    nestedItemTranslation[
+                                                        deepField.name
+                                                    ] =
+                                                        nestedItem[
+                                                            deepField.name
+                                                        ];
+                                                }
+                                            },
+                                        );
+                                    },
+                                );
+                            }
+                        },
+                    );
                 });
             }
         });
