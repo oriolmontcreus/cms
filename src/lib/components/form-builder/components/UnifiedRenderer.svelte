@@ -185,8 +185,7 @@
 
                 <Tabs value={defaultTab} class={CSS_CLASSES.TABS_CONTAINER}>
                     <TabsList
-                        class={CSS_CLASSES.TABS_LIST}
-                        style="grid-template-columns: repeat({filteredTabs.length}, minmax(0, 1fr));"
+                        class="text-foreground mb-3 h-auto gap-2 rounded-none border-b !bg-transparent px-0 py-1 flex flex-wrap w-fit"
                     >
                         {#each filteredTabs as tab (tab.name)}
                             <ResponsiveTabTrigger {tab} value={tab.name} />
