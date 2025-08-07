@@ -36,11 +36,8 @@
         config.components,
         components,
     );
-    let translationData: TranslationData = initializeTranslationDataOptimized(
-        config.components,
-        components,
-        SITE_LOCALES,
-    );
+    let translationData: TranslationData = {};
+    let translationDataInitialized = false;
 
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
@@ -111,8 +108,26 @@
                 filesToDelete.update((current) => [...current, ...fileIds]);
             });
         },
+        saveTranslations: saveTranslations,
     };
     setContext("formBuilder", formBuilderContext);
+
+    // Lazy initialization of translation data when translation mode is first activated
+    function initializeTranslationDataIfNeeded() {
+        if (!translationDataInitialized) {
+            translationData = initializeTranslationDataOptimized(
+                config.components,
+                components,
+                SITE_LOCALES,
+            );
+            translationDataInitialized = true;
+        }
+    }
+
+    // Initialize translation data when switching to translation mode
+    $: if (mode === RenderMode.TRANSLATION) {
+        initializeTranslationDataIfNeeded();
+    }
 
     // Optimized reactive statement with more selective updates
     // Only sync when formData actually changes and in content mode
@@ -283,8 +298,32 @@
         return replaceFileReferences(data, fileMap);
     }
 
-    export async function handleSubmit() {
-        console.log("[FormBuilder] handleSubmit called");
+    export async function handleSubmit(forced = false) {
+
+        // Only prevent auto-submit in translation mode, but allow manual saves
+        if (mode === RenderMode.TRANSLATION && !forced) {
+            return;
+        }
+
+        // If in translation mode and forced (manual save), ensure translation data is updated first
+        if (mode === RenderMode.TRANSLATION && forced) {
+            // Trigger all TranslationModeWrapper components to update their translation data
+            const event = new CustomEvent("updateTranslationData");
+            document.dispatchEvent(event);
+
+            // Give a small delay to ensure the update completes
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
+        await saveFormData();
+    }
+
+    // Add a separate function that can be called from translation mode
+    export async function saveTranslations() {
+        await saveFormData();
+    }
+
+    async function saveFormData() {
         const originalFormData = { ...formData }; // Backup original form data
         try {
             isSubmitting = true;

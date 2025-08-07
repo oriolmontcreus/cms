@@ -22,6 +22,30 @@ interface ProcessedSchema {
 const processedSchemaCache = new WeakMap<any, ProcessedSchema>();
 
 /**
+ * Convert schema item to proper schema format, handling builder instances
+ */
+function normalizeSchemaItem(item: any): any {
+    if (!item || typeof item !== 'object') return item;
+
+    // Handle builder instances that have toJSON method
+    if (typeof item.toJSON === 'function') {
+        return item.toJSON();
+    }
+
+    return item;
+}
+
+/**
+ * Normalize entire schema array, converting builder instances to proper format
+ */
+function normalizeSchema(schema: Layout | SchemaItem[]): any {
+    if (Array.isArray(schema)) {
+        return schema.map(item => normalizeSchemaItem(item));
+    }
+    return schema;
+}
+
+/**
  * Convert schema item to FormField if possible - optimized version
  */
 function toFormField(item: any): FormField | null {
@@ -43,6 +67,7 @@ function toFormField(item: any): FormField | null {
  */
 function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
     const fields: FormField[] = [];
+    const normalizedSchema = normalizeSchema(schema);
 
     function traverse(items: any) {
         if (Array.isArray(items)) {
@@ -79,7 +104,7 @@ function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
         }
     }
 
-    traverse(schema);
+    traverse(normalizedSchema);
     return fields;
 }
 
@@ -92,6 +117,8 @@ export function processComponentSchema(component: any): ProcessedSchema {
     }
 
     const schema = component.schema;
+    // Normalize schema first to handle builder instances
+    const normalizedSchema = normalizeSchema(schema);
     const allFields = extractAllFields(schema);
 
     // Single pass filtering - more efficient than multiple filters
@@ -114,11 +141,11 @@ export function processComponentSchema(component: any): ProcessedSchema {
         }
     }
 
-    // Analyze schema structure
-    const hasFilamentTabs = Array.isArray(schema) &&
-        schema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_CONTAINER);
-    const hasMixedSchema = Array.isArray(schema) &&
-        schema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_SELECTOR);
+    // Analyze schema structure using normalized schema
+    const hasFilamentTabs = Array.isArray(normalizedSchema) &&
+        normalizedSchema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_CONTAINER);
+    const hasMixedSchema = Array.isArray(normalizedSchema) &&
+        normalizedSchema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_SELECTOR);
 
     const result: ProcessedSchema = {
         allFields,
@@ -226,30 +253,17 @@ export function initializeTranslationDataOptimized(
             if (locale.code !== CMS_LOCALE) {
                 for (const repeaterField of repeaterFields) {
                     const repeaterItems = existingComponent?.formData?.[repeaterField.name] || [];
-                    const nestedTranslatableFields = extractAllFields(repeaterField.schema || [])
-                        .filter(f => f.translatable === true);
 
                     for (let itemIndex = 0; itemIndex < repeaterItems.length; itemIndex++) {
                         const key = `${repeaterField.name}_${itemIndex}`;
-                        const itemData: Record<string, any> = {};
 
-                        for (const nestedField of nestedTranslatableFields) {
-                            const existingTranslations = existingComponent?.formData?.translations?.[locale.code];
-                            let existingTranslation;
-
-                            // Try array format first, then indexed format
-                            if (existingTranslations) {
-                                if (Array.isArray(existingTranslations[repeaterField.name]) &&
-                                    existingTranslations[repeaterField.name][itemIndex]) {
-                                    existingTranslation = existingTranslations[repeaterField.name][itemIndex][nestedField.name];
-                                } else if (existingTranslations[key]) {
-                                    existingTranslation = existingTranslations[key][nestedField.name];
-                                }
-                            }
-
-                            itemData[nestedField.name] = existingTranslation !== undefined ?
-                                existingTranslation : getFieldDefaultValue(nestedField);
-                        }
+                        // Process this repeater item and all its nested content
+                        const itemData = processRepeaterItemTranslations(
+                            repeaterField,
+                            itemIndex,
+                            existingComponent?.formData?.translations?.[locale.code] || {},
+                            locale.code
+                        );
 
                         localeData[key] = itemData;
                     }
@@ -264,11 +278,66 @@ export function initializeTranslationDataOptimized(
 }
 
 /**
+ * Recursively process repeater item translations to handle infinite nesting
+ */
+function processRepeaterItemTranslations(
+    repeaterField: any,
+    itemIndex: number,
+    existingTranslations: Record<string, any>,
+    localeCode: string
+): Record<string, any> {
+    const itemData: Record<string, any> = {};
+    const key = `${repeaterField.name}_${itemIndex}`;
+
+    // Get all fields in this repeater's schema
+    const allFields = extractAllFields(repeaterField.schema || []);
+    const translatableFields = allFields.filter(f => f.translatable === true && f.type !== 'repeater');
+    const nestedRepeaterFields = allFields.filter(f => f.type === 'repeater');
+
+    // Handle regular translatable fields
+    for (const field of translatableFields) {
+        let existingTranslation;
+
+        // The actual data structure in JSON is: heroSections: [{ title: "", featureCards_0: {...} }]
+        // So we need to look in the array format first
+        if (Array.isArray(existingTranslations[repeaterField.name]) &&
+            existingTranslations[repeaterField.name][itemIndex]) {
+            existingTranslation = existingTranslations[repeaterField.name][itemIndex][field.name];
+        } else if (existingTranslations[key]) {
+            existingTranslation = existingTranslations[key][field.name];
+        }
+
+        itemData[field.name] = existingTranslation !== undefined ?
+            existingTranslation : getFieldDefaultValue(field);
+    }
+
+    // Handle nested repeater fields recursively
+    for (const nestedRepeaterField of nestedRepeaterFields) {
+        // Look for nested indexed keys in the array item
+        const arrayItem = Array.isArray(existingTranslations[repeaterField.name]) ?
+            existingTranslations[repeaterField.name][itemIndex] :
+            existingTranslations[key];
+
+        if (arrayItem) {
+            // Find all nested indexed keys for this repeater field
+            Object.keys(arrayItem).forEach(nestedKey => {
+                if (nestedKey.startsWith(`${nestedRepeaterField.name}_`)) {
+                    const nestedTranslation = arrayItem[nestedKey];
+                    itemData[nestedKey] = nestedTranslation;
+                }
+            });
+        }
+    }
+
+    return itemData;
+}/**
  * Filter schema by mode efficiently
  */
 export function filterSchemaByModeOptimized(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
+    const normalizedSchema = normalizeSchema(schema) as SchemaItem[];
+
     // First filter out hidden items for all modes
-    const visibleSchema = schema.filter(item => {
+    const visibleSchema = normalizedSchema.filter(item => {
         const field = toFormField(item);
         if (field) return !field.hidden;
         // Check for hidden structural elements

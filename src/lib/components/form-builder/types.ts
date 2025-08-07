@@ -181,12 +181,12 @@ export interface FieldBuilder {
     hidden(isHidden?: boolean): FieldBuilder;
 }
 
-// Schema item can be either a field, field builder, tabs container, or grid layout
-export type SchemaItem = FormField | FieldBuilder | TabsSelector | TabsContainer | GridLayout;
+// Schema item can be either a field, field builder, tabs container, tabs builder, or grid layout
+export type SchemaItem = FormField | FieldBuilder | TabsSelector | TabsContainer | GridLayout | TabBuilder | TabsBuilder;
 
 export interface Component {
     name: string;
-    schema: Layout | SchemaItem[]; // Can be a layout or mixed array of fields and placeholders
+    schema: SchemaItem[];
     tabs?: ComponentTab[]; // Component-level tab definitions
     activeTab?: string; // Name of the initially active tab
     validate?: (data: Record<string, any>) => string[];
@@ -194,7 +194,7 @@ export interface Component {
 }
 
 export interface ComponentInstance {
-    component: Component;
+    component: Component; // All components use the same interface now
     id: string; // Unique identifier for this instance
     displayName?: string; // Optional custom display name for this instance
 }
