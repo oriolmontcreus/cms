@@ -1,7 +1,6 @@
-import { TextInput } from '@/lib/components/form-builder/fields';
+import { TextInput, Repeater } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { HeroComponent } from './Hero';
-import { Repeater } from '@/lib/components/form-builder/fields';
 
 export const ContactInfo: Component = {
     name: 'Contact information',
@@ -13,7 +12,6 @@ export const ContactInfo: Component = {
             .max(100)
             .placeholder('Enter the email address'),
         Repeater('heroSections')
-            .schema(HeroComponent.schema) // ✅ Now possible!
-
+            .schema(HeroComponent.schema)
     ]
 };

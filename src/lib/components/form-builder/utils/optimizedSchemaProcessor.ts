@@ -22,6 +22,30 @@ interface ProcessedSchema {
 const processedSchemaCache = new WeakMap<any, ProcessedSchema>();
 
 /**
+ * Convert schema item to proper schema format, handling builder instances
+ */
+function normalizeSchemaItem(item: any): any {
+    if (!item || typeof item !== 'object') return item;
+
+    // Handle builder instances that have toJSON method
+    if (typeof item.toJSON === 'function') {
+        return item.toJSON();
+    }
+
+    return item;
+}
+
+/**
+ * Normalize entire schema array, converting builder instances to proper format
+ */
+function normalizeSchema(schema: Layout | SchemaItem[]): any {
+    if (Array.isArray(schema)) {
+        return schema.map(item => normalizeSchemaItem(item));
+    }
+    return schema;
+}
+
+/**
  * Convert schema item to FormField if possible - optimized version
  */
 function toFormField(item: any): FormField | null {
@@ -43,6 +67,7 @@ function toFormField(item: any): FormField | null {
  */
 function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
     const fields: FormField[] = [];
+    const normalizedSchema = normalizeSchema(schema);
 
     function traverse(items: any) {
         if (Array.isArray(items)) {
@@ -79,7 +104,7 @@ function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
         }
     }
 
-    traverse(schema);
+    traverse(normalizedSchema);
     return fields;
 }
 
@@ -92,6 +117,8 @@ export function processComponentSchema(component: any): ProcessedSchema {
     }
 
     const schema = component.schema;
+    // Normalize schema first to handle builder instances
+    const normalizedSchema = normalizeSchema(schema);
     const allFields = extractAllFields(schema);
 
     // Single pass filtering - more efficient than multiple filters
@@ -114,11 +141,11 @@ export function processComponentSchema(component: any): ProcessedSchema {
         }
     }
 
-    // Analyze schema structure
-    const hasFilamentTabs = Array.isArray(schema) &&
-        schema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_CONTAINER);
-    const hasMixedSchema = Array.isArray(schema) &&
-        schema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_SELECTOR);
+    // Analyze schema structure using normalized schema
+    const hasFilamentTabs = Array.isArray(normalizedSchema) &&
+        normalizedSchema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_CONTAINER);
+    const hasMixedSchema = Array.isArray(normalizedSchema) &&
+        normalizedSchema.some((item: any) => item?.type === SCHEMA_TYPES.TABS_SELECTOR);
 
     const result: ProcessedSchema = {
         allFields,
@@ -307,8 +334,10 @@ function processRepeaterItemTranslations(
  * Filter schema by mode efficiently
  */
 export function filterSchemaByModeOptimized(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
+    const normalizedSchema = normalizeSchema(schema) as SchemaItem[];
+
     // First filter out hidden items for all modes
-    const visibleSchema = schema.filter(item => {
+    const visibleSchema = normalizedSchema.filter(item => {
         const field = toFormField(item);
         if (field) return !field.hidden;
         // Check for hidden structural elements

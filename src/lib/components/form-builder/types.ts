@@ -181,8 +181,8 @@ export interface FieldBuilder {
     hidden(isHidden?: boolean): FieldBuilder;
 }
 
-// Schema item can be either a field, field builder, tabs container, or grid layout
-export type SchemaItem = FormField | FieldBuilder | TabsSelector | TabsContainer | GridLayout;
+// Schema item can be either a field, field builder, tabs container, tabs builder, or grid layout
+export type SchemaItem = FormField | FieldBuilder | TabsSelector | TabsContainer | GridLayout | TabBuilder | TabsBuilder;
 
 export interface Component {
     name: string;
