@@ -451,13 +451,26 @@ export function convertTranslationDataForSaving(
     componentInstance: any
 ): TranslationData {
     console.log("executing convertTranslationDataForSaving");
+
+    // Early return if no translation data
+    if (!translationData || Object.keys(translationData).length === 0) {
+        return {};
+    }
+
     const convertedData: TranslationData = {};
     const { repeaterFields } = getOrCreateComponentAnalysis(componentInstance.component);
 
     Object.entries(translationData).forEach(([componentId, locales]) => {
+        // Skip if no locales for this component
+        if (!locales || Object.keys(locales).length === 0) return;
+
         convertedData[componentId] = {};
 
         Object.entries(locales).forEach(([locale, translations]) => {
+            // Skip if no translations for this locale
+            if (!translations || Object.keys(translations).length === 0) {
+                return;
+            }
             convertedData[componentId][locale] = {};
 
             // Separate regular fields from repeater field indexed keys
