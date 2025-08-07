@@ -450,7 +450,6 @@ export function convertTranslationDataForSaving(
     translationData: TranslationData,
     componentInstance: any
 ): TranslationData {
-    console.log("executing convertTranslationDataForSaving");
 
     // Early return if no translation data
     if (!translationData || Object.keys(translationData).length === 0) {

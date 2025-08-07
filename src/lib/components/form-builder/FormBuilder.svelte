@@ -115,7 +115,6 @@
     // Lazy initialization of translation data when translation mode is first activated
     function initializeTranslationDataIfNeeded() {
         if (!translationDataInitialized) {
-            console.log("executing initializeTranslationDataOptimized");
             translationData = initializeTranslationDataOptimized(
                 config.components,
                 components,
@@ -300,7 +299,6 @@
     }
 
     export async function handleSubmit(forced = false) {
-        console.log("executing handleSubmit");
 
         // Only prevent auto-submit in translation mode, but allow manual saves
         if (mode === RenderMode.TRANSLATION && !forced) {
@@ -322,12 +320,10 @@
 
     // Add a separate function that can be called from translation mode
     export async function saveTranslations() {
-        console.log("executing saveTranslations");
         await saveFormData();
     }
 
     async function saveFormData() {
-        console.log("executing saveFormData");
         const originalFormData = { ...formData }; // Backup original form data
         try {
             isSubmitting = true;

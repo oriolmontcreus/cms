@@ -43,7 +43,6 @@
         "";
 
     function handleLocaleChange(newLocale: string | undefined) {
-        console.log("executing handleLocaleChange");
         if (newLocale) {
             activeLocale = newLocale;
         }
@@ -56,13 +55,11 @@
 
     // Only rebuild form data when activeLocale actually changes
     $: if (activeLocale !== lastActiveLocale || isInitialLoad) {
-        console.log("executing reactive locale change");
         lastActiveLocale = activeLocale;
         rebuildLocaleFormData();
     }
 
     function rebuildLocaleFormData() {
-        console.log("executing rebuildLocaleFormData");
         const contentData = formData[componentInstance.id] || {};
         const isDefaultLocale = activeLocale === CMS_LOCALE;
 
@@ -217,7 +214,6 @@
 
     // Update the internal translation data structure without saving to backend
     function updateTranslationDataStructure() {
-        console.log("executing updateTranslationDataStructure");
         if (!translationData[componentInstance.id]) {
             translationData[componentInstance.id] = {};
         }
@@ -319,7 +315,6 @@
     // This function is called by FormBuilder's saveTranslations context function
     // The translation data is already updated by updateTranslationDataStructure()
     async function saveTranslations() {
-        console.log("executing saveTranslations");
 
         // Make sure the translation data is up to date
         updateTranslationDataStructure();
@@ -332,7 +327,6 @@
 
     // Handle the translation data update event from FormBuilder
     function handleUpdateTranslationDataEvent() {
-        console.log("executing handleUpdateTranslationDataEvent");
         updateTranslationDataStructure();
     }
 
