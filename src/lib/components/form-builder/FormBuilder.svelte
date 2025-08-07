@@ -285,27 +285,15 @@
     }
 
     export async function handleSubmit(forced = false) {
-        console.log(
-            "[FormBuilder] handleSubmit called - current mode:",
-            mode,
-            "forced:",
-            forced,
-        );
+        console.log("executing handleSubmit");
 
         // Only prevent auto-submit in translation mode, but allow manual saves
         if (mode === RenderMode.TRANSLATION && !forced) {
-            console.log(
-                "[FormBuilder] handleSubmit blocked - auto-submit in translation mode",
-            );
             return;
         }
 
         // If in translation mode and forced (manual save), ensure translation data is updated first
         if (mode === RenderMode.TRANSLATION && forced) {
-            console.log(
-                "[FormBuilder] Translation mode save - triggering translation update",
-            );
-
             // Trigger all TranslationModeWrapper components to update their translation data
             const event = new CustomEvent("updateTranslationData");
             document.dispatchEvent(event);
@@ -319,11 +307,12 @@
 
     // Add a separate function that can be called from translation mode
     export async function saveTranslations() {
-        console.log("[FormBuilder] saveTranslations called");
+        console.log("executing saveTranslations");
         await saveFormData();
     }
 
     async function saveFormData() {
+        console.log("executing saveFormData");
         const originalFormData = { ...formData }; // Backup original form data
         try {
             isSubmitting = true;

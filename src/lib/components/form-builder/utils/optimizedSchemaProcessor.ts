@@ -259,6 +259,7 @@ function processRepeaterItemTranslations(
     existingTranslations: Record<string, any>,
     localeCode: string
 ): Record<string, any> {
+    console.log("executing processRepeaterItemTranslations");
     const itemData: Record<string, any> = {};
     const key = `${repeaterField.name}_${itemIndex}`;
 

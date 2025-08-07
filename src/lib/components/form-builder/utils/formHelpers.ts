@@ -450,6 +450,7 @@ export function convertTranslationDataForSaving(
     translationData: TranslationData,
     componentInstance: any
 ): TranslationData {
+    console.log("executing convertTranslationDataForSaving");
     const convertedData: TranslationData = {};
     const { repeaterFields } = getOrCreateComponentAnalysis(componentInstance.component);
 

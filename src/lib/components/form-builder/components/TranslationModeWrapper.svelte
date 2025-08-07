@@ -43,6 +43,7 @@
         "";
 
     function handleLocaleChange(newLocale: string | undefined) {
+        console.log("executing handleLocaleChange");
         if (newLocale) {
             activeLocale = newLocale;
         }
@@ -55,11 +56,13 @@
 
     // Only rebuild form data when activeLocale actually changes
     $: if (activeLocale !== lastActiveLocale || isInitialLoad) {
+        console.log("executing reactive locale change");
         lastActiveLocale = activeLocale;
         rebuildLocaleFormData();
     }
 
     function rebuildLocaleFormData() {
+        console.log("executing rebuildLocaleFormData");
         const contentData = formData[componentInstance.id] || {};
         const isDefaultLocale = activeLocale === CMS_LOCALE;
 
@@ -221,6 +224,7 @@
 
     // Update the internal translation data structure without saving to backend
     function updateTranslationDataStructure() {
+        console.log("executing updateTranslationDataStructure");
         if (!translationData[componentInstance.id]) {
             translationData[componentInstance.id] = {};
         }
@@ -322,9 +326,7 @@
     // This function is called by FormBuilder's saveTranslations context function
     // The translation data is already updated by updateTranslationDataStructure()
     async function saveTranslations() {
-        console.log(
-            "[TranslationModeWrapper] saveTranslations called - translation data should already be updated",
-        );
+        console.log("executing saveTranslations");
 
         // Make sure the translation data is up to date
         updateTranslationDataStructure();
@@ -332,19 +334,12 @@
         // The FormBuilder will handle converting and saving to backend
         if (formBuilderContext?.saveTranslations) {
             await formBuilderContext.saveTranslations();
-            console.log("[TranslationModeWrapper] FormBuilder save completed");
-        } else {
-            console.log(
-                "[TranslationModeWrapper] No saveTranslations function in context",
-            );
         }
     }
 
     // Handle the translation data update event from FormBuilder
     function handleUpdateTranslationDataEvent() {
-        console.log(
-            "[TranslationModeWrapper] Received updateTranslationData event",
-        );
+        console.log("executing handleUpdateTranslationDataEvent");
         updateTranslationDataStructure();
     }
 
