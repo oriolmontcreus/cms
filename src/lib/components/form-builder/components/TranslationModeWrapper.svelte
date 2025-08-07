@@ -8,8 +8,6 @@
         SelectTrigger,
     } from "$lib/components/ui/select";
     import UnifiedRenderer from "./UnifiedRenderer.svelte";
-    import GridLayout from "../layouts/GridLayout.svelte";
-    import TabsLayout from "../layouts/TabsLayout.svelte";
     import {
         usesFilamentTabsOptimized as usesFilamentTabs,
         usesMixedSchemaOptimized as usesMixedSchema,
@@ -315,7 +313,6 @@
     // This function is called by FormBuilder's saveTranslations context function
     // The translation data is already updated by updateTranslationDataStructure()
     async function saveTranslations() {
-
         // Make sure the translation data is up to date
         updateTranslationDataStructure();
 

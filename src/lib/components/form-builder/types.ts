@@ -23,12 +23,6 @@ export interface GridLayout {
     hidden?: boolean; // Whether this grid should be hidden from rendering
 }
 
-export interface TabsLayout {
-    type: 'tabs';
-    tabs: TabDefinition[];
-    activeTab?: number; // Index of the initially active tab (0-based)
-}
-
 export interface TabDefinition {
     id: string;
     label: string;
@@ -36,7 +30,7 @@ export interface TabDefinition {
     schema: FormField[]; // Fields contained in this tab
 }
 
-export type Layout = GridLayout | TabsLayout;
+export type Layout = GridLayout;
 
 // New tab definition for component-level tabs
 export interface ComponentTab {

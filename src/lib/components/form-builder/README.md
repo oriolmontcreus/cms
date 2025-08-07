@@ -39,7 +39,6 @@ form-builder/
 ├── constants.ts                ← Centralized constants
 └── layouts/                    ← Layout components
     ├── GridLayout.svelte
-    └── TabsLayout.svelte
 ```
 
 ## Key Features
