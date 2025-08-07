@@ -36,11 +36,8 @@
         config.components,
         components,
     );
-    let translationData: TranslationData = initializeTranslationDataOptimized(
-        config.components,
-        components,
-        SITE_LOCALES,
-    );
+    let translationData: TranslationData = {};
+    let translationDataInitialized = false;
 
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
@@ -114,6 +111,24 @@
         saveTranslations: saveTranslations,
     };
     setContext("formBuilder", formBuilderContext);
+
+    // Lazy initialization of translation data when translation mode is first activated
+    function initializeTranslationDataIfNeeded() {
+        if (!translationDataInitialized) {
+            console.log("executing initializeTranslationDataOptimized");
+            translationData = initializeTranslationDataOptimized(
+                config.components,
+                components,
+                SITE_LOCALES,
+            );
+            translationDataInitialized = true;
+        }
+    }
+
+    // Initialize translation data when switching to translation mode
+    $: if (mode === RenderMode.TRANSLATION) {
+        initializeTranslationDataIfNeeded();
+    }
 
     // Optimized reactive statement with more selective updates
     // Only sync when formData actually changes and in content mode
