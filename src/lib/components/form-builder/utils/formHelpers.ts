@@ -6,6 +6,7 @@ import { CMS_LOCALE } from '@/lib/shared/env';
 
 export interface FormBuilderContext {
     collectFilesForDeletion: (itemData: any) => void;
+    saveTranslations?: () => Promise<void>;
 }
 
 export function collectFilesForDeletion(itemData: any, addToQueue: (fileIds: string[]) => void) {

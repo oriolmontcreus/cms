@@ -18,11 +18,15 @@
     } from "../utils/optimizedSchemaProcessor";
     import { CSS_CLASSES, SCHEMA_TYPES } from "../constants";
     import { CMS_LOCALE } from "@/lib/shared/env";
+    import type { FormBuilderContext } from "../utils/formHelpers";
+    import { getContext } from "svelte";
 
     export let componentInstance: any;
     export let formData: FormData;
     export let translationData: TranslationData = {};
     export let locales: readonly { code: string; name: string }[] = [];
+
+    const formBuilderContext = getContext<FormBuilderContext>("formBuilder");
 
     $: componentAnalysis = getComponentAnalysis(componentInstance.component);
     $: regularTranslatableFields = componentAnalysis.translatableFields.filter(
@@ -45,18 +49,30 @@
     }
 
     let localeFormData: Record<string, any> = {};
+    let previousLocaleFormData: string = "";
+    let isInitialLoad = true;
 
-    // Simple approach: just work with the existing translation structure
+    // Simple approach: work with FormBuilder's translationData
     $: {
         const contentData = formData[componentInstance.id] || {};
         const isDefaultLocale = activeLocale === CMS_LOCALE;
 
+        console.log("LOAD DEBUG - Loading for locale:", activeLocale);
+        console.log(
+            "LOAD DEBUG - translationData for component:",
+            translationData[componentInstance.id],
+        );
+        console.log("LOAD DEBUG - Content data:", contentData);
+
         if (isDefaultLocale) {
             localeFormData = contentData;
         } else {
-            // Get translations from the legacy format
-            const translations = contentData.translations?.[activeLocale] || {};
+            // Get translations from FormBuilder's translationData
+            const translations =
+                translationData[componentInstance.id]?.[activeLocale] || {};
             const mergedData = { ...contentData };
+
+            console.log("LOAD DEBUG - Available translations:", translations);
 
             // Apply translations for regular translatable fields
             regularTranslatableFields.forEach((field) => {
@@ -67,16 +83,22 @@
                 }
             });
 
-            // Apply translations for repeater fields
+            // Apply translations for repeater fields using indexed keys
             repeaterFieldsWithTranslatableContent.forEach((repeaterField) => {
                 const repeaterItems = contentData[repeaterField.name] || [];
                 if (Array.isArray(repeaterItems)) {
                     const translatedItems = repeaterItems.map(
                         (item, itemIndex) => {
-                            const itemTranslation =
-                                translations[repeaterField.name]?.[itemIndex] ||
-                                {};
+                            const itemKey = `${repeaterField.name}_${itemIndex}`;
+                            const itemTranslation = translations[itemKey] || {};
                             const translatedItem = { ...item };
+
+                            console.log(
+                                "LOAD DEBUG - Loading repeater item:",
+                                itemKey,
+                                "translation:",
+                                itemTranslation,
+                            );
 
                             // Get all translatable fields in this repeater's schema
                             const nestedAnalysis = getComponentAnalysis({
@@ -117,14 +139,20 @@
                                                     nestedItem,
                                                     nestedItemIndex,
                                                 ) => {
+                                                    const nestedItemKey = `${nestedRepeaterField.name}_${nestedItemIndex}`;
                                                     const nestedItemTranslation =
                                                         itemTranslation[
-                                                            nestedRepeaterField
-                                                                .name
-                                                        ]?.[nestedItemIndex] ||
-                                                        {};
+                                                            nestedItemKey
+                                                        ] || {};
                                                     const translatedNestedItem =
                                                         { ...nestedItem };
+
+                                                    console.log(
+                                                        "LOAD DEBUG - Loading nested repeater item:",
+                                                        nestedItemKey,
+                                                        "translation:",
+                                                        nestedItemTranslation,
+                                                    );
 
                                                     // Get translatable fields in the nested repeater
                                                     const deepAnalysis =
@@ -184,48 +212,113 @@
 
             localeFormData = mergedData;
         }
+
+        // Mark initial load as complete after the first run
+        if (isInitialLoad) {
+            console.log("INIT DEBUG - Setting up initial load timer");
+            setTimeout(() => {
+                console.log("INIT DEBUG - Marking initial load as complete");
+                isInitialLoad = false;
+                // Store the initial state
+                previousLocaleFormData = JSON.stringify(localeFormData);
+                console.log(
+                    "INIT DEBUG - Stored initial state, length:",
+                    previousLocaleFormData.length,
+                );
+            }, 100);
+        }
     }
 
-    // Save translations back to the legacy format when form data changes
-    $: if (activeLocale !== CMS_LOCALE && localeFormData) {
-        const contentData = formData[componentInstance.id] || {};
+    // Save translations back to FormBuilder's translationData when form data changes
+    // Only save when data has actually changed, not during initial load or mode switches
+    $: if (activeLocale !== CMS_LOCALE && localeFormData && !isInitialLoad) {
+        console.log("SAVE DEBUG - Reactive statement triggered", {
+            activeLocale,
+            isInitialLoad,
+            hasLocaleFormData: !!localeFormData,
+            localeFormDataPreview: JSON.stringify(localeFormData).substring(
+                0,
+                200,
+            ),
+        });
 
-        if (!contentData.translations) {
-            contentData.translations = {};
+        const currentFormDataString = JSON.stringify(localeFormData);
+        console.log("SAVE DEBUG - Checking for changes", {
+            currentLength: currentFormDataString.length,
+            previousLength: previousLocaleFormData.length,
+            areEqual: currentFormDataString === previousLocaleFormData,
+            currentPreview: currentFormDataString.substring(0, 200),
+            previousPreview: previousLocaleFormData.substring(0, 200),
+        });
+
+        // Only save if the data has actually changed
+        if (currentFormDataString !== previousLocaleFormData) {
+            console.log("SAVE DEBUG - Data changed, saving...");
+            saveTranslations();
+            // Update the previous state to prevent unnecessary saves
+            previousLocaleFormData = currentFormDataString;
         }
-        if (!contentData.translations[activeLocale]) {
-            contentData.translations[activeLocale] = {};
+    }
+
+    // Manual save function for testing
+    async function saveTranslations() {
+        console.log("SAVE DEBUG - saveTranslations called");
+
+        // Initialize translationData structure for this component and locale
+        if (!translationData[componentInstance.id]) {
+            translationData[componentInstance.id] = {};
+        }
+        if (!translationData[componentInstance.id][activeLocale]) {
+            translationData[componentInstance.id][activeLocale] = {};
         }
 
-        const translations = contentData.translations[activeLocale];
+        const translations =
+            translationData[componentInstance.id][activeLocale];
 
         // Save regular translatable fields
         regularTranslatableFields.forEach((field) => {
             if (localeFormData[field.name] !== undefined) {
                 translations[field.name] = localeFormData[field.name];
+                console.log(
+                    "SAVE DEBUG - Saved regular field:",
+                    field.name,
+                    "=",
+                    localeFormData[field.name],
+                );
             }
         });
 
         // Save repeater field translations
         repeaterFieldsWithTranslatableContent.forEach((repeaterField) => {
             const repeaterItems = localeFormData[repeaterField.name] || [];
-            if (Array.isArray(repeaterItems)) {
-                if (!translations[repeaterField.name]) {
-                    translations[repeaterField.name] = [];
-                }
+            console.log(
+                "SAVE DEBUG - Processing repeater field:",
+                repeaterField.name,
+                "with items:",
+                repeaterItems,
+            );
 
+            if (Array.isArray(repeaterItems)) {
                 repeaterItems.forEach((item, itemIndex) => {
-                    if (!translations[repeaterField.name][itemIndex]) {
-                        translations[repeaterField.name][itemIndex] = {};
+                    console.log(
+                        "SAVE DEBUG - Processing repeater item",
+                        itemIndex,
+                        ":",
+                        item,
+                    );
+
+                    const itemKey = `${repeaterField.name}_${itemIndex}`;
+                    if (!translations[itemKey]) {
+                        translations[itemKey] = {};
                     }
 
-                    const itemTranslation =
-                        translations[repeaterField.name][itemIndex];
+                    const itemTranslation = translations[itemKey];
 
                     // Save translatable fields from this repeater item
                     const nestedAnalysis = getComponentAnalysis({
                         schema: repeaterField.schema || [],
                     });
+
                     nestedAnalysis.translatableFields.forEach((nestedField) => {
                         if (
                             nestedField.type !== "repeater" &&
@@ -233,6 +326,12 @@
                         ) {
                             itemTranslation[nestedField.name] =
                                 item[nestedField.name];
+                            console.log(
+                                "SAVE DEBUG - Saved nested field:",
+                                nestedField.name,
+                                "=",
+                                item[nestedField.name],
+                            );
                         }
                     });
 
@@ -241,30 +340,30 @@
                         (nestedRepeaterField) => {
                             const nestedRepeaterItems =
                                 item[nestedRepeaterField.name] || [];
-                            if (Array.isArray(nestedRepeaterItems)) {
-                                if (
-                                    !itemTranslation[nestedRepeaterField.name]
-                                ) {
-                                    itemTranslation[nestedRepeaterField.name] =
-                                        [];
-                                }
+                            console.log(
+                                "SAVE DEBUG - Processing nested repeater:",
+                                nestedRepeaterField.name,
+                                "with items:",
+                                nestedRepeaterItems,
+                            );
 
+                            if (Array.isArray(nestedRepeaterItems)) {
                                 nestedRepeaterItems.forEach(
                                     (nestedItem, nestedItemIndex) => {
-                                        if (
-                                            !itemTranslation[
-                                                nestedRepeaterField.name
-                                            ][nestedItemIndex]
-                                        ) {
-                                            itemTranslation[
-                                                nestedRepeaterField.name
-                                            ][nestedItemIndex] = {};
+                                        console.log(
+                                            "SAVE DEBUG - Processing nested item",
+                                            nestedItemIndex,
+                                            ":",
+                                            nestedItem,
+                                        );
+
+                                        const nestedItemKey = `${nestedRepeaterField.name}_${nestedItemIndex}`;
+                                        if (!itemTranslation[nestedItemKey]) {
+                                            itemTranslation[nestedItemKey] = {};
                                         }
 
                                         const nestedItemTranslation =
-                                            itemTranslation[
-                                                nestedRepeaterField.name
-                                            ][nestedItemIndex];
+                                            itemTranslation[nestedItemKey];
 
                                         // Save deep translatable fields
                                         const deepAnalysis =
@@ -273,6 +372,7 @@
                                                     nestedRepeaterField.schema ||
                                                     [],
                                             });
+
                                         deepAnalysis.translatableFields.forEach(
                                             (deepField) => {
                                                 if (
@@ -288,6 +388,14 @@
                                                         nestedItem[
                                                             deepField.name
                                                         ];
+                                                    console.log(
+                                                        "SAVE DEBUG - Saved deep field:",
+                                                        deepField.name,
+                                                        "=",
+                                                        nestedItem[
+                                                            deepField.name
+                                                        ],
+                                                    );
                                                 }
                                             },
                                         );
@@ -299,11 +407,25 @@
                 });
             }
         });
+
+        console.log(
+            "SAVE DEBUG - Final translationData for component:",
+            translationData[componentInstance.id],
+        );
+
+        // Now call FormBuilder's save function to persist to backend
+        if (formBuilderContext?.saveTranslations) {
+            console.log("SAVE DEBUG - Calling FormBuilder save function...");
+            await formBuilderContext.saveTranslations();
+            console.log("SAVE DEBUG - FormBuilder save completed!");
+        } else {
+            console.log("SAVE DEBUG - No saveTranslations function in context");
+        }
     }
 </script>
 
 {#if hasTranslatableContent}
-    <div class="mb-4">
+    <div class="mb-4 flex gap-4 items-center">
         <div class="w-48">
             <Select
                 type="single"
@@ -342,6 +464,16 @@
                 </SelectContent>
             </Select>
         </div>
+
+        {#if activeLocale !== CMS_LOCALE}
+            <button
+                type="button"
+                on:click={saveTranslations}
+                class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+                Save Translations
+            </button>
+        {/if}
     </div>
 
     {#if componentInstance.component}

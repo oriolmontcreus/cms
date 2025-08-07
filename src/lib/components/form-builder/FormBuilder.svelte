@@ -111,6 +111,7 @@
                 filesToDelete.update((current) => [...current, ...fileIds]);
             });
         },
+        saveTranslations: saveTranslations,
     };
     setContext("formBuilder", formBuilderContext);
 
@@ -284,7 +285,26 @@
     }
 
     export async function handleSubmit() {
-        console.log("[FormBuilder] handleSubmit called");
+        console.log("[FormBuilder] handleSubmit called - current mode:", mode);
+
+        // Prevent submit in translation mode unless forced
+        if (mode === RenderMode.TRANSLATION) {
+            console.log(
+                "[FormBuilder] handleSubmit blocked - in translation mode",
+            );
+            return;
+        }
+
+        await saveFormData();
+    }
+
+    // Add a separate function that can be called from translation mode
+    export async function saveTranslations() {
+        console.log("[FormBuilder] saveTranslations called");
+        await saveFormData();
+    }
+
+    async function saveFormData() {
         const originalFormData = { ...formData }; // Backup original form data
         try {
             isSubmitting = true;

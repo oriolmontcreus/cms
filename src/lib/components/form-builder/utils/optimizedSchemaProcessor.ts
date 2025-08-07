@@ -226,30 +226,17 @@ export function initializeTranslationDataOptimized(
             if (locale.code !== CMS_LOCALE) {
                 for (const repeaterField of repeaterFields) {
                     const repeaterItems = existingComponent?.formData?.[repeaterField.name] || [];
-                    const nestedTranslatableFields = extractAllFields(repeaterField.schema || [])
-                        .filter(f => f.translatable === true);
 
                     for (let itemIndex = 0; itemIndex < repeaterItems.length; itemIndex++) {
                         const key = `${repeaterField.name}_${itemIndex}`;
-                        const itemData: Record<string, any> = {};
 
-                        for (const nestedField of nestedTranslatableFields) {
-                            const existingTranslations = existingComponent?.formData?.translations?.[locale.code];
-                            let existingTranslation;
-
-                            // Try array format first, then indexed format
-                            if (existingTranslations) {
-                                if (Array.isArray(existingTranslations[repeaterField.name]) &&
-                                    existingTranslations[repeaterField.name][itemIndex]) {
-                                    existingTranslation = existingTranslations[repeaterField.name][itemIndex][nestedField.name];
-                                } else if (existingTranslations[key]) {
-                                    existingTranslation = existingTranslations[key][nestedField.name];
-                                }
-                            }
-
-                            itemData[nestedField.name] = existingTranslation !== undefined ?
-                                existingTranslation : getFieldDefaultValue(nestedField);
-                        }
+                        // Process this repeater item and all its nested content
+                        const itemData = processRepeaterItemTranslations(
+                            repeaterField,
+                            itemIndex,
+                            existingComponent?.formData?.translations?.[locale.code] || {},
+                            locale.code
+                        );
 
                         localeData[key] = itemData;
                     }
@@ -264,6 +251,59 @@ export function initializeTranslationDataOptimized(
 }
 
 /**
+ * Recursively process repeater item translations to handle infinite nesting
+ */
+function processRepeaterItemTranslations(
+    repeaterField: any,
+    itemIndex: number,
+    existingTranslations: Record<string, any>,
+    localeCode: string
+): Record<string, any> {
+    const itemData: Record<string, any> = {};
+    const key = `${repeaterField.name}_${itemIndex}`;
+
+    // Get all fields in this repeater's schema
+    const allFields = extractAllFields(repeaterField.schema || []);
+    const translatableFields = allFields.filter(f => f.translatable === true && f.type !== 'repeater');
+    const nestedRepeaterFields = allFields.filter(f => f.type === 'repeater');
+
+    // Handle regular translatable fields
+    for (const field of translatableFields) {
+        let existingTranslation;
+
+        // The actual data structure in JSON is: heroSections: [{ title: "", featureCards_0: {...} }]
+        // So we need to look in the array format first
+        if (Array.isArray(existingTranslations[repeaterField.name]) &&
+            existingTranslations[repeaterField.name][itemIndex]) {
+            existingTranslation = existingTranslations[repeaterField.name][itemIndex][field.name];
+        } else if (existingTranslations[key]) {
+            existingTranslation = existingTranslations[key][field.name];
+        }
+
+        itemData[field.name] = existingTranslation !== undefined ?
+            existingTranslation : getFieldDefaultValue(field);
+    }
+
+    // Handle nested repeater fields recursively
+    for (const nestedRepeaterField of nestedRepeaterFields) {
+        // Look for nested indexed keys in the array item
+        const arrayItem = Array.isArray(existingTranslations[repeaterField.name]) ?
+            existingTranslations[repeaterField.name][itemIndex] :
+            existingTranslations[key];
+
+        if (arrayItem) {
+            // Find all nested indexed keys for this repeater field
+            Object.keys(arrayItem).forEach(nestedKey => {
+                if (nestedKey.startsWith(`${nestedRepeaterField.name}_`)) {
+                    const nestedTranslation = arrayItem[nestedKey];
+                    itemData[nestedKey] = nestedTranslation;
+                }
+            });
+        }
+    }
+
+    return itemData;
+}/**
  * Filter schema by mode efficiently
  */
 export function filterSchemaByModeOptimized(schema: SchemaItem[], mode: RenderMode): SchemaItem[] {
