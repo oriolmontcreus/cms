@@ -51,9 +51,15 @@
     let localeFormData: Record<string, any> = {};
     let previousLocaleFormData: string = "";
     let isInitialLoad = true;
+    let lastActiveLocale = activeLocale; // Track locale changes
 
-    // Simple approach: work with FormBuilder's translationData
-    $: {
+    // Only rebuild form data when activeLocale actually changes
+    $: if (activeLocale !== lastActiveLocale || isInitialLoad) {
+        lastActiveLocale = activeLocale;
+        rebuildLocaleFormData();
+    }
+
+    function rebuildLocaleFormData() {
         const contentData = formData[componentInstance.id] || {};
         const isDefaultLocale = activeLocale === CMS_LOCALE;
 
