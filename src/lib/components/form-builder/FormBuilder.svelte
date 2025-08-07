@@ -284,15 +284,34 @@
         return replaceFileReferences(data, fileMap);
     }
 
-    export async function handleSubmit() {
-        console.log("[FormBuilder] handleSubmit called - current mode:", mode);
+    export async function handleSubmit(forced = false) {
+        console.log(
+            "[FormBuilder] handleSubmit called - current mode:",
+            mode,
+            "forced:",
+            forced,
+        );
 
-        // Prevent submit in translation mode unless forced
-        if (mode === RenderMode.TRANSLATION) {
+        // Only prevent auto-submit in translation mode, but allow manual saves
+        if (mode === RenderMode.TRANSLATION && !forced) {
             console.log(
-                "[FormBuilder] handleSubmit blocked - in translation mode",
+                "[FormBuilder] handleSubmit blocked - auto-submit in translation mode",
             );
             return;
+        }
+
+        // If in translation mode and forced (manual save), ensure translation data is updated first
+        if (mode === RenderMode.TRANSLATION && forced) {
+            console.log(
+                "[FormBuilder] Translation mode save - triggering translation update",
+            );
+
+            // Trigger all TranslationModeWrapper components to update their translation data
+            const event = new CustomEvent("updateTranslationData");
+            document.dispatchEvent(event);
+
+            // Give a small delay to ensure the update completes
+            await new Promise((resolve) => setTimeout(resolve, 50));
         }
 
         await saveFormData();

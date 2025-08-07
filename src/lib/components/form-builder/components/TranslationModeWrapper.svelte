@@ -19,7 +19,7 @@
     import { CSS_CLASSES, SCHEMA_TYPES } from "../constants";
     import { CMS_LOCALE } from "@/lib/shared/env";
     import type { FormBuilderContext } from "../utils/formHelpers";
-    import { getContext } from "svelte";
+    import { getContext, onMount, onDestroy } from "svelte";
 
     export let componentInstance: any;
     export let formData: FormData;
@@ -57,13 +57,6 @@
         const contentData = formData[componentInstance.id] || {};
         const isDefaultLocale = activeLocale === CMS_LOCALE;
 
-        console.log("LOAD DEBUG - Loading for locale:", activeLocale);
-        console.log(
-            "LOAD DEBUG - translationData for component:",
-            translationData[componentInstance.id],
-        );
-        console.log("LOAD DEBUG - Content data:", contentData);
-
         if (isDefaultLocale) {
             localeFormData = contentData;
         } else {
@@ -71,8 +64,6 @@
             const translations =
                 translationData[componentInstance.id]?.[activeLocale] || {};
             const mergedData = { ...contentData };
-
-            console.log("LOAD DEBUG - Available translations:", translations);
 
             // Apply translations for regular translatable fields
             regularTranslatableFields.forEach((field) => {
@@ -92,13 +83,6 @@
                             const itemKey = `${repeaterField.name}_${itemIndex}`;
                             const itemTranslation = translations[itemKey] || {};
                             const translatedItem = { ...item };
-
-                            console.log(
-                                "LOAD DEBUG - Loading repeater item:",
-                                itemKey,
-                                "translation:",
-                                itemTranslation,
-                            );
 
                             // Get all translatable fields in this repeater's schema
                             const nestedAnalysis = getComponentAnalysis({
@@ -146,13 +130,6 @@
                                                         ] || {};
                                                     const translatedNestedItem =
                                                         { ...nestedItem };
-
-                                                    console.log(
-                                                        "LOAD DEBUG - Loading nested repeater item:",
-                                                        nestedItemKey,
-                                                        "translation:",
-                                                        nestedItemTranslation,
-                                                    );
 
                                                     // Get translatable fields in the nested repeater
                                                     const deepAnalysis =
@@ -215,56 +192,29 @@
 
         // Mark initial load as complete after the first run
         if (isInitialLoad) {
-            console.log("INIT DEBUG - Setting up initial load timer");
             setTimeout(() => {
-                console.log("INIT DEBUG - Marking initial load as complete");
                 isInitialLoad = false;
                 // Store the initial state
                 previousLocaleFormData = JSON.stringify(localeFormData);
-                console.log(
-                    "INIT DEBUG - Stored initial state, length:",
-                    previousLocaleFormData.length,
-                );
             }, 100);
         }
     }
 
-    // Save translations back to FormBuilder's translationData when form data changes
-    // Only save when data has actually changed, not during initial load or mode switches
+    // Disabled automatic reactive save - now only saving through main save button
+    // Keep the reactive statement to just update the internal translation data structure
     $: if (activeLocale !== CMS_LOCALE && localeFormData && !isInitialLoad) {
-        console.log("SAVE DEBUG - Reactive statement triggered", {
-            activeLocale,
-            isInitialLoad,
-            hasLocaleFormData: !!localeFormData,
-            localeFormDataPreview: JSON.stringify(localeFormData).substring(
-                0,
-                200,
-            ),
-        });
-
         const currentFormDataString = JSON.stringify(localeFormData);
-        console.log("SAVE DEBUG - Checking for changes", {
-            currentLength: currentFormDataString.length,
-            previousLength: previousLocaleFormData.length,
-            areEqual: currentFormDataString === previousLocaleFormData,
-            currentPreview: currentFormDataString.substring(0, 200),
-            previousPreview: previousLocaleFormData.substring(0, 200),
-        });
 
-        // Only save if the data has actually changed
+        // Only update internal state if data has changed
         if (currentFormDataString !== previousLocaleFormData) {
-            console.log("SAVE DEBUG - Data changed, saving...");
-            saveTranslations();
-            // Update the previous state to prevent unnecessary saves
+            // Update translation data structure but don't save to backend
+            updateTranslationDataStructure();
             previousLocaleFormData = currentFormDataString;
         }
     }
 
-    // Manual save function for testing
-    async function saveTranslations() {
-        console.log("SAVE DEBUG - saveTranslations called");
-
-        // Initialize translationData structure for this component and locale
+    // Update the internal translation data structure without saving to backend
+    function updateTranslationDataStructure() {
         if (!translationData[componentInstance.id]) {
             translationData[componentInstance.id] = {};
         }
@@ -275,38 +225,19 @@
         const translations =
             translationData[componentInstance.id][activeLocale];
 
-        // Save regular translatable fields
+        // Update regular translatable fields
         regularTranslatableFields.forEach((field) => {
             if (localeFormData[field.name] !== undefined) {
                 translations[field.name] = localeFormData[field.name];
-                console.log(
-                    "SAVE DEBUG - Saved regular field:",
-                    field.name,
-                    "=",
-                    localeFormData[field.name],
-                );
             }
         });
 
-        // Save repeater field translations
+        // Update repeater field translations
         repeaterFieldsWithTranslatableContent.forEach((repeaterField) => {
             const repeaterItems = localeFormData[repeaterField.name] || [];
-            console.log(
-                "SAVE DEBUG - Processing repeater field:",
-                repeaterField.name,
-                "with items:",
-                repeaterItems,
-            );
 
             if (Array.isArray(repeaterItems)) {
                 repeaterItems.forEach((item, itemIndex) => {
-                    console.log(
-                        "SAVE DEBUG - Processing repeater item",
-                        itemIndex,
-                        ":",
-                        item,
-                    );
-
                     const itemKey = `${repeaterField.name}_${itemIndex}`;
                     if (!translations[itemKey]) {
                         translations[itemKey] = {};
@@ -314,7 +245,7 @@
 
                     const itemTranslation = translations[itemKey];
 
-                    // Save translatable fields from this repeater item
+                    // Update translatable fields from this repeater item
                     const nestedAnalysis = getComponentAnalysis({
                         schema: repeaterField.schema || [],
                     });
@@ -326,37 +257,18 @@
                         ) {
                             itemTranslation[nestedField.name] =
                                 item[nestedField.name];
-                            console.log(
-                                "SAVE DEBUG - Saved nested field:",
-                                nestedField.name,
-                                "=",
-                                item[nestedField.name],
-                            );
                         }
                     });
 
-                    // Save nested repeater field translations
+                    // Update nested repeater field translations
                     nestedAnalysis.repeaterFields.forEach(
                         (nestedRepeaterField) => {
                             const nestedRepeaterItems =
                                 item[nestedRepeaterField.name] || [];
-                            console.log(
-                                "SAVE DEBUG - Processing nested repeater:",
-                                nestedRepeaterField.name,
-                                "with items:",
-                                nestedRepeaterItems,
-                            );
 
                             if (Array.isArray(nestedRepeaterItems)) {
                                 nestedRepeaterItems.forEach(
                                     (nestedItem, nestedItemIndex) => {
-                                        console.log(
-                                            "SAVE DEBUG - Processing nested item",
-                                            nestedItemIndex,
-                                            ":",
-                                            nestedItem,
-                                        );
-
                                         const nestedItemKey = `${nestedRepeaterField.name}_${nestedItemIndex}`;
                                         if (!itemTranslation[nestedItemKey]) {
                                             itemTranslation[nestedItemKey] = {};
@@ -365,7 +277,7 @@
                                         const nestedItemTranslation =
                                             itemTranslation[nestedItemKey];
 
-                                        // Save deep translatable fields
+                                        // Update deep translatable fields
                                         const deepAnalysis =
                                             getComponentAnalysis({
                                                 schema:
@@ -388,14 +300,6 @@
                                                         nestedItem[
                                                             deepField.name
                                                         ];
-                                                    console.log(
-                                                        "SAVE DEBUG - Saved deep field:",
-                                                        deepField.name,
-                                                        "=",
-                                                        nestedItem[
-                                                            deepField.name
-                                                        ],
-                                                    );
                                                 }
                                             },
                                         );
@@ -407,21 +311,50 @@
                 });
             }
         });
+    }
 
+    // This function is called by FormBuilder's saveTranslations context function
+    // The translation data is already updated by updateTranslationDataStructure()
+    async function saveTranslations() {
         console.log(
-            "SAVE DEBUG - Final translationData for component:",
-            translationData[componentInstance.id],
+            "[TranslationModeWrapper] saveTranslations called - translation data should already be updated",
         );
 
-        // Now call FormBuilder's save function to persist to backend
+        // Make sure the translation data is up to date
+        updateTranslationDataStructure();
+
+        // The FormBuilder will handle converting and saving to backend
         if (formBuilderContext?.saveTranslations) {
-            console.log("SAVE DEBUG - Calling FormBuilder save function...");
             await formBuilderContext.saveTranslations();
-            console.log("SAVE DEBUG - FormBuilder save completed!");
+            console.log("[TranslationModeWrapper] FormBuilder save completed");
         } else {
-            console.log("SAVE DEBUG - No saveTranslations function in context");
+            console.log(
+                "[TranslationModeWrapper] No saveTranslations function in context",
+            );
         }
     }
+
+    // Handle the translation data update event from FormBuilder
+    function handleUpdateTranslationDataEvent() {
+        console.log(
+            "[TranslationModeWrapper] Received updateTranslationData event",
+        );
+        updateTranslationDataStructure();
+    }
+
+    onMount(() => {
+        document.addEventListener(
+            "updateTranslationData",
+            handleUpdateTranslationDataEvent,
+        );
+    });
+
+    onDestroy(() => {
+        document.removeEventListener(
+            "updateTranslationData",
+            handleUpdateTranslationDataEvent,
+        );
+    });
 </script>
 
 {#if hasTranslatableContent}
@@ -464,16 +397,6 @@
                 </SelectContent>
             </Select>
         </div>
-
-        {#if activeLocale !== CMS_LOCALE}
-            <button
-                type="button"
-                on:click={saveTranslations}
-                class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-            >
-                Save Translations
-            </button>
-        {/if}
     </div>
 
     {#if componentInstance.component}
