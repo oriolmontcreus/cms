@@ -51,7 +51,7 @@
     let localeFormData: Record<string, any> = {};
     let previousLocaleFormData: string = "";
     let isInitialLoad = true;
-    let lastActiveLocale = activeLocale; // Track locale changes
+    let lastActiveLocale = activeLocale; //Track locale changes
 
     // Only rebuild form data when activeLocale actually changes
     $: if (activeLocale !== lastActiveLocale || isInitialLoad) {
