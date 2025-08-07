@@ -209,18 +209,11 @@
         }
     }
 
-    // Disabled automatic reactive save - now only saving through main save button
-    // Keep the reactive statement to just update the internal translation data structure
-    $: if (activeLocale !== CMS_LOCALE && localeFormData && !isInitialLoad) {
-        const currentFormDataString = JSON.stringify(localeFormData);
-
-        // Only update internal state if data has changed
-        if (currentFormDataString !== previousLocaleFormData) {
-            // Update translation data structure but don't save to backend
-            updateTranslationDataStructure();
-            previousLocaleFormData = currentFormDataString;
-        }
-    }
+    // Remove the reactive statement that was causing excessive calls
+    // The translation data structure will be updated only when needed:
+    // 1. When switching locales (handled in rebuildLocaleFormData)
+    // 2. When explicitly saving (handled in saveTranslations)
+    // 3. When handling update events (handled in handleUpdateTranslationDataEvent)
 
     // Update the internal translation data structure without saving to backend
     function updateTranslationDataStructure() {
