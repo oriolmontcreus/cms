@@ -3,7 +3,7 @@ import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "@/services/toast.service";
 import { getPageConfig, getAllPageSlugs } from "@/lib/page-registry";
 import { api } from "@/lib/utils/api";
-import { CMS_NAME, FRONTEND_URL } from "@shared/env";
+import { CMS_FULLNAME, FRONTEND_URL } from "@shared/env";
 
 //region Local data helpers
 async function getExistingPagesData(): Promise<Page[]> {
@@ -17,7 +17,7 @@ async function getExistingPagesData(): Promise<Page[]> {
         if (!response.ok) throw new Error('Failed to fetch pages.json');
         return await response.json();
     } catch (error) {
-        console.warn(`${CMS_NAME} No existing pages.json found or error fetching it, starting fresh`);
+        console.warn(`${CMS_FULLNAME} No existing pages.json found or error fetching it, starting fresh`);
         return [];
     }
 }

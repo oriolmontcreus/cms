@@ -1,5 +1,4 @@
 <script lang="ts">
-    import GalleryVerticalEndIcon from "@lucide/svelte/icons/gallery-vertical-end";
     import LoginForm from "@/lib/components/LoginForm.svelte";
     import { CMS_NAME } from "@shared/env";
 </script>
@@ -12,9 +11,14 @@
                 class="flex items-center gap-2 font-medium dark:text-white"
             >
                 <div
-                    class="bg-primary text-primary-foreground dark:bg-primary-foreground dark:text-primary flex size-6 items-center justify-center rounded-md"
+                    class="text-white dark:text-black flex size-6 items-center justify-center rounded-md"
                 >
-                    <GalleryVerticalEndIcon class="size-4" />
+                    <div class="bg-black dark:bg-white rounded-sm size-6">
+                        <span
+                            class="text-xs flex justify-center h-full items-center"
+                            >EX</span
+                        >
+                    </div>
                 </div>
                 {CMS_NAME}
             </a>

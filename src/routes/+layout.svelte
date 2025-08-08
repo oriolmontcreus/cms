@@ -10,7 +10,7 @@
 	import { autoLogin } from "@/services/auth.service";
 	import PageLoading from "$lib/components/PageLoading.svelte";
 	import { fade } from "svelte/transition";
-	import { CMS_NAME } from "@shared/env";
+	import { CMS_FULLNAME } from "@shared/env";
 
 	let { children } = $props();
 
@@ -39,7 +39,7 @@
 </script>
 
 <svelte:head>
-	<title>{CMS_NAME}</title>
+	<title>{CMS_FULLNAME}</title>
 </svelte:head>
 
 {#if authInitialized}

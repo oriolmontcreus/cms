@@ -23,7 +23,7 @@
     } from "@/services/auth.service";
     import { usePasswordStrength } from "$lib/hooks/usePasswordStrength.svelte";
     import { setMode } from "mode-watcher";
-    import { CMS_NAME } from "@shared/env";
+    import { CMS_FULLNAME } from "@shared/env";
 
     let step = $state(0);
     let name = $state("");
@@ -51,7 +51,7 @@
 
     const steps = [
         {
-            title: `Welcome to ${CMS_NAME}`,
+            title: `Welcome to ${CMS_FULLNAME}`,
             description: "Let's get your content management system set up",
         },
         {
@@ -129,7 +129,7 @@
                             class="text-4xl font-light text-white tracking-tight"
                         >
                             Welcome to <span class="text-primary/70"
-                                >{CMS_NAME}</span
+                                >{CMS_FULLNAME}</span
                             >
                         </h1>
                         <p class="text-lg text-gray-300 font-light">
