@@ -185,7 +185,7 @@
 
                 <Tabs value={defaultTab} class={CSS_CLASSES.TABS_CONTAINER}>
                     <TabsList
-                        class="text-foreground mb-3 h-auto gap-2 rounded-none border-b !bg-transparent px-0 py-1 flex flex-wrap w-fit"
+                        class="text-foreground mb-3 h-auto gap-2 rounded-none border-b !bg-transparent px-0 py-1 pb-0 flex flex-wrap w-fit"
                     >
                         {#each filteredTabs as tab (tab.name)}
                             <ResponsiveTabTrigger {tab} value={tab.name} />
@@ -195,7 +195,7 @@
                     {#each filteredTabs as tab (tab.name)}
                         <TabsContent
                             value={tab.name}
-                            class={CSS_CLASSES.TABS_CONTENT}
+                            class="border rounded-b-lg rounded-tr-lg -mt-[21px] p-8"
                         >
                             <svelte:self
                                 schema={tab.schema}

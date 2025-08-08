@@ -33,7 +33,6 @@ export const CSS_CLASSES = {
     GRID_CONTAINER: 'grid gap-4',
     TABS_CONTAINER: 'w-full',
     TABS_LIST: 'flex flex-wrap gap-2',
-    TABS_CONTENT: 'mt-6',
     LABEL: 'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
     HELPER_TEXT: 'text-sm text-muted-foreground mt-1'
 } as const; 
