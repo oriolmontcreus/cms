@@ -4,6 +4,7 @@ import type { User } from "@shared/types/user.type";
 import { fetchWithToast } from "@/lib/utils/safeFetch";
 import { goto } from "$app/navigation";
 import { get } from "svelte/store";
+import { CMS_NAME } from "@shared/env";
 
 const root = "/auth";
 
@@ -84,7 +85,7 @@ export async function handleLogout(): Promise<void> {
 export async function handleSetupSuperAdmin(email: string, password: string, name: string, redirect: boolean = false): Promise<void> {
     const [ok, err] = await fetchWithToast(setupSuperAdmin(email, password, name), {
         loading: 'Setting up your account...',
-        success: () => `Welcome to Froggy CMS! Your account has been created successfully.`,
+        success: () => `Welcome to ${CMS_NAME}! Your account has been created successfully.`,
         error: 'Error setting up your account. Please try again.'
     });
     if (!err) {

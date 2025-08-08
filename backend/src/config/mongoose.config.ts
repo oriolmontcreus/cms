@@ -1,7 +1,7 @@
 import { log } from '@/lib/log.js';
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/froggy';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/excalibur';
 
 export const connectMongoose = async () => {
   try {

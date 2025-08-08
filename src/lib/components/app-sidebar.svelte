@@ -9,6 +9,7 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { ComponentProps } from "svelte";
 	import { loggedUser } from "@/stores/loggedUser";
+	import { CMS_NAME } from "@shared/env";
 
 	const data = {
 		navMain: [
@@ -48,7 +49,9 @@
 					{#snippet child({ props })}
 						<a href="##" {...props}>
 							<InnerShadowTopIcon class="!size-5" />
-							<span class="text-base font-semibold">Froggy</span>
+							<span class="text-base font-semibold"
+								>{CMS_NAME}</span
+							>
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>
