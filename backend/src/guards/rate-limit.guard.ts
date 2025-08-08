@@ -3,6 +3,7 @@ import { retrieveWithExpiry, storeWithExpiry } from "@/lib/redis.js";
 import { log } from "@/lib/log.js";
 import TooManyRequests from "@/errors/TooManyRequests.js";
 import { User } from "@shared/types/user.type.js";
+import { ENV, Environment } from "@/constants/env.js";
 
 const rateStore = new Map<string, { value: number; expiresAt: number }>();
 
@@ -67,6 +68,9 @@ export function withRateLimit(
   } = options;
 
   return async function (c: Context, next?: Next) {
+    // Skip rate limiting in development mode
+    if (ENV === Environment.DEVELOPMENT) return handler(c, next);
+
     const identifier = identifierFn(c);
     const path = c.req.path;
     const key = `ratelimit:${path}:${identifier}`;
