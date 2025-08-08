@@ -2,7 +2,7 @@ import type { FormField, Layout, SchemaItem, ComponentTab, TabsContainer, FormDa
 import { RenderMode } from '../types';
 import type { Component } from '@/lib/shared/types/pages.type';
 import { SCHEMA_TYPES, DEFAULT_VALUES } from '../constants';
-import { CMS_LOCALE } from '@/lib/shared/env';
+import { CMS_LOCALE } from '@shared/env';
 
 export interface FormBuilderContext {
     collectFilesForDeletion: (itemData: any) => void;
@@ -92,7 +92,6 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
             .filter((item): item is FormField => item !== null);
     }
     if (schema.type === SCHEMA_TYPES.GRID) return schema.schema;
-    if (schema.type === SCHEMA_TYPES.TABS) return schema.tabs.flatMap(tab => tab.schema);
     return [];
 }
 

@@ -3,7 +3,7 @@ import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "@/services/toast.service";
 import { getPageConfig, getAllPageSlugs } from "@/lib/page-registry";
 import { api } from "@/lib/utils/api";
-import { CMS_NAME, FRONTEND_URL } from "@/lib/shared/env";
+import { CMS_NAME, FRONTEND_URL } from "@shared/env";
 
 //region Local data helpers
 async function getExistingPagesData(): Promise<Page[]> {
