@@ -9,14 +9,7 @@
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import Spinner from "@components/Spinner.svelte";
     import { formatDateTime } from "$lib/utils";
-    import {
-        IconFile,
-        IconFolder,
-        IconFolderOpen,
-        IconPlus,
-        IconChevronRight,
-        IconChevronDown,
-    } from "@tabler/icons-svelte";
+    import { IconChevronRight, IconChevronDown } from "@tabler/icons-svelte";
 
     interface PageNode {
         page: Page;
@@ -141,23 +134,16 @@
                 {:else if pages.length === 0}
                     <div class="flex items-center justify-center min-h-[400px]">
                         <div class="text-center max-w-md">
-                            <div
-                                class="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center"
+                            <h3
+                                class="text-lg font-extralight uppercase tracking-wider mb-2"
                             >
-                                <IconFile
-                                    class="h-8 w-8 text-muted-foreground"
-                                />
-                            </div>
-                            <h3 class="text-lg font-semibold mb-2">
-                                No pages found
+                                NO PAGES FOUND
                             </h3>
-                            <p class="text-muted-foreground mb-6">
+                            <p
+                                class="text-muted-foreground font-extralight mb-6"
+                            >
                                 Get started by creating your first page
                             </p>
-                            <Button>
-                                <IconPlus class="h-4 w-4 mr-2" />
-                                Create Page
-                            </Button>
                         </div>
                     </div>
                 {:else}
@@ -176,7 +162,7 @@
     <div class="group">
         <!-- Main page row -->
         <div
-            class="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+            class="flex items-center gap-3 p-3 rounded-lg border bg-card/50 dark:bg-card/20 hover:bg-accent cursor-pointer dark:hover:bg-accent transition-all duration-200"
             style="margin-left: {depth * 20}px"
         >
             <!-- Expand/Collapse Button -->
@@ -197,50 +183,27 @@
                 <div class="w-6"></div>
             {/if}
 
-            <!-- Page Icon -->
-            <div class="flex-shrink-0">
-                {#if node.children.length > 0}
-                    <div
-                        class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center"
-                    >
-                        {#if node.isExpanded}
-                            <IconFolderOpen
-                                class="h-4 w-4 text-amber-600 dark:text-amber-400"
-                            />
-                        {:else}
-                            <IconFolder
-                                class="h-4 w-4 text-amber-600 dark:text-amber-400"
-                            />
-                        {/if}
-                    </div>
-                {:else}
-                    <div
-                        class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center"
-                    >
-                        <IconFile
-                            class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                        />
-                    </div>
-                {/if}
-            </div>
-
             <!-- Page Content -->
             <button
                 class="flex-1 flex items-center justify-between min-w-0 text-left group-hover:bg-transparent"
                 onclick={() => handlePageClick(node.page)}
                 type="button"
             >
-                <div class="min-w-0 flex-1">
-                    <div class="font-medium text-foreground truncate">
+                <div class="min-w-0 flex-1 cursor-pointer">
+                    <div
+                        class="text-lg text-muted-foreground uppercase truncate w-fit"
+                    >
                         {node.page.title}
                     </div>
-                    <div class="text-sm text-muted-foreground truncate">
+                    <div
+                        class="text-sm text-muted-foreground font-light truncate w-fit"
+                    >
                         /{getFullSlug(node.page)}
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3 ml-4 flex-shrink-0">
-                    <div class="text-xs text-muted-foreground">
+                    <div class="text-xs text-muted-foreground font-light">
                         {formatDateTime(node.page.updatedAt)}
                     </div>
                 </div>
