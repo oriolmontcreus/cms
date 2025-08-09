@@ -37,8 +37,8 @@
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<div class="flex justify-start gap-2 items-center">
-					<CmsLogo className="size-5" />
+				<div class="flex justify-start gap-1 items-center">
+					<CmsLogo textSize="text-sm" />
 					<span class="text-base font-extralight">{CMS_NAME}</span>
 				</div>
 			</Sidebar.MenuItem>
