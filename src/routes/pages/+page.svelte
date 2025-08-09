@@ -34,7 +34,6 @@
         const nodeMap = new Map<string, PageNode>();
         const rootNodes: PageNode[] = [];
 
-        // Create nodes for all pages first
         pages.forEach((page) => {
             nodeMap.set(page.slug, {
                 page,
@@ -43,17 +42,14 @@
             });
         });
 
-        // Build the tree structure
         pages.forEach((page) => {
             const node = nodeMap.get(page.slug)!;
 
             if (page.parentSlug) {
-                // Find parent node by parentSlug (not by full slug)
                 const parentNode = nodeMap.get(page.parentSlug);
                 if (parentNode) {
                     parentNode.children.push(node);
                 } else {
-                    // Parent doesn't exist, treat as root
                     rootNodes.push(node);
                 }
             } else {
@@ -61,7 +57,6 @@
             }
         });
 
-        // Sort nodes alphabetically
         const sortNodes = (nodes: PageNode[]) => {
             nodes.sort((a, b) => a.page.title.localeCompare(b.page.title));
             nodes.forEach((node) => sortNodes(node.children));
@@ -82,7 +77,7 @@
 
     function toggleExpand(node: PageNode) {
         node.isExpanded = !node.isExpanded;
-        pageTree = [...pageTree]; // Trigger reactivity
+        pageTree = [...pageTree];
     }
 
     async function handlePublish() {
@@ -161,12 +156,10 @@
 
 {#snippet PageTreeNode(node: PageNode, depth: number)}
     <div class="group">
-        <!-- Main page row -->
         <div
             class="flex items-center gap-3 p-3 rounded-lg border bg-card/50 dark:bg-card/20 hover:bg-accent cursor-pointer dark:hover:bg-accent transition-all duration-200"
             style="margin-left: {depth * 20}px"
         >
-            <!-- Expand/Collapse Button -->
             {#if node.children.length > 0}
                 <Button
                     variant="ghost"
@@ -184,7 +177,6 @@
                 <div class="w-6"></div>
             {/if}
 
-            <!-- Page Content -->
             <button
                 class="flex-1 flex items-center justify-between min-w-0 text-left group-hover:bg-transparent"
                 onclick={() => handlePageClick(node.page)}
@@ -211,7 +203,6 @@
             </button>
         </div>
 
-        <!-- Children -->
         {#if node.isExpanded && node.children.length > 0}
             <div class="mt-1 space-y-1" transition:slide={{ duration: 200 }}>
                 {#each node.children as childNode}
