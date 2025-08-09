@@ -24,10 +24,14 @@ const savePageData = async (pages: Page[]): Promise<void> => {
 };
 
 export class PageService {
+  static async getPages(): Promise<Page[]> {
+    return await getExistingPagesData();
+  }
+
   static async updateComponents(slug: string, components: Component[]): Promise<Page> {
     const existingPages = await getExistingPagesData();
     const pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
-    
+
     if (pageIndex === -1) {
       throw new NotFound("Page not found");
     }
@@ -42,7 +46,7 @@ export class PageService {
   static async updateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page> {
     const existingPages = await getExistingPagesData();
     const pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
-    
+
     if (pageIndex === -1) {
       throw new NotFound("Page not found");
     }
