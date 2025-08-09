@@ -10,6 +10,7 @@
     import Spinner from "@components/Spinner.svelte";
     import { formatDateTime } from "$lib/utils";
     import { IconChevronRight, IconChevronDown } from "@tabler/icons-svelte";
+    import { slide } from "svelte/transition";
 
     interface PageNode {
         page: Page;
@@ -212,7 +213,7 @@
 
         <!-- Children -->
         {#if node.isExpanded && node.children.length > 0}
-            <div class="mt-1 space-y-1">
+            <div class="mt-1 space-y-1" transition:slide={{ duration: 200 }}>
                 {#each node.children as childNode}
                     {@render PageTreeNode(childNode, depth + 1)}
                 {/each}
