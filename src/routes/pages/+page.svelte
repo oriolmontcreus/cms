@@ -9,7 +9,11 @@
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import Spinner from "@components/Spinner.svelte";
     import { formatDateTime } from "$lib/utils";
-    import { IconChevronRight, IconChevronDown } from "@tabler/icons-svelte";
+    import {
+        IconChevronRight,
+        IconChevronDown,
+        IconArrowRight,
+    } from "@tabler/icons-svelte";
     import { slide } from "svelte/transition";
 
     interface PageNode {
@@ -88,24 +92,20 @@
 </script>
 
 <SiteHeader title="Pages">
-    <div class="flex items-center gap-2">
-        <Button
-            onclick={handlePublish}
-            disabled={isBuilding}
-            variant="default"
-            size="sm"
-            class="bg-green-600 hover:bg-green-700"
-        >
-            {#if isBuilding}
-                <div
-                    class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
-                ></div>
-                Publishing...
-            {:else}
-                🚀 Publish
-            {/if}
-        </Button>
-    </div>
+    <Button
+        onclick={handlePublish}
+        disabled={isBuilding}
+        size="sm"
+        effect="expandIcon"
+        icon={IconArrowRight}
+        iconPlacement="right"
+    >
+        {#if isBuilding}
+            Publishing
+        {:else}
+            Publish
+        {/if}
+    </Button>
 </SiteHeader>
 <div class="flex flex-1 flex-col">
     <ScrollArea
