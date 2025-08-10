@@ -1,14 +1,14 @@
 <script lang="ts">
 	import DashboardIcon from "@tabler/icons-svelte/icons/dashboard";
 	import FolderIcon from "@tabler/icons-svelte/icons/folder";
-	import InnerShadowTopIcon from "@tabler/icons-svelte/icons/inner-shadow-top";
 	import UsersIcon from "@tabler/icons-svelte/icons/users";
 	import NavMain from "./nav-main.svelte";
 	import NavUser from "./nav-user.svelte";
-	import SettingsIcon from "@tabler/icons-svelte/icons/settings";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import type { ComponentProps } from "svelte";
 	import { loggedUser } from "@/stores/loggedUser";
+	import { CMS_NAME } from "@shared/env";
+	import CmsLogo from "./CmsLogo.svelte";
 
 	const data = {
 		navMain: [
@@ -27,11 +27,6 @@
 				url: "/users",
 				icon: UsersIcon,
 			},
-			{
-				title: "Settings",
-				url: "#",
-				icon: SettingsIcon,
-			},
 		],
 	};
 
@@ -42,16 +37,10 @@
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton
-					class="data-[slot=sidebar-menu-button]:!p-1.5"
-				>
-					{#snippet child({ props })}
-						<a href="##" {...props}>
-							<InnerShadowTopIcon class="!size-5" />
-							<span class="text-base font-semibold">Froggy</span>
-						</a>
-					{/snippet}
-				</Sidebar.MenuButton>
+				<div class="flex justify-start gap-1 items-center">
+					<CmsLogo textSize="text-sm" />
+					<span class="text-base font-extralight">{CMS_NAME}</span>
+				</div>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>
 	</Sidebar.Header>

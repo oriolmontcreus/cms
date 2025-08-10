@@ -5,10 +5,10 @@ import { UserModel } from '../src/models/user.model.js';
 import { UserRegisterPayload } from '@shared/types/user.type.js';
 import { Roles } from '@shared/constants/role.type.js';
 import mongoose from 'mongoose';
-import { logStep, printHeader, printSuccessBox, printErrorBox, printWarningBox, printInfoBox, printCancelledBox, handleScriptError } from './utils/terminal-ui.js';
+import { logStep, printHeader, printSuccessBox, printErrorBox, printWarningBox, printCancelledBox, handleScriptError } from './utils/terminal-ui.js';
 
 // Mongoose connection configuration (matching your main app config)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/froggy';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/excalibur';
 
 // Role styling configuration with chalk
 const roleStyles = new Map([

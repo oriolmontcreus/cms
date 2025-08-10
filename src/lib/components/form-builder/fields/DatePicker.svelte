@@ -1,17 +1,17 @@
 <script lang="ts">
-    import type { FormField } from '../types';
+    import type { FormField } from "../types";
     import CalendarIcon from "@lucide/svelte/icons/calendar";
     import {
         DateFormatter,
         type DateValue,
         getLocalTimeZone,
-        parseDate
+        parseDate,
     } from "@internationalized/date";
     import { cn } from "$lib/utils.js";
     import { buttonVariants } from "$lib/components/ui/button/index.js";
     import { Calendar } from "$lib/components/ui/calendar/index.js";
     import * as Popover from "$lib/components/ui/popover/index.js";
-    import { CMS_LOCALE } from "@/lib/shared/env";
+    import { CMS_LOCALE } from "@shared/env";
 
     interface Props {
         field: FormField;
@@ -22,14 +22,14 @@
     let { field, fieldId, value = $bindable() }: Props = $props();
 
     const df = new DateFormatter(field.locale || CMS_LOCALE, {
-        dateStyle: field.dateStyle || "long"
+        dateStyle: field.dateStyle || "long",
     });
 
     let contentRef = $state<HTMLElement | null>(null);
 
     // Derive dateValue from the string value without causing loops
     let dateValue = $derived.by(() => {
-        if (value && typeof value === 'string') {
+        if (value && typeof value === "string") {
             try {
                 return parseDate(value);
             } catch {
@@ -70,7 +70,7 @@
     };
 
     function handleDateChange(newDate: DateValue | undefined) {
-        value = newDate ? newDate.toString() : '';
+        value = newDate ? newDate.toString() : "";
     }
 </script>
 
@@ -80,21 +80,23 @@
             class={cn(
                 buttonVariants({
                     variant: "outline",
-                    class: "w-full justify-start text-left font-normal"
+                    class: "w-full justify-start text-left font-normal",
                 }),
                 !dateValue && "text-muted-foreground",
-                field.disabled && "opacity-50 cursor-not-allowed"
+                field.disabled && "opacity-50 cursor-not-allowed",
             )}
             disabled={field.disabled || field.readonly}
             id={fieldId}
             name={fieldId}
         >
             <CalendarIcon class="mr-2 h-4 w-4" />
-            {dateValue ? df.format(dateValue.toDate(getLocalTimeZone())) : (field.placeholder || "Pick a date")}
+            {dateValue
+                ? df.format(dateValue.toDate(getLocalTimeZone()))
+                : field.placeholder || "Pick a date"}
         </Popover.Trigger>
         <Popover.Content bind:ref={contentRef} class="w-auto p-0">
-            <Calendar 
-                type="single" 
+            <Calendar
+                type="single"
                 value={dateValue}
                 onValueChange={handleDateChange}
                 disabled={field.disabled || field.readonly}
@@ -104,9 +106,9 @@
                 monthFormat={field.monthFormat || "long"}
                 minValue={minDateValue}
                 maxValue={maxDateValue}
-                isDateUnavailable={isDateUnavailable}
+                {isDateUnavailable}
                 fixedWeeks={true}
             />
         </Popover.Content>
     </Popover.Root>
-</div> 
+</div>

@@ -1,10 +1,5 @@
-import SettingsIcon from '@lucide/svelte/icons/settings';
-import PaletteIcon from '@lucide/svelte/icons/palette';
-import WrenchIcon from '@lucide/svelte/icons/wrench';
-import LayersIcon from '@lucide/svelte/icons/layers';
-import { TextInput, ColorPicker, Toggle, Tabs, TabField, FileInput, Repeater } from '@/lib/components/form-builder/fields';
+import { Repeater, TextInput } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
-import { FeatureCard } from './FeatureCard';
 
 export const HeroComponent: Component = {
     name: 'Hero',
@@ -15,80 +10,30 @@ export const HeroComponent: Component = {
             .min(3)
             .max(100)
             .placeholder('Enter the hero title')
-            .helperText('This field is always visible regardless of the active tab')
+            .helperText('The main title displayed in the hero section')
             .translatable(),
-        Tabs('hero-tabs')
-            .tabs([
-                TabField('basic')
-                    .label('Basic Settings')
-                    .icon(SettingsIcon)
-                    .schema([
-                        TextInput('title2')
-                            .label('Secondary Title')
-                            .required()
-                            .min(3)
-                            .max(100)
-                            .placeholder('Enter the secondary title'),
 
-                        TextInput('subtitle')
-                            .label('Subtitle')
-                            .placeholder('Enter a subtitle')
-                            .helperText('Appears below the main title')
-                            .translatable(),
+        TextInput('docsUrl')
+            .label('Docs URL')
+            .placeholder('https://docs.example.com')
+            .helperText('Link to the documentation page'),
 
-                        FileInput('image')
-                            .label('Image')
-                            .helperText('Upload an image for the hero section')
-                            .allowedMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-                            .maxFileSize(1, 'mb')
-                    ]),
+        TextInput('githubUrl')
+            .label('GitHub repo URL')
+            .placeholder('https://github.com/username/repo')
+            .helperText('Link to the GitHub repository'),
 
-                TabField('styling')
-                    .label('Styling Options')
-                    .icon(PaletteIcon)
-                    .schema([
-                        ColorPicker('backgroundColor')
-                            .label('Background Color')
-                            .helperText('Choose the background color for the hero section'),
-
-                        ColorPicker('textColor')
-                            .label('Text Color')
-                            .helperText('Choose the text color for the hero section')
-                    ]),
-
-                TabField('settings')
-                    .label('Advanced Settings')
-                    .icon(WrenchIcon)
-                    .hidden() // This entire tab will be hidden
-                    .schema([
-                        Toggle('showButton')
-                            .label('Show Call-to-Action Button')
-                            .helperText('Display a button in the hero section'),
-
-                        Toggle('autoSave')
-                            .label('Auto Save')
-                            .helperText('Automatically save changes')
-                            .disabled(),
-
-                        TextInput('debugInfo')
-                            .label('Debug Information')
-                            .helperText('Internal debug information (hidden in production)')
-                            .placeholder('Debug data...')
-                            .hidden() // This field will be hidden from rendering
-                    ]),
-
-                TabField('features')
-                    .label('Feature Cards')
-                    .icon(LayersIcon)
-                    .schema([
-                        Repeater('featureCards')
-                            .label('Feature Cards')
-                            .helperText('Add feature cards to display in the hero section')
-                            .contained()
-                            .responsiveGrid(2, 4, { sm: 1, md: 2 })
-                            .schema(FeatureCard.schema)
-                    ])
+        Repeater('words')
+            .label('Hero Words')
+            .helperText('Words to animate in the hero section')
+            .schema((index: number) => [
+                TextInput('word')
+                    .label('Word')
+                    .required()
+                    .min(2)
+                    .max(100)
+                    .placeholder(`Word ${index + 1}`)
+                    .translatable()
             ])
-            .activeTab('basic')
     ]
 };

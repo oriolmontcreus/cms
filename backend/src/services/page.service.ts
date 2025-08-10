@@ -24,16 +24,37 @@ const savePageData = async (pages: Page[]): Promise<void> => {
 };
 
 export class PageService {
+  static async getPages(): Promise<Page[]> {
+    return await getExistingPagesData();
+  }
+
   static async updateComponents(slug: string, components: Component[]): Promise<Page> {
     const existingPages = await getExistingPagesData();
-    const pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
-    
-    if (pageIndex === -1) {
-      throw new NotFound("Page not found");
-    }
+    let pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
 
-    existingPages[pageIndex].components = components;
-    existingPages[pageIndex].updatedAt = new Date().toISOString();
+    if (pageIndex === -1) {
+      // Create a new page if it doesn't exist
+      const newPage: Page = {
+        _id: `page_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        title: slug === '/' ? 'Home' : slug,
+        slug: slug,
+        content: '',
+        config: {
+          title: slug === '/' ? 'Home' : slug,
+          slug: slug
+        },
+        components: components,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      existingPages.push(newPage);
+      pageIndex = existingPages.length - 1;
+      log('INFO', `Created new page with slug: ${slug}`);
+    } else {
+      existingPages[pageIndex].components = components;
+      existingPages[pageIndex].updatedAt = new Date().toISOString();
+    }
 
     await savePageData(existingPages);
     return existingPages[pageIndex];
@@ -42,7 +63,7 @@ export class PageService {
   static async updateComponentFormData(slug: string, instanceId: string, formData: Record<string, any>): Promise<Page> {
     const existingPages = await getExistingPagesData();
     const pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
-    
+
     if (pageIndex === -1) {
       throw new NotFound("Page not found");
     }

@@ -177,7 +177,7 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
-    schema(items: SchemaItem[]): this {
+    schema(items: SchemaItem[] | ((index: number) => SchemaItem[])): this {
         this.field.schema = items;
         return this;
     }

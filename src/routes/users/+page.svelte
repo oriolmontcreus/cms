@@ -150,7 +150,7 @@
                         iconPlacement="right"
                         icon={PlusIcon}
                     >
-                        Add User
+                        Add user
                     </Button>
                 </div>
 

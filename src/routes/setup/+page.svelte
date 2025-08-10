@@ -23,6 +23,7 @@
     } from "@/services/auth.service";
     import { usePasswordStrength } from "$lib/hooks/usePasswordStrength.svelte";
     import { setMode } from "mode-watcher";
+    import { CMS_FULLNAME } from "@shared/env";
 
     let step = $state(0);
     let name = $state("");
@@ -50,7 +51,7 @@
 
     const steps = [
         {
-            title: "Welcome to Froggy CMS",
+            title: `Welcome to ${CMS_FULLNAME}`,
             description: "Let's get your content management system set up",
         },
         {
@@ -127,7 +128,9 @@
                         <h1
                             class="text-4xl font-light text-white tracking-tight"
                         >
-                            Welcome to Froggy CMS
+                            Welcome to <span class="text-primary/70"
+                                >{CMS_FULLNAME}</span
+                            >
                         </h1>
                         <p class="text-lg text-gray-300 font-light">
                             How should we address you?

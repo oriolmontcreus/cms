@@ -30,9 +30,9 @@
         const fullSlug = Array.isArray(slugParam)
             ? slugParam.join("/")
             : slugParam;
-        console.log("Fetching page with slug:", fullSlug);
+        const normalizedSlug = fullSlug || "/";
 
-        const [data, err] = await safeFetch(getPageBySlug(fullSlug));
+        const [data, err] = await safeFetch(getPageBySlug(normalizedSlug));
         loading = false;
         if (data) {
             pageData = data;

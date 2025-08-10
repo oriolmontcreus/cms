@@ -8,16 +8,11 @@
         SelectTrigger,
     } from "$lib/components/ui/select";
     import UnifiedRenderer from "./UnifiedRenderer.svelte";
-    import GridLayout from "../layouts/GridLayout.svelte";
-    import TabsLayout from "../layouts/TabsLayout.svelte";
     import {
-        usesFilamentTabsOptimized as usesFilamentTabs,
-        usesMixedSchemaOptimized as usesMixedSchema,
         getComponentAnalysis,
         getFieldDefaultValue,
     } from "../utils/optimizedSchemaProcessor";
-    import { CSS_CLASSES, SCHEMA_TYPES } from "../constants";
-    import { CMS_LOCALE } from "@/lib/shared/env";
+    import { CMS_LOCALE } from "@shared/env";
     import type { FormBuilderContext } from "../utils/formHelpers";
     import { getContext, onMount, onDestroy } from "svelte";
 
@@ -315,7 +310,6 @@
     // This function is called by FormBuilder's saveTranslations context function
     // The translation data is already updated by updateTranslationDataStructure()
     async function saveTranslations() {
-
         // Make sure the translation data is up to date
         updateTranslationDataStructure();
 

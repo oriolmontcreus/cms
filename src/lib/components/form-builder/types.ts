@@ -23,12 +23,6 @@ export interface GridLayout {
     hidden?: boolean; // Whether this grid should be hidden from rendering
 }
 
-export interface TabsLayout {
-    type: 'tabs';
-    tabs: TabDefinition[];
-    activeTab?: number; // Index of the initially active tab (0-based)
-}
-
 export interface TabDefinition {
     id: string;
     label: string;
@@ -36,7 +30,7 @@ export interface TabDefinition {
     schema: FormField[]; // Fields contained in this tab
 }
 
-export type Layout = GridLayout | TabsLayout;
+export type Layout = GridLayout;
 
 // New tab definition for component-level tabs
 export interface ComponentTab {
@@ -120,7 +114,7 @@ export interface FormField {
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
     // Repeater specific options
-    schema?: SchemaItem[]; // For repeater fields - the schema to repeat
+    schema?: SchemaItem[] | ((index: number) => SchemaItem[]); // For repeater fields - the schema to repeat (can be function for dynamic fields)
     contained?: boolean; // For repeater fields - whether to show items in a container
     responsiveGrid?: {
         columns?: number; // Number of columns (1-12, default: 2)

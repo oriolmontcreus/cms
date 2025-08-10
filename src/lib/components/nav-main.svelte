@@ -6,9 +6,10 @@
 	import type { Icon } from "@tabler/icons-svelte";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	
-	let { items }: { items: { title: string; url: string; icon?: Icon }[] } = $props();
-	
+
+	let { items }: { items: { title: string; url: string; icon?: Icon }[] } =
+		$props();
+
 	function isActive(url: string): boolean {
 		if (url === "/") return page.url.pathname === "/";
 		return page.url.pathname.startsWith(url);
@@ -17,9 +18,9 @@
 
 <Sidebar.Group>
 	<Sidebar.GroupContent class="flex flex-col gap-2">
-		<Sidebar.Menu>
+		<!-- <Sidebar.Menu>
 			<Sidebar.MenuItem class="flex items-center gap-2">
-				<Sidebar.MenuButton
+				 <Sidebar.MenuButton
 					class="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
 					tooltipContent="Quick create"
 				>
@@ -35,14 +36,16 @@
 					<span class="sr-only">Inbox</span>
 				</Button>
 			</Sidebar.MenuItem>
-		</Sidebar.Menu>
+		</Sidebar.Menu> -->
 		<Sidebar.Menu>
 			{#each items as item (item.title)}
 				<Sidebar.MenuItem>
-					<Sidebar.MenuButton 
-						tooltipContent={item.title} 
+					<Sidebar.MenuButton
+						tooltipContent={item.title}
 						onclick={() => goto(item.url)}
-						class={isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""}
+						class={isActive(item.url)
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: ""}
 					>
 						{#if item.icon}
 							<item.icon />

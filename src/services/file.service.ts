@@ -2,7 +2,7 @@ import { api } from "@/lib/utils/api";
 import { safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "./toast.service";
 import type { UploadedFile } from "@/lib/shared/types/file.type";
-import { BACKEND_URL } from "@/lib/shared/env";
+import { BACKEND_URL } from "@shared/env";
 
 const root = "/files";
 
@@ -17,7 +17,7 @@ export function getFileUrl(file: UploadedFile): string {
 
 export async function uploadFiles(files: File[]): Promise<UploadedFile[]> {
     const formData = new FormData();
-    
+
     files.forEach((file, index) => {
         formData.append(`file_${index}`, file);
     });
@@ -54,7 +54,7 @@ export async function handleUploadFiles(files: File[]): Promise<UploadedFile[] |
 
 export async function handleDeleteFiles(fileIds: string[]): Promise<boolean> {
     if (fileIds.length === 0) return true;
-    
+
     const [success, err] = await safeFetch(deleteFiles(fileIds));
     if (!success) {
         errorToast('Failed to delete files');

@@ -22,7 +22,7 @@
     import { CSS_CLASSES } from "./constants";
     import { writable } from "svelte/store";
     import { setContext, onMount } from "svelte";
-    import { SITE_LOCALES, CMS_LOCALE } from "@/lib/shared/env";
+    import { SITE_LOCALES, CMS_LOCALE } from "@shared/env";
     import { IconChevronDown, IconChevronUp } from "@tabler/icons-svelte";
     import { slide, fade } from "svelte/transition";
 
@@ -299,7 +299,6 @@
     }
 
     export async function handleSubmit(forced = false) {
-
         // Only prevent auto-submit in translation mode, but allow manual saves
         if (mode === RenderMode.TRANSLATION && !forced) {
             return;

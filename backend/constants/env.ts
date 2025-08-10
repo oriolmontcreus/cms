@@ -13,6 +13,6 @@ const JWT_PERMANENT_SECRET = process.env.JWT_PERMANENT_SECRET ??
 export const JTW_SECRET_KEY = new TextEncoder().encode(JWT_PERMANENT_SECRET);
 
 export const TOKEN_EXPIRATION_TIME = "24h";
-export const SESSION_COOKIE = "froggy-session";
+export const SESSION_COOKIE = "excalibur-session";
 
-export const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/froggy";
+export const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/excalibur";
