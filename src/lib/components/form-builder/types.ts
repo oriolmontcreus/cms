@@ -114,7 +114,7 @@ export interface FormField {
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
     // Repeater specific options
-    schema?: SchemaItem[]; // For repeater fields - the schema to repeat
+    schema?: SchemaItem[] | ((index: number) => SchemaItem[]); // For repeater fields - the schema to repeat (can be function for dynamic fields)
     contained?: boolean; // For repeater fields - whether to show items in a container
     responsiveGrid?: {
         columns?: number; // Number of columns (1-12, default: 2)

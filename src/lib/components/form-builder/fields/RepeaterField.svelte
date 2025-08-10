@@ -107,7 +107,9 @@
                                 </Button>
                             </div>
                             <UnifiedRenderer
-                                schema={field.schema || []}
+                                schema={typeof field.schema === "function"
+                                    ? field.schema(index)
+                                    : field.schema || []}
                                 componentId={`${fieldId}-${index}`}
                                 bind:formData={value[index]}
                                 mode={translationMode}
@@ -150,7 +152,9 @@
                         </ConfirmPopover>
                     </div>
                     <UnifiedRenderer
-                        schema={field.schema || []}
+                        schema={typeof field.schema === "function"
+                            ? field.schema(index)
+                            : field.schema || []}
                         componentId={`${fieldId}-${index}`}
                         bind:formData={value[index]}
                         mode={translationMode}
