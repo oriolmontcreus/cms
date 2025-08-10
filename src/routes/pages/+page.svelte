@@ -74,6 +74,14 @@
         return page.slug;
     }
 
+    function getDisplaySlug(page: Page): string {
+        const slug = getFullSlug(page);
+        if (!slug || slug === "" || slug === "/") {
+            return "Main route /";
+        }
+        return `/${slug}`;
+    }
+
     function handlePageClick(page: Page) {
         const fullSlug = getFullSlug(page);
         goto(`/pages/${fullSlug}`);
@@ -191,7 +199,7 @@
                     <div
                         class="text-sm text-muted-foreground font-light truncate w-fit"
                     >
-                        /{getFullSlug(node.page)}
+                        {getDisplaySlug(node.page)}
                     </div>
                 </div>
 
