@@ -35,7 +35,7 @@ export class PageService {
     if (pageIndex === -1) {
       // Create a new page if it doesn't exist
       const newPage: Page = {
-        _id: `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        _id: `page_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         title: slug === '/' ? 'Home' : slug,
         slug: slug,
         content: '',
