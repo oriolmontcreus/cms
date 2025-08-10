@@ -30,14 +30,31 @@ export class PageService {
 
   static async updateComponents(slug: string, components: Component[]): Promise<Page> {
     const existingPages = await getExistingPagesData();
-    const pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
+    let pageIndex = existingPages.findIndex((p: Page) => p.slug === slug);
 
     if (pageIndex === -1) {
-      throw new NotFound("Page not found");
-    }
+      // Create a new page if it doesn't exist
+      const newPage: Page = {
+        _id: `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title: slug === '/' ? 'Home' : slug,
+        slug: slug,
+        content: '',
+        config: {
+          title: slug === '/' ? 'Home' : slug,
+          slug: slug
+        },
+        components: components,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-    existingPages[pageIndex].components = components;
-    existingPages[pageIndex].updatedAt = new Date().toISOString();
+      existingPages.push(newPage);
+      pageIndex = existingPages.length - 1;
+      log('INFO', `Created new page with slug: ${slug}`);
+    } else {
+      existingPages[pageIndex].components = components;
+      existingPages[pageIndex].updatedAt = new Date().toISOString();
+    }
 
     await savePageData(existingPages);
     return existingPages[pageIndex];

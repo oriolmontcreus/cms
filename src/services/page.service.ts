@@ -77,7 +77,8 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
 }
 
 export async function updateComponents(slug: string, components: Component[]): Promise<Page> {
-    const { data } = await api.put<Page>(`/pages/${slug}/components`, { components });
+    const apiSlug = slug === '/' ? 'index' : slug;
+    const { data } = await api.put<Page>(`/pages/${apiSlug}/components`, { components });
     return data;
 }
 //endregion
