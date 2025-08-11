@@ -65,10 +65,6 @@
     name={fieldId}
 />
 
-{#if field.helperText}
-    <p class="text-sm text-muted-foreground mt-1">{field.helperText}</p>
-{/if}
-
 {#if field.maxTags}
     <p class="text-xs text-muted-foreground mt-1">
         {value.length}/{field.maxTags} tags

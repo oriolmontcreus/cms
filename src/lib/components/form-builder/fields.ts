@@ -238,7 +238,7 @@ export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 export const FileInput = (name: string) => new FieldBuilder('file', name);
 export const Repeater = (name: string) => new FieldBuilder('repeater', name);
-export const Tags = (name: string) => new FieldBuilder('tags', name);
+export const TagsInput = (name: string) => new FieldBuilder('tags', name);
 
 class TabBuilderImpl implements ITabBuilder {
     private tab: Tab;
