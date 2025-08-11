@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file' | 'repeater';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file' | 'repeater' | 'tags';
 
 export enum RenderMode {
     CONTENT = 'content',
@@ -113,6 +113,10 @@ export interface FormField {
     // File upload specific options
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
+    // Tags input specific options
+    maxTags?: number; // For tags fields - maximum number of tags allowed
+    validateTag?: (tag: string, existingTags: string[]) => string | undefined; // For tags fields - custom tag validation function
+    allowDuplicates?: boolean; // For tags fields - whether to allow duplicate tags (default: false)
     // Repeater specific options
     schema?: SchemaItem[] | ((index: number) => SchemaItem[]); // For repeater fields - the schema to repeat (can be function for dynamic fields)
     contained?: boolean; // For repeater fields - whether to show items in a container
@@ -168,6 +172,9 @@ export interface FieldBuilder {
     resizable(isResizable?: boolean): FieldBuilder;
     allowedMimeTypes(types: string[]): FieldBuilder;
     maxFileSize(size: number): FieldBuilder;
+    maxTags(count: number): FieldBuilder;
+    validateTag(validator: (tag: string, existingTags: string[]) => string | undefined): FieldBuilder;
+    allowDuplicates(allow?: boolean): FieldBuilder;
     columnSpan(span: number): FieldBuilder;
     tab(tabName: string): FieldBuilder;
     responsiveGrid(columns?: number, gap?: number, responsive?: { sm?: number; md?: number; lg?: number }): FieldBuilder;

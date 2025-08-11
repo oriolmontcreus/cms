@@ -16,6 +16,7 @@
     import RichEditor from "./fields/RichEditor.svelte";
     import FileInput from "./fields/file-input/FileInput.svelte";
     import RepeaterField from "./fields/RepeaterField.svelte";
+    import TagsInput from "./fields/TagsInput.svelte";
 
     export let field: FormField;
     export let fieldId: string;
@@ -40,6 +41,7 @@
         richtext: RichEditor,
         file: FileInput,
         repeater: RepeaterField,
+        tags: TagsInput,
     };
 
     $: FieldComponent = FIELD_COMPONENTS[field.type];

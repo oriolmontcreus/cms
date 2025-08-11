@@ -168,7 +168,8 @@ const fieldDefaultValues = new Map<string, any>([
     ['toggle', DEFAULT_VALUES.FALSE],
     ['dateRange', DEFAULT_VALUES.DATE_RANGE],
     ['color', DEFAULT_VALUES.COLOR],
-    ['richtext', DEFAULT_VALUES.EMPTY_STRING]
+    ['richtext', DEFAULT_VALUES.EMPTY_STRING],
+    ['tags', DEFAULT_VALUES.EMPTY_ARRAY]
 ]);
 
 export function getFieldDefaultValue(field: FormField): any {

@@ -162,6 +162,21 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    maxTags(count: number): this {
+        this.field.maxTags = count;
+        return this;
+    }
+
+    validateTag(validator: (tag: string, existingTags: string[]) => string | undefined): this {
+        this.field.validateTag = validator;
+        return this;
+    }
+
+    allowDuplicates(allow: boolean = true): this {
+        this.field.allowDuplicates = allow;
+        return this;
+    }
+
     columnSpan(span: number): this {
         this.field.columnSpan = span;
         return this;
@@ -223,6 +238,7 @@ export const ColorPicker = (name: string) => new FieldBuilder('color', name);
 export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
 export const FileInput = (name: string) => new FieldBuilder('file', name);
 export const Repeater = (name: string) => new FieldBuilder('repeater', name);
+export const Tags = (name: string) => new FieldBuilder('tags', name);
 
 class TabBuilderImpl implements ITabBuilder {
     private tab: Tab;
