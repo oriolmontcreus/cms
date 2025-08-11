@@ -1,14 +1,12 @@
 import type { PageConfig } from '../lib/components/form-builder/types';
 import { HeroComponent } from '../components/Hero';
-
 export const config: PageConfig = {
-    title: "Home",
-    slug: "home",
+    title: "Test Page",
+    slug: "test-page",
     components: [
         {
             component: HeroComponent,
-            id: "hero-main",
+            id: "hero-test",
             displayName: "HERO SECTION"
-        }
-    ]
+        }]
 };
