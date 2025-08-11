@@ -48,7 +48,7 @@ export const HeroComponent: Component = {
                     .label('Buttons')
                     .schema([buttonsTab]),
             ]),
-        TagsInput('flip-words')
+        TagsInput('flipWords')
             .label('Flip words')
             .placeholder('Add word')
             .min(2)

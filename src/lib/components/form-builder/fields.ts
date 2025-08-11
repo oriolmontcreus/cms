@@ -1,4 +1,4 @@
-import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector, FieldBuilder as IFieldBuilder, TabBuilder as ITabBuilder, TabsBuilder as ITabsBuilder, Tab, TabsContainer, SchemaItem } from './types';
+import type { FormField, FieldType, PrefixSuffix, ComponentTab, TabsSelector, FieldBuilder as IFieldBuilder, TabBuilder as ITabBuilder, TabsBuilder as ITabsBuilder, Tab, TabsContainer, SchemaItem, ValidFieldName } from './types';
 
 class FieldBuilder implements IFieldBuilder {
     private field: FormField;
@@ -231,19 +231,19 @@ class FieldBuilder implements IFieldBuilder {
 }
 
 // Factory functions that return FieldBuilder instances
-export const TextInput = (name: string) => new FieldBuilder('text', name);
-export const Textarea = (name: string) => new FieldBuilder('textarea', name);
-export const Number = (name: string) => new FieldBuilder('number', name);
-export const DatePicker = (name: string) => new FieldBuilder('date', name);
-export const DateRangePicker = (name: string) => new FieldBuilder('dateRange', name);
-export const Email = (name: string) => new FieldBuilder('email', name);
-export const Select = (name: string) => new FieldBuilder('select', name);
-export const Toggle = (name: string) => new FieldBuilder('toggle', name);
-export const ColorPicker = (name: string) => new FieldBuilder('color', name);
-export const RichEditor = (name: string) => new FieldBuilder('richtext', name);
-export const FileInput = (name: string) => new FieldBuilder('file', name);
-export const Repeater = (name: string) => new FieldBuilder('repeater', name);
-export const TagsInput = (name: string) => new FieldBuilder('tags', name);
+export const TextInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('text', name);
+export const Textarea = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('textarea', name);
+export const Number = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('number', name);
+export const DatePicker = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('date', name);
+export const DateRangePicker = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('dateRange', name);
+export const Email = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('email', name);
+export const Select = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('select', name);
+export const Toggle = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('toggle', name);
+export const ColorPicker = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('color', name);
+export const RichEditor = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('richtext', name);
+export const FileInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('file', name);
+export const Repeater = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('repeater', name);
+export const TagsInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('tags', name);
 
 class TabBuilderImpl implements ITabBuilder {
     private tab: Tab;
@@ -323,10 +323,10 @@ class TabsBuilderImpl implements ITabsBuilder {
     }
 }
 
-export const Tabs = (name: string) => new TabsBuilderImpl(name);
-export const TabField = (name: string) => new TabBuilderImpl(name);
+export const Tabs = <T extends string>(name: ValidFieldName<T>) => new TabsBuilderImpl(name);
+export const TabField = <T extends string>(name: ValidFieldName<T>) => new TabBuilderImpl(name);
 
-export function defineTab(name: string, label: string, icon?: any): ComponentTab {
+export function defineTab<T extends string>(name: ValidFieldName<T>, label: string, icon?: any): ComponentTab {
     return {
         name,
         label,

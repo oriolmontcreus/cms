@@ -1,5 +1,157 @@
 export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'dateRange' | 'select' | 'email' | 'password' | 'url' | 'tel' | 'checkbox' | 'radio' | 'toggle' | 'color' | 'richtext' | 'file' | 'repeater' | 'tags';
 
+/**
+ * Error messages for invalid field names with descriptive feedback
+ */
+type FieldNameError<T extends string> =
+    T extends `${string}-${string}`
+    ? `Field name "${T}" cannot contain hyphens. Use camelCase instead (e.g., "myField")`
+    : T extends `${string} ${string}`
+    ? `Field name "${T}" cannot contain spaces. Use camelCase instead (e.g., "myField")`
+    : T extends `${number}${string}`
+    ? `Field name "${T}" cannot start with a number. Use a letter instead (e.g., "field${T}")`
+    : T extends `${string}.${string}`
+    ? `Field name "${T}" cannot contain dots. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}@${string}`
+    ? `Field name "${T}" cannot contain @ symbol. Use camelCase instead (e.g., "emailField")`
+    : T extends `${string}#${string}`
+    ? `Field name "${T}" cannot contain # symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}$${string}`
+    ? `Field name "${T}" cannot contain $ symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}%${string}`
+    ? `Field name "${T}" cannot contain % symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}&${string}`
+    ? `Field name "${T}" cannot contain & symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}*${string}`
+    ? `Field name "${T}" cannot contain * symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}+${string}`
+    ? `Field name "${T}" cannot contain + symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}=${string}`
+    ? `Field name "${T}" cannot contain = symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}|${string}`
+    ? `Field name "${T}" cannot contain | symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}\\${string}`
+    ? `Field name "${T}" cannot contain backslash. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}/${string}`
+    ? `Field name "${T}" cannot contain forward slash. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}?${string}`
+    ? `Field name "${T}" cannot contain question mark. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}<${string}`
+    ? `Field name "${T}" cannot contain < symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}>${string}`
+    ? `Field name "${T}" cannot contain > symbol. Use camelCase instead (e.g., "myField")`
+    : T extends `${string},${string}`
+    ? `Field name "${T}" cannot contain comma. Use camelCase instead (e.g., "myField")`
+    : T extends `${string};${string}`
+    ? `Field name "${T}" cannot contain semicolon. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}:${string}`
+    ? `Field name "${T}" cannot contain colon. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}"${string}`
+    ? `Field name "${T}" cannot contain double quotes. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}'${string}`
+    ? `Field name "${T}" cannot contain single quotes. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}\`${string}`
+    ? `Field name "${T}" cannot contain backticks. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}[${string}`
+    ? `Field name "${T}" cannot contain square brackets. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}]${string}`
+    ? `Field name "${T}" cannot contain square brackets. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}{${string}`
+    ? `Field name "${T}" cannot contain curly braces. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}}${string}`
+    ? `Field name "${T}" cannot contain curly braces. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}(${string}`
+    ? `Field name "${T}" cannot contain parentheses. Use camelCase instead (e.g., "myField")`
+    : T extends `${string})${string}`
+    ? `Field name "${T}" cannot contain parentheses. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}!${string}`
+    ? `Field name "${T}" cannot contain exclamation mark. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}~${string}`
+    ? `Field name "${T}" cannot contain tilde. Use camelCase instead (e.g., "myField")`
+    : T extends `${string}^${string}`
+    ? `Field name "${T}" cannot contain caret. Use camelCase instead (e.g., "myField")`
+    : T extends ''
+    ? `Field name cannot be empty. Please provide a valid field name (e.g., "myField")`
+    : never;
+
+/**
+ * Validates field names to be valid JavaScript/TypeScript variable names.
+ * Provides descriptive error messages when invalid names are used.
+ * 
+ * Examples:
+ * ✅ Valid: "title", "userName", "email", "firstName", "user_id"
+ * ❌ Invalid: "flip-words", "user name", "123field", "my-field"
+ */
+export type ValidFieldName<T extends string> = T extends `${string}-${string}`
+    ? FieldNameError<T>
+    : T extends `${string} ${string}`
+    ? FieldNameError<T>
+    : T extends `${number}${string}`
+    ? FieldNameError<T>
+    : T extends `${string}.${string}`
+    ? FieldNameError<T>
+    : T extends `${string}@${string}`
+    ? FieldNameError<T>
+    : T extends `${string}#${string}`
+    ? FieldNameError<T>
+    : T extends `${string}$${string}`
+    ? FieldNameError<T>
+    : T extends `${string}%${string}`
+    ? FieldNameError<T>
+    : T extends `${string}&${string}`
+    ? FieldNameError<T>
+    : T extends `${string}*${string}`
+    ? FieldNameError<T>
+    : T extends `${string}+${string}`
+    ? FieldNameError<T>
+    : T extends `${string}=${string}`
+    ? FieldNameError<T>
+    : T extends `${string}|${string}`
+    ? FieldNameError<T>
+    : T extends `${string}\\${string}`
+    ? FieldNameError<T>
+    : T extends `${string}/${string}`
+    ? FieldNameError<T>
+    : T extends `${string}?${string}`
+    ? FieldNameError<T>
+    : T extends `${string}<${string}`
+    ? FieldNameError<T>
+    : T extends `${string}>${string}`
+    ? FieldNameError<T>
+    : T extends `${string},${string}`
+    ? FieldNameError<T>
+    : T extends `${string};${string}`
+    ? FieldNameError<T>
+    : T extends `${string}:${string}`
+    ? FieldNameError<T>
+    : T extends `${string}"${string}`
+    ? FieldNameError<T>
+    : T extends `${string}'${string}`
+    ? FieldNameError<T>
+    : T extends `${string}\`${string}`
+    ? FieldNameError<T>
+    : T extends `${string}[${string}`
+    ? FieldNameError<T>
+    : T extends `${string}]${string}`
+    ? FieldNameError<T>
+    : T extends `${string}{${string}`
+    ? FieldNameError<T>
+    : T extends `${string}}${string}`
+    ? FieldNameError<T>
+    : T extends `${string}(${string}`
+    ? FieldNameError<T>
+    : T extends `${string})${string}`
+    ? FieldNameError<T>
+    : T extends `${string}!${string}`
+    ? FieldNameError<T>
+    : T extends `${string}~${string}`
+    ? FieldNameError<T>
+    : T extends `${string}^${string}`
+    ? FieldNameError<T>
+    : T extends ''
+    ? FieldNameError<T>
+    : T;
+
 export enum RenderMode {
     CONTENT = 'content',
     TRANSLATION = 'translation'
