@@ -191,11 +191,11 @@
     )}
     aria-disabled={disabled}
 >
-    {#each value as tag, i (tag)}
+    {#each value as tag, i (allowDuplicates ? `${tag}-${i}` : tag)}
         <TagsInputTag
             value={tag}
             {disabled}
-            onDelete={deleteValue}
+            onDelete={() => deleteIndex(i)}
             active={i === tagIndex}
         />
     {/each}
