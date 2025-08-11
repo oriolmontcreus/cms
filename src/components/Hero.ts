@@ -1,34 +1,38 @@
-import { Repeater, TextInput, TagsInput } from '@/lib/components/form-builder/fields';
+import { TextInput, TagsInput, defineGrid } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
+
+const heroGrid = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
+heroGrid.schema = [
+    TextInput('title')
+        .label('Main title')
+        .required()
+        .min(3)
+        .max(100)
+        .placeholder('Enter the hero title')
+        .translatable()
+        .toJSON(),
+
+    TextInput('docsUrl')
+        .label('Docs url')
+        .placeholder('https://docs.example.com')
+        .toJSON(),
+
+    TextInput('githubUrl')
+        .label('GitHub repo url')
+        .placeholder('https://github.com/username/repo')
+        .toJSON()
+];
 
 export const HeroComponent: Component = {
     name: 'Hero',
     schema: [
-        TextInput('title')
-            .label('Hero Title')
-            .required()
-            .min(3)
-            .max(100)
-            .placeholder('Enter the hero title')
-            .helperText('The main title displayed in the hero section')
-            .translatable(),
-
-        TextInput('docsUrl')
-            .label('Docs URL')
-            .placeholder('https://docs.example.com')
-            .helperText('Link to the documentation page'),
-
-        TextInput('githubUrl')
-            .label('GitHub repo URL')
-            .placeholder('https://github.com/username/repo')
-            .helperText('Link to the GitHub repository'),
-
+        heroGrid,
         TagsInput('flip-words')
             .label('Flip words')
             .placeholder('Add word')
-            .helperText('The flip words in color blue')
             .min(2)
             .max(30)
-            .translatable(),
+            .translatable()
+            .toJSON(),
     ]
 };
