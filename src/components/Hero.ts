@@ -56,3 +56,6 @@ export const HeroComponent: Component = {
             .translatable(),
     ]
 };
+
+// Export with consistent naming for registry
+export const Hero: Component = HeroComponent;

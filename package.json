@@ -14,7 +14,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"create-user": "cd backend && npm run create-user",
 		"create-page": "tsx backend/scripts/create-page.ts",
-		"create-component": "tsx backend/scripts/create-component.ts"
+		"create-component": "tsx backend/scripts/create-component.ts",
+		"delete-component": "tsx backend/scripts/delete-component.ts"
 	},
 	"dependencies": {
 		"@sveltejs/adapter-auto": "^6.0.1",
