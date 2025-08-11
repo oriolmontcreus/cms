@@ -79,7 +79,7 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
             .flatMap(item => {
                 if (item && typeof item === 'object' && 'type' in item) {
                     if (item.type === SCHEMA_TYPES.GRID) {
-                        return item.schema || [];
+                        return getAllFields(item.schema || []);
                     }
                     if (item.type === SCHEMA_TYPES.TABS_CONTAINER) {
                         return (item as TabsContainer).tabs.flatMap(tab =>
@@ -91,8 +91,18 @@ export function getAllFields(schema: Layout | SchemaItem[]): FormField[] {
             })
             .filter((item): item is FormField => item !== null);
     }
-    if (schema.type === SCHEMA_TYPES.GRID) return schema.schema;
+    if (schema.type === SCHEMA_TYPES.GRID) return getAllFields(schema.schema);
     return [];
+}
+
+// Helper function to get schema items from a field's schema (handles both static arrays and functions)
+function getSchemaItems(field: FormField): SchemaItem[] {
+    if (!field.schema) return [];
+    if (typeof field.schema === 'function') {
+        // For function-based schemas, call with index 0 to get the base schema
+        return field.schema(0);
+    }
+    return field.schema;
 }
 
 function analyzeSchema(schema: Layout | SchemaItem[]): SchemaAnalysis {
@@ -108,7 +118,7 @@ function analyzeSchema(schema: Layout | SchemaItem[]): SchemaAnalysis {
         translatableFields: allFields.filter((field: FormField) => field.translatable === true),
         repeaterFields: allFields.filter((field: FormField) => {
             if (field.type === 'repeater' && field.schema) {
-                const nestedAnalysis = analyzeSchema(field.schema);
+                const nestedAnalysis = analyzeSchema(getSchemaItems(field));
                 return nestedAnalysis.translatableFields.length > 0;
             }
             return false;
@@ -187,7 +197,7 @@ export function initializeTranslationData(
             if (locale.code !== CMS_LOCALE) {
                 repeaterFields.forEach(repeaterField => {
                     const repeaterItems = existingComponent?.formData?.[repeaterField.name] || [];
-                    const { translatableFields: nestedTranslatableFields } = analyzeSchema(repeaterField.schema || []);
+                    const { translatableFields: nestedTranslatableFields } = analyzeSchema(getSchemaItems(repeaterField));
 
                     repeaterItems.forEach((item: any, itemIndex: number) => {
                         const key = `${repeaterField.name}_${itemIndex}`;
@@ -329,7 +339,7 @@ export function getFlattenedFields(schema: Layout | SchemaItem[]): {
         translatableFields: allFields.filter(field => field.translatable === true),
         repeaterFields: allFields.filter(field => {
             if (field.type === 'repeater' && field.schema) {
-                const nestedFields = getAllFields(field.schema);
+                const nestedFields = getAllFields(getSchemaItems(field));
                 return nestedFields.some(f => f.translatable === true);
             }
             return false;
@@ -388,7 +398,7 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
                     if (f.translatable === true) return true;
                     // Check if it's a repeater field with translatable nested content
                     if (f.type === 'repeater' && f.schema) {
-                        const nestedFields = getAllFields(f.schema);
+                        const nestedFields = getAllFields(getSchemaItems(f));
                         return nestedFields.some(nf => nf.translatable === true);
                     }
                     return false;
@@ -415,7 +425,7 @@ export function filterSchemaByMode(schema: SchemaItem[], mode: RenderMode): Sche
 
             // Check if it's a repeater field with translatable nested content
             if (field.type === 'repeater' && field.schema) {
-                const nestedFields = getAllFields(field.schema);
+                const nestedFields = getAllFields(getSchemaItems(field));
                 const hasTranslatableNestedFields = nestedFields.some(f => f.translatable === true);
                 return hasTranslatableNestedFields;
             }

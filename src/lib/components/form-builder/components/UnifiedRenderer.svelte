@@ -87,14 +87,17 @@
                 "schema" in item &&
                 !item.hidden
             ) {
-                return (item.schema as FormField[]).some(
-                    (f) =>
-                        !f.hidden &&
-                        (f.translatable === true ||
-                            (f.type === "repeater" &&
-                                f.schema &&
-                                hasTranslatableFieldsInSchema(f.schema))),
-                );
+                return item.schema.some((schemaItem: SchemaItem) => {
+                    const field = convertToFormField(schemaItem);
+                    return (
+                        field &&
+                        !field.hidden &&
+                        (field.translatable === true ||
+                            (field.type === "repeater" &&
+                                field.schema &&
+                                hasTranslatableFieldsInSchema(field.schema)))
+                    );
+                });
             }
 
             if (
@@ -105,7 +108,7 @@
                 return (item as TabsContainer).tabs.some(
                     (tab) =>
                         !tab.hidden &&
-                        tab.schema.some((schemaItem) =>
+                        tab.schema.some((schemaItem: SchemaItem) =>
                             hasTranslatableContent(schemaItem),
                         ),
                 );
@@ -125,8 +128,11 @@
         return false;
     }
 
-    function hasTranslatableFieldsInSchema(schema: any[]): boolean {
-        return schema.some((item) => {
+    function hasTranslatableFieldsInSchema(
+        schema: SchemaItem[] | ((index: number) => SchemaItem[]),
+    ): boolean {
+        const schemaItems = typeof schema === "function" ? schema(0) : schema;
+        return schemaItems.some((item) => {
             const field = convertToFormField(item);
             return field?.translatable === true;
         });
@@ -169,7 +175,7 @@
             {@const filteredTabs =
                 mode === RenderMode.TRANSLATION
                     ? visibleTabs.filter((tab) =>
-                          tab.schema.some((schemaItem) =>
+                          tab.schema.some((schemaItem: SchemaItem) =>
                               hasTranslatableContent(schemaItem),
                           ),
                       )

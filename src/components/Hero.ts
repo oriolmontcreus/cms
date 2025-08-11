@@ -9,18 +9,15 @@ heroGrid.schema = [
         .min(3)
         .max(100)
         .placeholder('Enter the hero title')
-        .translatable()
-        .toJSON(),
+        .translatable(),
 
     TextInput('docsUrl')
         .label('Docs url')
-        .placeholder('https://docs.example.com')
-        .toJSON(),
+        .placeholder('https://docs.example.com'),
 
     TextInput('githubUrl')
         .label('GitHub repo url')
         .placeholder('https://github.com/username/repo')
-        .toJSON()
 ];
 
 export const HeroComponent: Component = {
@@ -32,7 +29,6 @@ export const HeroComponent: Component = {
             .placeholder('Add word')
             .min(2)
             .max(30)
-            .translatable()
-            .toJSON(),
+            .translatable(),
     ]
 };

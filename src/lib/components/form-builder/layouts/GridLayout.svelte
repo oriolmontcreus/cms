@@ -1,16 +1,19 @@
 <script lang="ts">
-    import type { GridLayout, TranslationData } from '../types';
-    import { RenderMode } from '../types';
-    import FormFieldComponent from '../FormField.svelte';
-    import { filterFieldsByMode } from '../utils/formHelpers';
-    import { cn } from '$lib/utils';
+    import type { GridLayout, TranslationData } from "../types";
+    import { RenderMode } from "../types";
+    import FormFieldComponent from "../FormField.svelte";
+    import {
+        filterFieldsByMode,
+        convertToFormField,
+    } from "../utils/formHelpers";
+    import { cn } from "$lib/utils";
 
     export let layout: GridLayout;
     export let formData: Record<string, any>;
     export let componentId: string;
     export let activeTab: string | undefined = undefined;
     export let mode: RenderMode = RenderMode.CONTENT;
-    export let currentLocale: string = '';
+    export let currentLocale: string = "";
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
 
@@ -18,25 +21,30 @@
     const gap = layout.gap || 4;
     const responsive = layout.responsive;
 
+    // Convert schema items to form fields first
+    $: formFields = layout.schema
+        .map((item) => convertToFormField(item))
+        .filter((field): field is NonNullable<typeof field> => field !== null);
+
     // Filter fields based on active tab and render mode
-    $: tabFilteredFields = activeTab 
-        ? layout.schema.filter(field => field.tab === activeTab)
-        : layout.schema.filter(field => !field.tab);
+    $: tabFilteredFields = activeTab
+        ? formFields.filter((field) => field.tab === activeTab)
+        : formFields.filter((field) => !field.tab);
     $: filteredFields = filterFieldsByMode(tabFilteredFields, mode);
     $: hasFieldsToShow = filteredFields.length > 0;
 
     $: gridClasses = cn(
-        'grid',
+        "grid",
         `grid-cols-1`,
         responsive?.sm && `sm:grid-cols-${responsive.sm}`,
         responsive?.md && `md:grid-cols-${responsive.md}`,
         responsive?.lg && `lg:grid-cols-${responsive.lg}`,
         !responsive && `md:grid-cols-${columns}`,
-        `gap-${gap}`
+        `gap-${gap}`,
     );
 
     function getColumnSpanClass(field: any): string {
-        if (!field.columnSpan) return '';
+        if (!field.columnSpan) return "";
         return `md:col-span-${field.columnSpan}`;
     }
 </script>
@@ -45,8 +53,8 @@
 {#if hasFieldsToShow}
     <div class={gridClasses}>
         {#each filteredFields as field (field.name)}
-            <div class={cn('space-y-2', getColumnSpanClass(field))}>
-                <FormFieldComponent 
+            <div class={cn("space-y-2", getColumnSpanClass(field))}>
+                <FormFieldComponent
                     {field}
                     fieldId="{componentId}-{field.name}"
                     bind:value={formData[field.name]}
@@ -60,4 +68,4 @@
             </div>
         {/each}
     </div>
-{/if} 
+{/if}

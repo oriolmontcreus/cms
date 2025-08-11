@@ -350,7 +350,7 @@ export function defineGrid(
     columns: number,
     gap: number,
     responsive?: { sm?: number; md?: number; lg?: number },
-    schema: FormField[],
+    schema: SchemaItem[],
     hidden?: boolean
 } {
     return {
@@ -371,10 +371,9 @@ export function GridContainer(
 
     const container = {
         ...grid,
-        add(...fields: (FormField | FieldBuilder)[]) {
+        add(...fields: SchemaItem[]) {
             fields.forEach(field => {
-                const formField = field instanceof FieldBuilder ? field.toJSON() : field;
-                grid.schema.push(formField);
+                grid.schema.push(field);
             });
             return container;
         },

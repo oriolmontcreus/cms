@@ -19,7 +19,7 @@ export interface GridLayout {
         md?: number; // Columns on medium screens
         lg?: number; // Columns on large screens
     };
-    schema: FormField[]; // Fields contained in this grid
+    schema: SchemaItem[]; // Fields contained in this grid
     hidden?: boolean; // Whether this grid should be hidden from rendering
 }
 
