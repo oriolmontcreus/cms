@@ -9,18 +9,14 @@ async function deleteComponent() {
     printHeader('COMPONENT DELETION WIZARD', 'magenta');
 
     try {
-        // Get all available components from the registry
+        // Get all available components from the file system
         const componentsDir = join(process.cwd(), '..', 'cms', 'src', 'components');
-        const registryPath = join(componentsDir, 'component-registry.ts');
 
-        logStep('Reading component registry...');
-        const registryContent = await readFile(registryPath, 'utf-8');
-
-        // Extract component names from registry
-        const componentNames = extractComponentNames(registryContent);
+        logStep('Scanning components directory...');
+        const componentNames = await getComponentNamesFromDirectory(componentsDir);
 
         if (componentNames.length === 0) {
-            console.log(chalk.yellow('⚠️  No components found in the registry to delete.'));
+            console.log(chalk.yellow('⚠️  No components found in the components directory to delete.'));
             return;
         }
 
@@ -92,12 +88,6 @@ async function deleteComponent() {
             }
         }
 
-        // Update component registry
-        logStep('Updating component registry...');
-        const updatedRegistryContent = updateComponentRegistry(registryContent, componentsToDelete);
-        await writeFile(registryPath, updatedRegistryContent);
-        logStep('Component registry updated', 'success');
-
         // Update affected pages
         if (affectedPages.length > 0) {
             logStep('Updating affected pages...');
@@ -117,62 +107,26 @@ async function deleteComponent() {
     }
 }
 
-function extractComponentNames(registryContent: string): string[] {
+async function getComponentNamesFromDirectory(componentsDir: string): Promise<string[]> {
     const componentNames: string[] = [];
 
-    // Extract from COMPONENT_REGISTRY object
-    const registryMatch = registryContent.match(/export const COMPONENT_REGISTRY[^{]*\{([^}]*)\}/s);
-    if (registryMatch) {
-        const registryBody = registryMatch[1];
-        const entries = registryBody.match(/'([^']+)':\s*\w+/g);
-        if (entries) {
-            for (const entry of entries) {
-                const nameMatch = entry.match(/'([^']+)':/);
-                if (nameMatch) {
-                    componentNames.push(nameMatch[1]);
-                }
+    try {
+        const entries = await readdir(componentsDir);
+
+        for (const entry of entries) {
+            // Skip non-TypeScript files and definition files
+            if (entry.endsWith('.ts') && !entry.endsWith('.d.ts')) {
+                // Remove the .ts extension to get the component name
+                const componentName = entry.replace('.ts', '');
+                componentNames.push(componentName);
             }
         }
+    } catch (error) {
+        // Directory doesn't exist or can't be read
+        console.log(chalk.red('Error reading components directory'));
     }
 
-    return componentNames;
-}
-
-function updateComponentRegistry(content: string, componentsToDelete: string[]): string {
-    let updatedContent = content;
-
-    // Remove imports for deleted components
-    for (const componentName of componentsToDelete) {
-        // Remove import statement
-        const importRegex = new RegExp(`import\\s+\\{\\s*${componentName}\\s*\\}\\s+from\\s+[^;]+;\\s*\\n?`, 'g');
-        updatedContent = updatedContent.replace(importRegex, '');
-
-        // Also handle imports with multiple components on same line
-        const multiImportRegex = new RegExp(`(import\\s+\\{[^}]*),\\s*${componentName}\\s*([^}]*\\}\\s+from[^;]+;)`, 'g');
-        updatedContent = updatedContent.replace(multiImportRegex, '$1$2');
-
-        const multiImportRegex2 = new RegExp(`(import\\s+\\{)\\s*${componentName}\\s*,([^}]*\\}\\s+from[^;]+;)`, 'g');
-        updatedContent = updatedContent.replace(multiImportRegex2, '$1$2');
-
-        // Remove from COMPONENT_REGISTRY object
-        const registryEntryRegex = new RegExp(`\\s*'${componentName}':\\s*${componentName},?\\s*\\n?`, 'g');
-        updatedContent = updatedContent.replace(registryEntryRegex, '');
-
-        // Remove from export statement
-        const exportRegex = new RegExp(`(export\\s+\\{[^}]*),\\s*${componentName}\\s*([^}]*\\})`, 'g');
-        updatedContent = updatedContent.replace(exportRegex, '$1$2');
-
-        const exportRegex2 = new RegExp(`(export\\s+\\{)\\s*${componentName}\\s*,([^}]*\\})`, 'g');
-        updatedContent = updatedContent.replace(exportRegex2, '$1$2');
-    }
-
-    // Clean up any trailing commas or empty lines
-    updatedContent = updatedContent.replace(/,(\s*[}\]])/g, '$1');
-    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, '\n\n');
-    updatedContent = updatedContent.replace(/{\s*,/g, '{');
-    updatedContent = updatedContent.replace(/,\s*}/g, ' }');
-
-    return updatedContent;
+    return componentNames.sort();
 }
 
 interface AffectedPage {
