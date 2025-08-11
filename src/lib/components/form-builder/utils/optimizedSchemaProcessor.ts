@@ -99,7 +99,8 @@ function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
 
             // Handle nested schema in repeater fields
             if (field.type === 'repeater' && field.schema) {
-                traverse(field.schema);
+                const schema = typeof field.schema === 'function' ? field.schema(0) : field.schema;
+                traverse(schema);
             }
         }
     }
@@ -134,7 +135,9 @@ export function processComponentSchema(component: any): ProcessedSchema {
         }
 
         if (field.type === 'repeater' && field.schema) {
-            const nestedFields = extractAllFields(field.schema);
+            // Handle both static schema arrays and dynamic schema functions
+            const schema = typeof field.schema === 'function' ? field.schema(0) : field.schema;
+            const nestedFields = extractAllFields(schema);
             if (nestedFields.some(f => f.translatable === true)) {
                 repeaterFields.push(field);
             }
@@ -291,7 +294,10 @@ function processRepeaterItemTranslations(
     const key = `${repeaterField.name}_${itemIndex}`;
 
     // Get all fields in this repeater's schema
-    const allFields = extractAllFields(repeaterField.schema || []);
+    const schema = repeaterField.schema
+        ? (typeof repeaterField.schema === 'function' ? repeaterField.schema(0) : repeaterField.schema)
+        : [];
+    const allFields = extractAllFields(schema);
     const translatableFields = allFields.filter(f => f.translatable === true && f.type !== 'repeater');
     const nestedRepeaterFields = allFields.filter(f => f.type === 'repeater');
 
@@ -364,7 +370,9 @@ function hasTranslatableContent(item: SchemaItem): boolean {
         if (item.type === SCHEMA_TYPES.GRID && 'schema' in item && !item.hidden) {
             return (item.schema as FormField[]).some(f =>
                 !f.hidden && (f.translatable === true ||
-                    (f.type === 'repeater' && f.schema && hasTranslatableFieldsInSchema(f.schema)))
+                    (f.type === 'repeater' && f.schema && hasTranslatableFieldsInSchema(
+                        typeof f.schema === 'function' ? f.schema(0) : f.schema
+                    )))
             );
         }
 
@@ -381,7 +389,8 @@ function hasTranslatableContent(item: SchemaItem): boolean {
         if (field.translatable === true) return true;
 
         if (field.type === 'repeater' && field.schema) {
-            return hasTranslatableFieldsInSchema(field.schema);
+            const schema = typeof field.schema === 'function' ? field.schema(0) : field.schema;
+            return hasTranslatableFieldsInSchema(schema);
         }
     }
 
