@@ -1,6 +1,7 @@
 import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconBrandGithub, IconLink } from '@tabler/icons-svelte';
+import { ProductDetailsComponent } from './ProductDetails';
 
 const mainTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
 mainTab.schema = [
@@ -36,7 +37,7 @@ buttonsTab.schema = [
         .suffix(IconBrandGithub)
         .placeholder('https://github.com/username/repo'),];
 
-export const HeroComponent: Component = {
+export const Hero: Component = {
     name: 'Hero',
     schema: [
         Tabs('hero')
@@ -56,6 +57,3 @@ export const HeroComponent: Component = {
             .translatable(),
     ]
 };
-
-// Export with consistent naming for registry
-export const Hero: Component = HeroComponent;

@@ -44,13 +44,13 @@ async function deleteComponent() {
         logStep('Scanning pages for component usage...');
         const pagesDir = join(process.cwd(), '..', 'cms', 'src', 'pages');
         const affectedPages = await scanPagesForComponents(pagesDir, componentsToDelete);
-        
+
         if (affectedPages.length > 0) {
             console.log(chalk.yellow('\n⚠️  Warning: The following pages use components that will be deleted:'));
             affectedPages.forEach(({ file, components }) => {
                 console.log(chalk.yellow(`  📄 ${file}: ${components.join(', ')}`));
             });
-            
+
             const { handlePages } = await enquirer.prompt<{ handlePages: string }>({
                 type: 'select',
                 name: 'handlePages',
@@ -183,21 +183,21 @@ interface AffectedPage {
 
 async function scanPagesForComponents(pagesDir: string, componentsToDelete: string[]): Promise<AffectedPage[]> {
     const affectedPages: AffectedPage[] = [];
-    
+
     async function scanDirectory(dir: string): Promise<void> {
         const entries = await readdir(dir);
-        
+
         for (const entry of entries) {
             const fullPath = join(dir, entry);
             const stats = await stat(fullPath);
-            
+
             if (stats.isDirectory()) {
                 await scanDirectory(fullPath);
             } else if (entry.endsWith('.ts') && !entry.endsWith('.d.ts')) {
                 try {
                     const content = await readFile(fullPath, 'utf-8');
                     const usedComponents = findComponentUsage(content, componentsToDelete);
-                    
+
                     if (usedComponents.length > 0) {
                         const relativePath = fullPath.replace(pagesDir + '\\', '').replace(/\\/g, '/');
                         affectedPages.push({
@@ -212,51 +212,51 @@ async function scanPagesForComponents(pagesDir: string, componentsToDelete: stri
             }
         }
     }
-    
+
     await scanDirectory(pagesDir);
     return affectedPages;
 }
 
 function findComponentUsage(content: string, componentsToDelete: string[]): string[] {
     const usedComponents: string[] = [];
-    
+
     for (const componentName of componentsToDelete) {
         // Check for import statements (both direct and Component suffix)
         const importPatterns = [
             `import.*{.*${componentName}.*}.*from`,
             `import.*{.*${componentName}Component.*}.*from`
         ];
-        
+
         // Check for usage in components array
         const usagePatterns = [
             `component:\\s*${componentName}\\b`,
             `component:\\s*${componentName}Component\\b`
         ];
-        
+
         const allPatterns = [...importPatterns, ...usagePatterns];
-        
+
         if (allPatterns.some(pattern => new RegExp(pattern).test(content))) {
             usedComponents.push(componentName);
         }
     }
-    
+
     return usedComponents;
 }
 
 async function updatePageFile(filePath: string, componentsToDelete: string[]): Promise<void> {
     let content = await readFile(filePath, 'utf-8');
-    
+
     for (const componentName of componentsToDelete) {
         // Remove import statements
         const importPatterns = [
             new RegExp(`import\\s+\\{[^}]*\\b${componentName}\\b[^}]*\\}\\s+from\\s+[^;]+;\\s*\\n?`, 'g'),
             new RegExp(`import\\s+\\{[^}]*\\b${componentName}Component\\b[^}]*\\}\\s+from\\s+[^;]+;\\s*\\n?`, 'g')
         ];
-        
+
         for (const pattern of importPatterns) {
             content = content.replace(pattern, '');
         }
-        
+
         // Handle multiple imports on same line
         const multiImportPatterns = [
             new RegExp(`(import\\s+\\{[^}]*),\\s*\\b${componentName}\\b\\s*([^}]*\\}\\s+from[^;]+;)`, 'g'),
@@ -264,28 +264,28 @@ async function updatePageFile(filePath: string, componentsToDelete: string[]): P
             new RegExp(`(import\\s+\\{[^}]*),\\s*\\b${componentName}Component\\b\\s*([^}]*\\}\\s+from[^;]+;)`, 'g'),
             new RegExp(`(import\\s+\\{)\\s*\\b${componentName}Component\\b\\s*,([^}]*\\}\\s+from[^;]+;)`, 'g')
         ];
-        
+
         for (const pattern of multiImportPatterns) {
             content = content.replace(pattern, '$1$2');
         }
-        
+
         // Remove component objects from components array
         const componentObjectPatterns = [
             new RegExp(`\\s*\\{[^}]*component:\\s*${componentName}\\b[^}]*\\},?\\s*`, 'g'),
             new RegExp(`\\s*\\{[^}]*component:\\s*${componentName}Component\\b[^}]*\\},?\\s*`, 'g')
         ];
-        
+
         for (const pattern of componentObjectPatterns) {
             content = content.replace(pattern, '');
         }
     }
-    
+
     // Clean up any trailing commas or empty lines
     content = content.replace(/,(\s*\])/g, '$1'); // Remove trailing comma before closing array
     content = content.replace(/\[\s*,/g, '['); // Remove leading comma after opening array
     content = content.replace(/,\s*,/g, ','); // Remove double commas
     content = content.replace(/\n\s*\n\s*\n/g, '\n\n'); // Remove excessive empty lines
-    
+
     await writeFile(filePath, content);
 }
 

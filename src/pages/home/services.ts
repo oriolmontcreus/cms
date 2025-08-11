@@ -1,4 +1,4 @@
-import { HeroComponent } from '@/components/Hero';
+import { Hero } from '@/components/Hero';
 import type { PageConfig } from '../../lib/components/form-builder/types';
 
 export const config: PageConfig = {
@@ -7,7 +7,7 @@ export const config: PageConfig = {
     parentSlug: "home",
     components: [
         {
-            component: HeroComponent,
+            component: Hero,
             id: "hero-main-a",
             displayName: "test"
         },
