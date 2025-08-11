@@ -101,6 +101,7 @@ export interface FormField {
     // Textarea-specific options
     rows?: number; // For textarea fields - number of visible rows
     resizable?: boolean; // For textarea fields - whether it can be resized (default: true)
+    autoResize?: boolean; // For textarea fields - whether it should automatically resize based on content
     // Date-specific formatting options
     locale?: string; // For date fields (e.g., 'en-US', 'es-ES')
     weekdayFormat?: 'short' | 'long' | 'narrow'; // For date fields
@@ -170,6 +171,7 @@ export interface FieldBuilder {
     maxDate(date: string | Date): FieldBuilder;
     rows(count: number): FieldBuilder;
     resizable(isResizable?: boolean): FieldBuilder;
+    autoResize(isAutoResize?: boolean): FieldBuilder;
     allowedMimeTypes(types: string[]): FieldBuilder;
     maxFileSize(size: number): FieldBuilder;
     maxTags(count: number): FieldBuilder;

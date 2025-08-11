@@ -1,9 +1,9 @@
-import { TextInput, TagsInput, defineGrid, Tabs, TabField } from '@/lib/components/form-builder/fields';
+import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconBrandGithub, IconLink } from '@tabler/icons-svelte';
 
-const heroGrid = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
-heroGrid.schema = [
+const mainTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
+mainTab.schema = [
     TextInput('title')
         .label('Main title')
         .required()
@@ -11,7 +11,16 @@ heroGrid.schema = [
         .max(100)
         .placeholder('Enter the hero title')
         .translatable(),
+    Textarea('subtitle')
+        .label('Subtitle')
+        .required()
+        .placeholder('Enter the hero subtitle')
+        .autoResize()
+        .translatable(),
+];
 
+const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
+buttonsTab.schema = [
     TextInput('docsUrl')
         .label('Docs url')
         .suffix(IconLink)
@@ -25,8 +34,7 @@ heroGrid.schema = [
     TextInput('githubUrl')
         .label('GitHub repo url')
         .suffix(IconBrandGithub)
-        .placeholder('https://github.com/username/repo'),
-];
+        .placeholder('https://github.com/username/repo'),];
 
 export const HeroComponent: Component = {
     name: 'Hero',
@@ -35,7 +43,10 @@ export const HeroComponent: Component = {
             .tabs([
                 TabField('main')
                     .label('Main')
-                    .schema(heroGrid.schema),
+                    .schema([mainTab]),
+                TabField('buttons')
+                    .label('Buttons')
+                    .schema([buttonsTab]),
             ]),
         TagsInput('flip-words')
             .label('Flip words')

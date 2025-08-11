@@ -146,6 +146,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    autoResize(isAutoResize: boolean = true): this {
+        this.field.autoResize = isAutoResize;
+        return this;
+    }
+
     allowedMimeTypes(types: string[]): this {
         this.field.allowedMimeTypes = types;
         return this;
