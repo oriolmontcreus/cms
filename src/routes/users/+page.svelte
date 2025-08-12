@@ -178,20 +178,20 @@
             <Button
                 variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="sm"
-                class={`h-8 px-3 rounded-e-none ${viewMode === "table" ? "" : "bg-white"}`}
+                class={`h-8 px-2 sm:px-3 rounded-e-none ${viewMode === "table" ? "" : "bg-white dark:bg-transparent"}`}
                 onclick={switchToTable}
             >
-                <TableIcon class="h-4 w-4 mr-2" />
-                Table
+                <TableIcon class="h-4 w-4 sm:mr-2" />
+                <span class="hidden sm:inline">Table</span>
             </Button>
             <Button
                 variant={viewMode === "cards" ? "secondary" : "ghost"}
                 size="sm"
-                class={`h-8 px-3 rounded-s-none ${viewMode === "cards" ? "" : "bg-white"}`}
+                class={`h-8 px-2 sm:px-3 rounded-s-none ${viewMode === "cards" ? "" : "bg-white dark:bg-transparent"}`}
                 onclick={switchToCards}
             >
-                <LayoutGridIcon class="h-4 w-4 mr-2" />
-                Cards
+                <LayoutGridIcon class="h-4 w-4 sm:mr-2" />
+                <span class="hidden sm:inline">Cards</span>
             </Button>
         </div>
         <Button
