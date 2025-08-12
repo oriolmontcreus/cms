@@ -11,14 +11,9 @@
         TooltipProvider,
         TooltipTrigger,
     } from "$lib/components/ui/tooltip";
-    import {
-        Card,
-        CardContent,
-        CardHeader,
-        CardTitle,
-    } from "$lib/components/ui/card";
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import SiteHeader from "$lib/components/site-header.svelte";
+    import Spinner from "@components/Spinner.svelte";
     import UserForm from "./UserForm.svelte";
     import PlusIcon from "@tabler/icons-svelte/icons/plus";
     import DotsVerticalIcon from "@tabler/icons-svelte/icons/dots-vertical";
@@ -136,212 +131,198 @@
     }
 </script>
 
-<SiteHeader title="Users" />
+<SiteHeader title="Users">
+    <Button
+        onclick={openCreateDialog}
+        size="sm"
+        effect="expandIcon"
+        iconPlacement="right"
+        icon={PlusIcon}
+    >
+        Add user
+    </Button>
+</SiteHeader>
 <div class="flex flex-1 flex-col">
     <ScrollArea
         class="@container/main flex flex-col gap-2 max-h-[calc(100dvh-80px)]"
     >
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
-                <div class="flex justify-end items-center mb-8">
-                    <Button
-                        onclick={openCreateDialog}
-                        effect="expandIcon"
-                        iconPlacement="right"
-                        icon={PlusIcon}
-                    >
-                        Add user
-                    </Button>
-                </div>
+                {#if users.length > 0}
+                    <div class="mb-4">
+                        <div class="text-sm text-muted-foreground">
+                            {users.length} user{users.length === 1 ? "" : "s"}
+                        </div>
+                    </div>
+                {/if}
 
                 {#if loading}
-                    <div class="text-center py-8">
-                        <div class="text-gray-500">Loading users...</div>
+                    <div class="text-center py-8 flex justify-center">
+                        <Spinner />
                     </div>
                 {:else if users.length === 0}
-                    <Card>
-                        <CardContent class="py-8">
-                            <div class="text-center text-gray-500">
-                                No users found. Create your first user to get
-                                started.
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div class="flex items-center justify-center min-h-[400px]">
+                        <div class="text-center max-w-md">
+                            <h3
+                                class="text-lg font-extralight uppercase tracking-wider mb-2"
+                            >
+                                NO USERS FOUND
+                            </h3>
+                            <p
+                                class="text-muted-foreground font-extralight mb-6"
+                            >
+                                Create your first user to get started
+                            </p>
+                        </div>
+                    </div>
                 {:else}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Users ({users.length})</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Table.Root>
-                                <Table.Header>
-                                    <Table.Row>
-                                        <Table.Head>Name</Table.Head>
-                                        <Table.Head>Email</Table.Head>
-                                        <Table.Head>Role</Table.Head>
-                                        <Table.Head>Status</Table.Head>
-                                        <Table.Head>Created</Table.Head>
-                                        <Table.Head>Updated</Table.Head>
-                                        <Table.Head class="w-[100px]"
-                                            >Actions</Table.Head
-                                        >
-                                    </Table.Row>
-                                </Table.Header>
-                                <Table.Body>
-                                    {#each users as user (user._id)}
-                                        <Table.Row>
-                                            <Table.Cell class="font-medium"
-                                                >{user.name}</Table.Cell
-                                            >
-                                            <Table.Cell>{user.email}</Table.Cell
-                                            >
-                                            <Table.Cell>
-                                                <TooltipProvider
-                                                    delayDuration={300}
-                                                >
-                                                    <Tooltip>
-                                                        <TooltipTrigger>
-                                                            {#snippet child({
-                                                                props,
-                                                            })}
-                                                                <div
-                                                                    class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold cursor-help transition-colors {getRoleStyle(
-                                                                        user.permissions,
-                                                                    )}"
-                                                                    {...props}
-                                                                >
-                                                                    {getRoleCharacter(
-                                                                        user.permissions,
-                                                                    )}
-                                                                </div>
-                                                            {/snippet}
-                                                        </TooltipTrigger>
-                                                        <TooltipContent
-                                                            class="px-2 py-1 text-xs"
+                    <Table.Root>
+                        <Table.Header>
+                            <Table.Row>
+                                <Table.Head>Name</Table.Head>
+                                <Table.Head>Email</Table.Head>
+                                <Table.Head>Role</Table.Head>
+                                <Table.Head>Status</Table.Head>
+                                <Table.Head>Created</Table.Head>
+                                <Table.Head>Updated</Table.Head>
+                                <Table.Head class="w-[100px]"
+                                    >Actions</Table.Head
+                                >
+                            </Table.Row>
+                        </Table.Header>
+                        <Table.Body>
+                            {#each users as user (user._id)}
+                                <Table.Row>
+                                    <Table.Cell class="font-medium"
+                                        >{user.name}</Table.Cell
+                                    >
+                                    <Table.Cell>{user.email}</Table.Cell>
+                                    <Table.Cell>
+                                        <TooltipProvider delayDuration={300}>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    {#snippet child({ props })}
+                                                        <div
+                                                            class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold cursor-help transition-colors {getRoleStyle(
+                                                                user.permissions,
+                                                            )}"
+                                                            {...props}
                                                         >
-                                                            {getRoleLabel(
+                                                            {getRoleCharacter(
                                                                 user.permissions,
                                                             )}
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            </Table.Cell>
-                                            <Table.Cell>
-                                                <TooltipProvider
-                                                    delayDuration={300}
+                                                        </div>
+                                                    {/snippet}
+                                                </TooltipTrigger>
+                                                <TooltipContent
+                                                    class="px-2 py-1 text-xs"
                                                 >
-                                                    <Tooltip>
-                                                        <TooltipTrigger>
-                                                            {#snippet child({
-                                                                props,
-                                                            })}
-                                                                <div
-                                                                    class="inline-flex items-center justify-center w-3 h-3 rounded-full cursor-help transition-colors {user.isInitialized
-                                                                        ? 'bg-green-500/60'
-                                                                        : 'bg-yellow-500/60'}"
-                                                                    {...props}
-                                                                ></div>
-                                                            {/snippet}
-                                                        </TooltipTrigger>
-                                                        <TooltipContent
-                                                            class="px-2 py-1 text-xs"
-                                                        >
-                                                            {user.isInitialized
-                                                                ? "Active"
-                                                                : "Pending setup"}
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            </Table.Cell>
-                                            <Table.Cell
-                                                >{formatDate(
-                                                    user.createdAt,
-                                                )}</Table.Cell
-                                            >
-                                            <Table.Cell
-                                                >{formatDate(
-                                                    user.updatedAt,
-                                                )}</Table.Cell
-                                            >
-                                            <Table.Cell>
-                                                <DropdownMenu.Root>
-                                                    <DropdownMenu.Trigger>
-                                                        {#snippet child({
-                                                            props,
-                                                        })}
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                {...props}
-                                                            >
-                                                                <DotsVerticalIcon
-                                                                    class="h-4 w-4"
-                                                                />
-                                                                <span
-                                                                    class="sr-only"
-                                                                    >Open menu</span
-                                                                >
-                                                            </Button>
-                                                        {/snippet}
-                                                    </DropdownMenu.Trigger>
-                                                    <DropdownMenu.Content
-                                                        align="end"
+                                                    {getRoleLabel(
+                                                        user.permissions,
+                                                    )}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                        <TooltipProvider delayDuration={300}>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    {#snippet child({ props })}
+                                                        <div
+                                                            class="inline-flex items-center justify-center w-3 h-3 rounded-full cursor-help transition-colors {user.isInitialized
+                                                                ? 'bg-green-500/60'
+                                                                : 'bg-yellow-500/60'}"
+                                                            {...props}
+                                                        ></div>
+                                                    {/snippet}
+                                                </TooltipTrigger>
+                                                <TooltipContent
+                                                    class="px-2 py-1 text-xs"
+                                                >
+                                                    {user.isInitialized
+                                                        ? "Active"
+                                                        : "Pending setup"}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Table.Cell>
+                                    <Table.Cell
+                                        >{formatDate(
+                                            user.createdAt,
+                                        )}</Table.Cell
+                                    >
+                                    <Table.Cell
+                                        >{formatDate(
+                                            user.updatedAt,
+                                        )}</Table.Cell
+                                    >
+                                    <Table.Cell>
+                                        <DropdownMenu.Root>
+                                            <DropdownMenu.Trigger>
+                                                {#snippet child({ props })}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        {...props}
                                                     >
-                                                        <DropdownMenu.Item
-                                                            onclick={() =>
-                                                                openEditDialog(
-                                                                    user,
-                                                                )}
-                                                        >
-                                                            <EditIcon
-                                                                class="h-4 w-4 mr-2"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenu.Item>
-                                                        {#if !user.isInitialized}
-                                                            <DropdownMenu.Item
-                                                                onclick={() =>
-                                                                    regenerateSetupLink(
-                                                                        user,
-                                                                    )}
-                                                            >
-                                                                <ReloadIcon
-                                                                    class="h-4 w-4 mr-2"
-                                                                />
-                                                                Regenerate setup
-                                                                link
-                                                            </DropdownMenu.Item>
-                                                        {/if}
-                                                        <DropdownMenu.Separator
+                                                        <DotsVerticalIcon
+                                                            class="h-4 w-4"
                                                         />
-                                                        <DropdownMenu.Item
-                                                            variant="destructive"
-                                                            onclick={() => {
-                                                                if (
-                                                                    confirm(
-                                                                        "Are you sure you want to delete this user? This action cannot be undone.",
-                                                                    )
-                                                                ) {
-                                                                    deleteUser(
-                                                                        user,
-                                                                    );
-                                                                }
-                                                            }}
+                                                        <span class="sr-only"
+                                                            >Open menu</span
                                                         >
-                                                            <TrashIcon
-                                                                class="h-4 w-4 mr-2"
-                                                            />
-                                                            Delete
-                                                        </DropdownMenu.Item>
-                                                    </DropdownMenu.Content>
-                                                </DropdownMenu.Root>
-                                            </Table.Cell>
-                                        </Table.Row>
-                                    {/each}
-                                </Table.Body>
-                            </Table.Root>
-                        </CardContent>
-                    </Card>
+                                                    </Button>
+                                                {/snippet}
+                                            </DropdownMenu.Trigger>
+                                            <DropdownMenu.Content align="end">
+                                                <DropdownMenu.Item
+                                                    onclick={() =>
+                                                        openEditDialog(user)}
+                                                >
+                                                    <EditIcon
+                                                        class="h-4 w-4 mr-2"
+                                                    />
+                                                    Edit
+                                                </DropdownMenu.Item>
+                                                {#if !user.isInitialized}
+                                                    <DropdownMenu.Item
+                                                        onclick={() =>
+                                                            regenerateSetupLink(
+                                                                user,
+                                                            )}
+                                                    >
+                                                        <ReloadIcon
+                                                            class="h-4 w-4 mr-2"
+                                                        />
+                                                        Regenerate setup link
+                                                    </DropdownMenu.Item>
+                                                {/if}
+                                                <DropdownMenu.Separator />
+                                                <DropdownMenu.Item
+                                                    variant="destructive"
+                                                    onclick={() => {
+                                                        if (
+                                                            confirm(
+                                                                "Are you sure you want to delete this user? This action cannot be undone.",
+                                                            )
+                                                        ) {
+                                                            deleteUser(user);
+                                                        }
+                                                    }}
+                                                >
+                                                    <TrashIcon
+                                                        class="h-4 w-4 mr-2"
+                                                    />
+                                                    Delete
+                                                </DropdownMenu.Item>
+                                            </DropdownMenu.Content>
+                                        </DropdownMenu.Root>
+                                    </Table.Cell>
+                                </Table.Row>
+                            {/each}
+                        </Table.Body>
+                    </Table.Root>
                 {/if}
             </div>
         </div>
