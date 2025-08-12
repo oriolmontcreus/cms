@@ -52,17 +52,12 @@
     function switchToTable() {
         viewMode = "table";
         localStorage.setItem("users-view-mode", "table");
-        console.log("Switched to table view:", viewMode);
     }
 
     function switchToCards() {
         viewMode = "cards";
         localStorage.setItem("users-view-mode", "cards");
-        console.log("Switched to cards view:", viewMode);
     }
-
-    // Reactive statement to handle view mode changes
-    $: console.log("Current view mode:", viewMode);
 
     const roleLabels = new Map([
         [Roles.SUPER_ADMIN, "Super Admin"],
@@ -184,29 +179,25 @@
 <SiteHeader title="Users">
     <div class="flex items-center gap-2">
         <!-- View mode toggle buttons -->
-        <div
-            class="flex items-center rounded-md border border-border overflow-hidden"
-        >
-            <button
-                type="button"
-                class="px-3 py-1.5 text-sm transition-colors {viewMode ===
-                'table'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-transparent hover:bg-muted'}"
+        <div class="flex rounded-lg border bg-background">
+            <Button
+                variant={viewMode === "table" ? "secondary" : "ghost"}
+                size="sm"
+                class="h-8 px-3 rounded-e-none"
                 onclick={switchToTable}
             >
-                <TableIcon class="h-4 w-4" />
-            </button>
-            <button
-                type="button"
-                class="px-3 py-1.5 text-sm transition-colors {viewMode ===
-                'cards'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-transparent hover:bg-muted'}"
+                <TableIcon class="h-4 w-4 mr-2" />
+                Table
+            </Button>
+            <Button
+                variant={viewMode === "cards" ? "secondary" : "ghost"}
+                size="sm"
+                class="h-8 px-3 rounded-s-none"
                 onclick={switchToCards}
             >
-                <LayoutGridIcon class="h-4 w-4" />
-            </button>
+                <LayoutGridIcon class="h-4 w-4 mr-2" />
+                Cards
+            </Button>
         </div>
         <Button
             onclick={openCreateDialog}
@@ -226,12 +217,9 @@
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
                 {#if users.length > 0}
-                    <div class="mb-4 flex items-center justify-between">
+                    <div class="mb-4">
                         <div class="text-sm text-muted-foreground">
                             {users.length} user{users.length === 1 ? "" : "s"}
-                        </div>
-                        <div class="text-xs text-muted-foreground">
-                            Current view: {viewMode}
                         </div>
                     </div>
                 {/if}
