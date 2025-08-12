@@ -17,7 +17,7 @@
 
 <div
     class="{CSS_CLASSES.COMPONENT_CONTAINER} {isCollapsed
-        ? 'cursor-pointer hover:bg-accent dark:hover:bg-accent transition-all duration-200'
+        ? 'cursor-pointer border hover:bg-accent dark:hover:bg-accent transition-all duration-200'
         : ''}"
     onclick={isCollapsed ? onToggleCollapse : undefined}
     role={isCollapsed ? "button" : undefined}
