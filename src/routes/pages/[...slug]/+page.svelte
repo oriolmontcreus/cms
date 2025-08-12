@@ -15,6 +15,7 @@
         IconEdit,
         IconDeviceFloppy,
     } from "@tabler/icons-svelte";
+    import Spinner from "$lib/components/Spinner.svelte";
 
     let pageData: Page | null = null;
     let config: PageConfig | null = null;
@@ -49,22 +50,22 @@
             <Button
                 variant={mode === RenderMode.CONTENT ? "secondary" : "ghost"}
                 size="sm"
-                class="h-8 px-3 rounded-e-none"
+                class="h-8 px-2 sm:px-3 rounded-e-none"
                 onclick={() => (mode = RenderMode.CONTENT)}
             >
-                <IconEdit class="h-4 w-4 mr-2" />
-                Content
+                <IconEdit class="h-4 w-4 sm:mr-2" />
+                <span class="hidden sm:inline">Content</span>
             </Button>
             <Button
                 variant={mode === RenderMode.TRANSLATION
                     ? "secondary"
                     : "ghost"}
                 size="sm"
-                class="h-8 px-3 rounded-s-none"
+                class="h-8 px-2 sm:px-3 rounded-s-none"
                 onclick={() => (mode = RenderMode.TRANSLATION)}
             >
-                <IconLanguage class="h-4 w-4 mr-2" />
-                Translations
+                <IconLanguage class="h-4 w-4 sm:mr-2" />
+                <span class="hidden sm:inline">Translations</span>
             </Button>
         </div>
 
@@ -91,9 +92,7 @@
             <div class="px-4 lg:px-6">
                 {#if loading}
                     <div class="flex items-center justify-center min-h-[200px]">
-                        <div
-                            class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"
-                        ></div>
+                        <Spinner />
                     </div>
                 {:else if error}
                     <div class="max-w-2xl mx-auto py-8">
