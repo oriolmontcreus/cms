@@ -4,8 +4,6 @@ import type { Component } from '@/lib/components/form-builder/types';
 export const CarouselComponent: Component = {
     name: 'Carousel',
     schema: [
-        TextInput('title')
-            .label('Title'),
         Repeater('slides')
             .responsiveGrid(2)
             .schema([
