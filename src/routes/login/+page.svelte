@@ -6,7 +6,7 @@
 </script>
 
 <div class="grid min-h-svh lg:grid-cols-2 dark:bg-background">
-    <div class="flex flex-col gap-4 p-6 md:p-10">
+    <div class="flex flex-col gap-4 p-6 md:p-10 bg-white">
         <div class="flex justify-center gap-1 md:justify-start">
             <CmsLogo textSize="text-sm" />
             {CMS_NAME}
@@ -24,7 +24,6 @@
             squareSize={12}
             gridGap={8}
             flickerChance={0.05}
-            color="oklch(0.7611 0.1735 156.3879)"
             maxOpacity={0.3}
             className="absolute inset-0"
         />

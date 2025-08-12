@@ -5,7 +5,7 @@
     export let squareSize = 4;
     export let gridGap = 6;
     export let flickerChance = 0.3;
-    export let color = "rgb(0, 0, 0)";
+    export let color = "var(--primary)";
     export let width: number | undefined = undefined;
     export let height: number | undefined = undefined;
     export let className = "";
@@ -31,11 +31,23 @@
             if (typeof window === "undefined") {
                 return `rgba(0, 0, 0,`;
             }
+
+            // If color is a CSS custom property, resolve it
+            let resolvedColor = color;
+            if (color.startsWith("var(")) {
+                const tempDiv = document.createElement("div");
+                tempDiv.style.color = color;
+                document.body.appendChild(tempDiv);
+                const computedColor = window.getComputedStyle(tempDiv).color;
+                document.body.removeChild(tempDiv);
+                resolvedColor = computedColor;
+            }
+
             const canvas = document.createElement("canvas");
             canvas.width = canvas.height = 1;
             const ctx = canvas.getContext("2d");
             if (!ctx) return "rgba(255, 0, 0,";
-            ctx.fillStyle = color;
+            ctx.fillStyle = resolvedColor;
             ctx.fillRect(0, 0, 1, 1);
             const [r, g, b] = Array.from(ctx.getImageData(0, 0, 1, 1).data);
             return `rgba(${r}, ${g}, ${b},`;
