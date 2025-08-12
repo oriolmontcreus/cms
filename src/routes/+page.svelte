@@ -112,7 +112,12 @@
 </script>
 
 <SiteHeader title="Dashboard">
-  <Button variant="outline" size="sm" onclick={() => goto("/pages")}>
+  <Button
+    variant="outline"
+    size="sm"
+    onclick={() => goto("/pages")}
+    class="bg-white"
+  >
     <PlusIcon size={16} />
     <span class="hidden sm:inline">New Page</span>
   </Button>

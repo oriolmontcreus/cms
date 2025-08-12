@@ -109,11 +109,6 @@
         loading = false;
     }
 
-    const toggleViewMode = () => {
-        viewMode = viewMode === "table" ? "cards" : "table";
-        localStorage.setItem("users-view-mode", viewMode);
-    };
-
     const openCreateDialog = () => {
         selectedUser = null;
         createDialogOpen = true;
@@ -179,11 +174,11 @@
 <SiteHeader title="Users">
     <div class="flex items-center gap-2">
         <!-- View mode toggle buttons -->
-        <div class="flex rounded-lg border bg-background">
+        <div class="flex rounded-md border bg-background">
             <Button
                 variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="sm"
-                class="h-8 px-3 rounded-e-none"
+                class={`h-8 px-3 rounded-e-none ${viewMode === "table" ? "" : "bg-white"}`}
                 onclick={switchToTable}
             >
                 <TableIcon class="h-4 w-4 mr-2" />
@@ -192,7 +187,7 @@
             <Button
                 variant={viewMode === "cards" ? "secondary" : "ghost"}
                 size="sm"
-                class="h-8 px-3 rounded-s-none"
+                class={`h-8 px-3 rounded-s-none ${viewMode === "cards" ? "" : "bg-white"}`}
                 onclick={switchToCards}
             >
                 <LayoutGridIcon class="h-4 w-4 mr-2" />

@@ -46,11 +46,11 @@
 
 <SiteHeader title={config?.title || "Page"}>
     <div class="flex items-center gap-2">
-        <div class="flex rounded-lg border bg-background">
+        <div class="flex rounded-md border bg-background">
             <Button
                 variant={mode === RenderMode.CONTENT ? "secondary" : "ghost"}
                 size="sm"
-                class="h-8 px-2 sm:px-3 rounded-e-none"
+                class={`h-8 px-2 sm:px-3 rounded-e-none ${mode === RenderMode.CONTENT ? "" : "bg-white"}`}
                 onclick={() => (mode = RenderMode.CONTENT)}
             >
                 <IconEdit class="h-4 w-4 sm:mr-2" />
@@ -61,7 +61,7 @@
                     ? "secondary"
                     : "ghost"}
                 size="sm"
-                class="h-8 px-2 sm:px-3 rounded-s-none"
+                class={`h-8 px-2 sm:px-3 rounded-s-none ${mode === RenderMode.TRANSLATION ? "" : "bg-white"}`}
                 onclick={() => (mode = RenderMode.TRANSLATION)}
             >
                 <IconLanguage class="h-4 w-4 sm:mr-2" />
