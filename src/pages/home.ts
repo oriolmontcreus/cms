@@ -1,5 +1,6 @@
 import type { PageConfig } from '../lib/components/form-builder/types';
 import { Hero } from '../components/Hero';
+import { CarouselComponent } from '@/components/Carousel';
 export const config: PageConfig = {
     title: "Home",
     slug: "home",
@@ -8,5 +9,11 @@ export const config: PageConfig = {
             component: Hero,
             id: "hero-main",
             displayName: "HERO SECTION"
-        }]
+        },
+        {
+            component: CarouselComponent,
+            id: "carousel-main",
+            displayName: "CAROUSEL SECTION"
+        }
+    ]
 };
