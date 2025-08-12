@@ -144,12 +144,19 @@
           <FileTextIcon class="h-4 w-4 text-muted-foreground" />
         </Card.Header>
         <Card.Content>
-          <div class="text-2xl font-bold">{totalPages}</div>
-          <p class="text-xs text-muted-foreground">
-            {recentPages.length > 0
-              ? `${recentPages.length} recently updated`
-              : "No recent updates"}
-          </p>
+          {#if isLoading}
+            <div class="animate-pulse">
+              <div class="h-8 bg-muted rounded w-16 mb-2"></div>
+              <div class="h-3 bg-muted rounded w-24"></div>
+            </div>
+          {:else}
+            <div class="text-2xl font-bold">{totalPages}</div>
+            <p class="text-xs text-muted-foreground">
+              {recentPages.length > 0
+                ? `${recentPages.length} recently updated`
+                : "No recent updates"}
+            </p>
+          {/if}
         </Card.Content>
       </Card.Root>
 
@@ -161,12 +168,19 @@
           <UsersIcon class="h-4 w-4 text-muted-foreground" />
         </Card.Header>
         <Card.Content>
-          <div class="text-2xl font-bold">{totalUsers}</div>
-          <p class="text-xs text-muted-foreground">
-            {uninitializedUsers > 0
-              ? `${uninitializedUsers} pending setup`
-              : `${totalUsers} total member${totalUsers !== 1 ? "s" : ""}`}
-          </p>
+          {#if isLoading}
+            <div class="animate-pulse">
+              <div class="h-8 bg-muted rounded w-16 mb-2"></div>
+              <div class="h-3 bg-muted rounded w-32"></div>
+            </div>
+          {:else}
+            <div class="text-2xl font-bold">{totalUsers}</div>
+            <p class="text-xs text-muted-foreground">
+              {uninitializedUsers > 0
+                ? `${uninitializedUsers} pending setup`
+                : `${totalUsers} total member${totalUsers !== 1 ? "s" : ""}`}
+            </p>
+          {/if}
         </Card.Content>
       </Card.Root>
 
@@ -178,10 +192,17 @@
           <WorldIcon class="h-4 w-4 text-muted-foreground" />
         </Card.Header>
         <Card.Content>
-          <div class="text-2xl font-bold">{SITE_LOCALES.length}</div>
-          <p class="text-xs text-muted-foreground">
-            {SITE_LOCALES.map((locale) => locale.name).join(", ")}
-          </p>
+          {#if isLoading}
+            <div class="animate-pulse">
+              <div class="h-8 bg-muted rounded w-12 mb-2"></div>
+              <div class="h-3 bg-muted rounded w-20"></div>
+            </div>
+          {:else}
+            <div class="text-2xl font-bold">{SITE_LOCALES.length}</div>
+            <p class="text-xs text-muted-foreground">
+              {SITE_LOCALES.map((locale) => locale.name).join(", ")}
+            </p>
+          {/if}
         </Card.Content>
       </Card.Root>
 
@@ -193,16 +214,22 @@
           <TrendingUpIcon class="h-4 w-4 text-muted-foreground" />
         </Card.Header>
         <Card.Content class="space-y-2">
-          <Button
-            variant="outline"
-            size="sm"
-            class="w-full justify-start"
-            disabled={isBuildingWelcomeMessage}
-            onclick={triggerBuild}
-          >
-            <BuildingIcon size={14} />
-            {isBuildingWelcomeMessage ? "Building..." : "Build Site"}
-          </Button>
+          {#if isLoading}
+            <div class="animate-pulse">
+              <div class="h-8 bg-muted rounded w-full"></div>
+            </div>
+          {:else}
+            <Button
+              variant="outline"
+              size="sm"
+              class="w-full justify-start"
+              disabled={isBuildingWelcomeMessage}
+              onclick={triggerBuild}
+            >
+              <BuildingIcon size={14} />
+              {isBuildingWelcomeMessage ? "Building..." : "Build Site"}
+            </Button>
+          {/if}
         </Card.Content>
       </Card.Root>
     </div>
