@@ -22,6 +22,8 @@
     import ReloadIcon from "@tabler/icons-svelte/icons/refresh";
     import Check from "@tabler/icons-svelte/icons/check";
     import Copy from "@tabler/icons-svelte/icons/copy";
+    import LayoutGridIcon from "@tabler/icons-svelte/icons/layout-grid";
+    import TableIcon from "@tabler/icons-svelte/icons/table";
     import {
         handleGetAllUsers,
         handleDeleteUser,
@@ -42,6 +44,26 @@
     let selectedUser: User | null = null;
     let copied = false;
 
+    // View mode state
+    let viewMode: "table" | "cards" = "table";
+    let isMobile = false;
+
+    // Function to switch view mode
+    function switchToTable() {
+        viewMode = "table";
+        localStorage.setItem("users-view-mode", "table");
+        console.log("Switched to table view:", viewMode);
+    }
+
+    function switchToCards() {
+        viewMode = "cards";
+        localStorage.setItem("users-view-mode", "cards");
+        console.log("Switched to cards view:", viewMode);
+    }
+
+    // Reactive statement to handle view mode changes
+    $: console.log("Current view mode:", viewMode);
+
     const roleLabels = new Map([
         [Roles.SUPER_ADMIN, "Super Admin"],
         [Roles.DEVELOPER, "Developer"],
@@ -60,7 +82,30 @@
         [Roles.CLIENT, "bg-green-400/20 text-green-500"],
     ]);
 
-    onMount(loadUsers);
+    onMount(() => {
+        // Check if device is mobile
+        isMobile = window.innerWidth < 768;
+
+        // Load saved preference from localStorage or use mobile default
+        const savedViewMode = localStorage.getItem("users-view-mode");
+        if (savedViewMode === "table" || savedViewMode === "cards") {
+            viewMode = savedViewMode;
+        } else {
+            viewMode = isMobile ? "cards" : "table";
+        }
+
+        // Listen for resize events to update mobile state
+        const handleResize = () => {
+            isMobile = window.innerWidth < 768;
+        };
+        window.addEventListener("resize", handleResize);
+
+        loadUsers();
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    });
 
     async function loadUsers() {
         loading = true;
@@ -68,6 +113,11 @@
         if (result) users = result;
         loading = false;
     }
+
+    const toggleViewMode = () => {
+        viewMode = viewMode === "table" ? "cards" : "table";
+        localStorage.setItem("users-view-mode", viewMode);
+    };
 
     const openCreateDialog = () => {
         selectedUser = null;
@@ -132,15 +182,42 @@
 </script>
 
 <SiteHeader title="Users">
-    <Button
-        onclick={openCreateDialog}
-        size="sm"
-        effect="expandIcon"
-        iconPlacement="right"
-        icon={PlusIcon}
-    >
-        Add user
-    </Button>
+    <div class="flex items-center gap-2">
+        <!-- View mode toggle buttons -->
+        <div
+            class="flex items-center rounded-md border border-border overflow-hidden"
+        >
+            <button
+                type="button"
+                class="px-3 py-1.5 text-sm transition-colors {viewMode ===
+                'table'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-transparent hover:bg-muted'}"
+                onclick={switchToTable}
+            >
+                <TableIcon class="h-4 w-4" />
+            </button>
+            <button
+                type="button"
+                class="px-3 py-1.5 text-sm transition-colors {viewMode ===
+                'cards'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-transparent hover:bg-muted'}"
+                onclick={switchToCards}
+            >
+                <LayoutGridIcon class="h-4 w-4" />
+            </button>
+        </div>
+        <Button
+            onclick={openCreateDialog}
+            size="sm"
+            effect="expandIcon"
+            iconPlacement="right"
+            icon={PlusIcon}
+        >
+            Add user
+        </Button>
+    </div>
 </SiteHeader>
 <div class="flex flex-1 flex-col">
     <ScrollArea
@@ -149,9 +226,12 @@
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
                 {#if users.length > 0}
-                    <div class="mb-4">
+                    <div class="mb-4 flex items-center justify-between">
                         <div class="text-sm text-muted-foreground">
                             {users.length} user{users.length === 1 ? "" : "s"}
+                        </div>
+                        <div class="text-xs text-muted-foreground">
+                            Current view: {viewMode}
                         </div>
                     </div>
                 {/if}
@@ -175,7 +255,7 @@
                             </p>
                         </div>
                     </div>
-                {:else}
+                {:else if viewMode === "table"}
                     <Table.Root>
                         <Table.Header>
                             <Table.Row>
@@ -323,6 +403,168 @@
                             {/each}
                         </Table.Body>
                     </Table.Root>
+                {:else}
+                    <!-- Cards View -->
+                    <div
+                        class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                    >
+                        {#each users as user (user._id)}
+                            <div
+                                class="border rounded-lg p-4 space-y-3 bg-card hover:shadow-md transition-shadow"
+                            >
+                                <!-- Header with name and actions -->
+                                <div class="flex items-start justify-between">
+                                    <div class="space-y-1 flex-1">
+                                        <h3
+                                            class="font-medium text-sm truncate"
+                                        >
+                                            {user.name}
+                                        </h3>
+                                        <p
+                                            class="text-sm text-muted-foreground truncate"
+                                        >
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                    <DropdownMenu.Root>
+                                        <DropdownMenu.Trigger>
+                                            {#snippet child({ props })}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    class="h-8 w-8 shrink-0"
+                                                    {...props}
+                                                >
+                                                    <DotsVerticalIcon
+                                                        class="h-4 w-4"
+                                                    />
+                                                    <span class="sr-only"
+                                                        >Open menu</span
+                                                    >
+                                                </Button>
+                                            {/snippet}
+                                        </DropdownMenu.Trigger>
+                                        <DropdownMenu.Content align="end">
+                                            <DropdownMenu.Item
+                                                onclick={() =>
+                                                    openEditDialog(user)}
+                                            >
+                                                <EditIcon
+                                                    class="h-4 w-4 mr-2"
+                                                />
+                                                Edit
+                                            </DropdownMenu.Item>
+                                            {#if !user.isInitialized}
+                                                <DropdownMenu.Item
+                                                    onclick={() =>
+                                                        regenerateSetupLink(
+                                                            user,
+                                                        )}
+                                                >
+                                                    <ReloadIcon
+                                                        class="h-4 w-4 mr-2"
+                                                    />
+                                                    Regenerate setup link
+                                                </DropdownMenu.Item>
+                                            {/if}
+                                            <DropdownMenu.Separator />
+                                            <DropdownMenu.Item
+                                                variant="destructive"
+                                                onclick={() => {
+                                                    if (
+                                                        confirm(
+                                                            "Are you sure you want to delete this user? This action cannot be undone.",
+                                                        )
+                                                    ) {
+                                                        deleteUser(user);
+                                                    }
+                                                }}
+                                            >
+                                                <TrashIcon
+                                                    class="h-4 w-4 mr-2"
+                                                />
+                                                Delete
+                                            </DropdownMenu.Item>
+                                        </DropdownMenu.Content>
+                                    </DropdownMenu.Root>
+                                </div>
+
+                                <!-- Role and Status -->
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <TooltipProvider delayDuration={300}>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    {#snippet child({ props })}
+                                                        <div
+                                                            class="inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold cursor-help transition-colors {getRoleStyle(
+                                                                user.permissions,
+                                                            )}"
+                                                            {...props}
+                                                        >
+                                                            {getRoleCharacter(
+                                                                user.permissions,
+                                                            )}
+                                                        </div>
+                                                    {/snippet}
+                                                </TooltipTrigger>
+                                                <TooltipContent
+                                                    class="px-2 py-1 text-xs"
+                                                >
+                                                    {getRoleLabel(
+                                                        user.permissions,
+                                                    )}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <span
+                                            class="text-xs text-muted-foreground"
+                                            >{getRoleLabel(
+                                                user.permissions,
+                                            )}</span
+                                        >
+                                    </div>
+                                    <TooltipProvider delayDuration={300}>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                {#snippet child({ props })}
+                                                    <div
+                                                        class="inline-flex items-center justify-center w-3 h-3 rounded-full cursor-help transition-colors {user.isInitialized
+                                                            ? 'bg-green-500/60'
+                                                            : 'bg-yellow-500/60'}"
+                                                        {...props}
+                                                    ></div>
+                                                {/snippet}
+                                            </TooltipTrigger>
+                                            <TooltipContent
+                                                class="px-2 py-1 text-xs"
+                                            >
+                                                {user.isInitialized
+                                                    ? "Active"
+                                                    : "Pending setup"}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+
+                                <!-- Dates -->
+                                <div
+                                    class="space-y-1 text-xs text-muted-foreground"
+                                >
+                                    <div class="flex justify-between">
+                                        <span>Created:</span>
+                                        <span>{formatDate(user.createdAt)}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Updated:</span>
+                                        <span>{formatDate(user.updatedAt)}</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
                 {/if}
             </div>
         </div>
