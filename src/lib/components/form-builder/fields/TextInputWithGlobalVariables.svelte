@@ -25,10 +25,7 @@
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
-    const inputClasses = cn(
-        hasPrefix && "ps-9",
-        hasSuffix && "pe-9",
-    );
+    const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
@@ -230,11 +227,15 @@
                     "flex items-center px-3 py-2",
                     "text-sm font-[inherit] whitespace-pre overflow-hidden",
                     hasPrefix && "ps-9",
-                    hasSuffix && "pe-9"
+                    hasSuffix && "pe-9",
                 )}
             >
                 {#each parseTextWithVariables(value) as part}
-                    <span class={part.isVariable ? "text-primary" : "text-transparent"}>
+                    <span
+                        class={part.isVariable
+                            ? "text-primary"
+                            : "text-transparent"}
+                    >
                         {part.content}
                     </span>
                 {/each}
@@ -253,7 +254,10 @@
                 minlength={field.min}
                 maxlength={field.max}
                 pattern={field.pattern}
-                class={cn(inputClasses, "bg-transparent text-transparent caret-foreground relative z-10")}
+                class={cn(
+                    inputClasses,
+                    "bg-transparent text-transparent caret-foreground relative z-10",
+                )}
                 bind:value
                 oninput={handleInput}
                 onkeydown={handleKeydown}
@@ -266,11 +270,15 @@
                     "flex items-center px-3 py-2",
                     "text-sm font-[inherit] whitespace-pre overflow-hidden text-foreground",
                     hasPrefix && "ps-9",
-                    hasSuffix && "pe-9"
+                    hasSuffix && "pe-9",
                 )}
             >
                 {#each parseTextWithVariables(value) as part}
-                    <span class={part.isVariable ? "text-transparent" : "text-foreground"}>
+                    <span
+                        class={part.isVariable
+                            ? "text-transparent"
+                            : "text-foreground"}
+                    >
                         {part.content}
                     </span>
                 {/each}
@@ -316,7 +324,11 @@
                 class="absolute inset-0 pointer-events-none z-0 flex items-center px-3 py-2 text-sm font-[inherit] whitespace-pre overflow-hidden"
             >
                 {#each parseTextWithVariables(value) as part}
-                    <span class={part.isVariable ? "text-primary" : "text-transparent"}>
+                    <span
+                        class={part.isVariable
+                            ? "text-primary"
+                            : "text-transparent"}
+                    >
                         {part.content}
                     </span>
                 {/each}
@@ -346,7 +358,11 @@
                 class="absolute inset-0 pointer-events-none z-5 flex items-center px-3 py-2 text-sm font-[inherit] whitespace-pre overflow-hidden text-foreground"
             >
                 {#each parseTextWithVariables(value) as part}
-                    <span class={part.isVariable ? "text-transparent" : "text-foreground"}>
+                    <span
+                        class={part.isVariable
+                            ? "text-transparent"
+                            : "text-foreground"}
+                    >
                         {part.content}
                     </span>
                 {/each}
