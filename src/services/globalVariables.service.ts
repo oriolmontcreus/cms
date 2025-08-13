@@ -30,6 +30,18 @@ export async function getGlobalVariables(): Promise<Record<string, any>> {
 }
 
 /**
+ * Get global variable names for autocomplete
+ */
+export async function getGlobalVariableNames(): Promise<string[]> {
+    const data = await getExistingGlobalVariablesData();
+    return Object.keys(data).filter(key =>
+        key !== 'translations' &&
+        key !== 'updatedAt' &&
+        typeof data[key] !== 'object'
+    );
+}
+
+/**
  * Update global variables
  */
 export async function updateGlobalVariables(data: Record<string, any>): Promise<{ message: string; data: Record<string, any> }> {
