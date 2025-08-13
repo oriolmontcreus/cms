@@ -14,12 +14,12 @@
 
     let editableElement: HTMLDivElement;
     let open = false;
-    let cursorPosition = 0;
     let searchQuery = "";
     let filteredVariables: string[] = [];
     let selectedIndex = 0;
     let globalVariableNames: string[] = [];
     let globalVariablesData: Record<string, any> = {};
+    let isUpdating = false; // Prevent recursive updates
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
@@ -41,38 +41,51 @@
         return editableElement.textContent || "";
     }
 
-    // Function to set cursor position in contenteditable
+    // Simplified function to set cursor position
     function setCursorPosition(element: HTMLElement, offset: number) {
         const range = document.createRange();
         const selection = window.getSelection();
 
-        let currentOffset = 0;
-        let walker = document.createTreeWalker(
-            element,
-            NodeFilter.SHOW_TEXT,
-            null,
-        );
+        if (!selection) return;
 
-        let node;
-        while ((node = walker.nextNode())) {
-            if (currentOffset + node.textContent!.length >= offset) {
-                range.setStart(node, offset - currentOffset);
-                range.setEnd(node, offset - currentOffset);
-                break;
-            }
-            currentOffset += node.textContent!.length;
-        }
-
-        if (selection) {
+        // Simple approach: get all text nodes and find the right position
+        const textNode = getTextNodeAtOffset(element, offset);
+        if (textNode) {
+            range.setStart(textNode.node, textNode.offset);
+            range.setEnd(textNode.node, textNode.offset);
             selection.removeAllRanges();
             selection.addRange(range);
         }
     }
 
-    // Function to get current cursor position
+    // Helper function to find text node at specific offset
+    function getTextNodeAtOffset(element: HTMLElement, offset: number) {
+        let currentOffset = 0;
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+
+        let node: Text | null = null;
+        while ((node = walker.nextNode() as Text)) {
+            const length = node.textContent?.length || 0;
+            if (currentOffset + length >= offset) {
+                return {
+                    node,
+                    offset: offset - currentOffset,
+                };
+            }
+            currentOffset += length;
+        }
+
+        // If we're at the end, return the last text node if it exists
+        if (node) {
+            return { node, offset: (node as Text).textContent?.length || 0 };
+        }
+        return null;
+    }
+
+    // Simplified function to get current cursor position
     function getCurrentCursorPosition(): number {
         const selection = window.getSelection();
-        if (!selection || !selection.rangeCount) return 0;
+        if (!selection?.rangeCount || !editableElement) return 0;
 
         const range = selection.getRangeAt(0);
         const preCaretRange = range.cloneRange();
@@ -87,12 +100,20 @@
         globalVariablesData = state.data;
     });
 
-    // Keep contenteditable in sync with value changes
-    $: if (editableElement && editableElement.textContent !== value) {
-        const htmlContent = renderTextWithVariables(value);
-        if (editableElement.innerHTML !== htmlContent) {
-            editableElement.innerHTML = htmlContent;
+    // Simplified content update function
+    function updateElementContent(newValue: string, preserveCursor = true) {
+        if (!editableElement || isUpdating) return;
+
+        isUpdating = true;
+        const cursorPos = preserveCursor ? getCurrentCursorPosition() : 0;
+
+        editableElement.innerHTML = renderTextWithVariables(newValue);
+
+        if (preserveCursor) {
+            setCursorPosition(editableElement, cursorPos);
         }
+
+        isUpdating = false;
     }
 
     onMount(async () => {
@@ -113,26 +134,22 @@
     }
 
     function handleInput(event: Event) {
+        if (isUpdating) return;
+
         const target = event.target as HTMLDivElement;
         const inputValue = target.textContent || "";
-        const newCursorPosition = getCurrentCursorPosition();
+        const cursorPos = getCurrentCursorPosition();
 
-        if (inputValue === value && newCursorPosition === cursorPosition)
-            return;
-
+        // Update the value
         value = inputValue;
-        cursorPosition = newCursorPosition;
 
-        // Update the HTML content with highlighted variables
-        const htmlContent = renderTextWithVariables(inputValue);
-        if (target.innerHTML !== htmlContent) {
-            target.innerHTML = htmlContent;
-            setCursorPosition(target, cursorPosition);
-        }
+        // Update HTML with highlighted variables, preserving cursor
+        updateElementContent(inputValue, true);
 
+        // Check for variable autocomplete trigger
         const textBeforeCursor = inputValue.substring(
-            Math.max(0, cursorPosition - 50),
-            cursorPosition,
+            Math.max(0, cursorPos - 50),
+            cursorPos,
         );
         const matchIndex = textBeforeCursor.lastIndexOf("{{");
 
@@ -258,20 +275,16 @@
 
     function updateValueAndCursor(newValue: string, newCursorPos: number) {
         value = newValue;
-        cursorPosition = newCursorPos;
-
         tick().then(() => {
-            if (editableElement) {
-                const htmlContent = renderTextWithVariables(newValue);
-                editableElement.innerHTML = htmlContent;
-                setCursorPosition(editableElement, newCursorPos);
-            }
+            updateElementContent(newValue, false);
+            setCursorPosition(editableElement, newCursorPos);
         });
     }
 
     function insertVariable(variableName: string) {
-        const textBeforeCursor = value.substring(0, cursorPosition);
-        const textAfterCursor = value.substring(cursorPosition);
+        const cursorPos = getCurrentCursorPosition();
+        const textBeforeCursor = value.substring(0, cursorPos);
+        const textAfterCursor = value.substring(cursorPos);
 
         const matchIndex = textBeforeCursor.lastIndexOf("{{");
         if (matchIndex === -1) return;
@@ -285,11 +298,8 @@
         closeAndFocusTrigger();
 
         tick().then(() => {
-            if (editableElement) {
-                const htmlContent = renderTextWithVariables(value);
-                editableElement.innerHTML = htmlContent;
-                setCursorPosition(editableElement, newCursorPos);
-            }
+            updateElementContent(value, false);
+            setCursorPosition(editableElement, newCursorPos);
         });
     }
 </script>
