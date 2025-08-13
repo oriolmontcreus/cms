@@ -11,7 +11,7 @@
     export let fieldId: string;
     export let value: string = "";
 
-    let inputElement: HTMLInputElement;
+    let inputElement: any; // This will be the Input component, not HTMLInputElement
     let showPopover = false;
     let cursorPosition = 0;
     let searchQuery = "";
@@ -43,7 +43,8 @@
     });
 
     function handleClickOutside(event: MouseEvent) {
-        if (showPopover && !event.target?.closest(".popover-content")) {
+        const target = event.target as Element | null;
+        if (showPopover && target && !target.closest(".popover-content")) {
             showPopover = false;
         }
     }
@@ -99,15 +100,24 @@
     }
 
     function updatePopoverPosition() {
-        let domElement = inputElement;
+        let domElement: HTMLElement | null = null;
 
-        if (inputElement && !inputElement.getBoundingClientRect) {
-            domElement =
-                inputElement.$el ||
-                inputElement.getElement?.() ||
-                inputElement.element;
+        // Try to get the actual input element from the Input component
+        if (inputElement) {
+            // Check if it's a direct HTMLInputElement
+            if (inputElement.getBoundingClientRect) {
+                domElement = inputElement;
+            } else {
+                // Try common component element properties
+                domElement =
+                    inputElement.$el ||
+                    inputElement.getElement?.() ||
+                    inputElement.element ||
+                    null;
+            }
         }
 
+        // Fallback to getElementById if we still don't have an element
         if (!domElement || !domElement.getBoundingClientRect) {
             domElement = document.getElementById(fieldId);
         }
@@ -179,26 +189,40 @@
         showPopover = false;
 
         tick().then(() => {
-            let domElement = inputElement;
+            let domElement: HTMLElement | null = null;
 
-            if (inputElement && !inputElement.focus) {
-                domElement =
-                    inputElement.$el ||
-                    inputElement.getElement?.() ||
-                    inputElement.element;
+            // Try to get the actual input element from the Input component
+            if (inputElement) {
+                // Check if it's a direct HTMLInputElement
+                if (inputElement.focus) {
+                    domElement = inputElement;
+                } else {
+                    // Try common component element properties
+                    domElement =
+                        inputElement.$el ||
+                        inputElement.getElement?.() ||
+                        inputElement.element ||
+                        null;
+                }
             }
 
+            // Fallback to getElementById if we still don't have an element
             if (!domElement && fieldId) {
-                domElement = document.getElementById(fieldId);
+                domElement = document.getElementById(
+                    fieldId,
+                ) as HTMLInputElement | null;
             }
 
             if (
                 domElement &&
-                domElement.focus &&
-                domElement.setSelectionRange
+                "focus" in domElement &&
+                "setSelectionRange" in domElement
             ) {
-                domElement.focus();
-                domElement.setSelectionRange(newCursorPos, newCursorPos);
+                (domElement as HTMLInputElement).focus();
+                (domElement as HTMLInputElement).setSelectionRange(
+                    newCursorPos,
+                    newCursorPos,
+                );
             }
         });
     }
