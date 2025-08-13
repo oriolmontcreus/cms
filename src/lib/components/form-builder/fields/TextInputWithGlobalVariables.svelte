@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { FormField } from "../types";
-    import { onMount } from "svelte";
+    import { onMount, onDestroy, tick } from "svelte";
     import { Input } from "@components/ui/input";
     import { cn } from "$lib/utils";
     import * as Command from "@components/ui/command";
@@ -11,59 +11,175 @@
     export let fieldId: string;
     export let value: string = "";
 
-    let inputComponent: any; // Svelte Input component reference
-    let inputElement: HTMLInputElement; // Actual DOM element reference
+    let inputElement: HTMLInputElement;
     let showPopover = false;
     let cursorPosition = 0;
     let searchQuery = "";
     let filteredVariables: string[] = [];
     let selectedIndex = 0;
 
-    $: hasPrefix = field.prefix !== undefined;
-    $: hasSuffix = field.suffix !== undefined;
-    $: inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
+    // Performance: Cache position to avoid DOM calls in reactive context
+    let popoverPosition = { x: 0, y: 0 };
 
-    // Subscribe to the global variables store
-    $: globalVariablesState = $globalVariablesStore;
-    $: globalVariableNames = globalVariablesState.variableNames;
-    $: globalVariablesData = globalVariablesState.data;
+    // Performance: Cache computed values
+    let globalVariableNames: string[] = [];
+    let globalVariablesData: Record<string, any> = {};
 
-    onMount(async () => {
-        // Load global variables using the shared store
-        await globalVariablesStore.load();
+    // Performance: Memoize CSS classes
+    const hasPrefix = field.prefix !== undefined;
+    const hasSuffix = field.suffix !== undefined;
+    const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
 
-        // Get the actual DOM element from the Svelte Input component
-        if (inputComponent && inputComponent.ref) {
-            inputElement = inputComponent.ref;
-        }
+    // Performance: Cache string type check result for prefix/suffix
+    const prefixIsString = typeof field.prefix === "string";
+    const suffixIsString = typeof field.suffix === "string";
+
+    // Single subscription for optimal reactivity
+    const unsubscribe = globalVariablesStore.subscribe((state) => {
+        globalVariableNames = state.variableNames;
+        globalVariablesData = state.data;
     });
 
+    onMount(async () => {
+        await globalVariablesStore.load();
+    });
+
+    onDestroy(() => {
+        unsubscribe();
+    });
+
+    // Performance: Optimized input handler with early returns
     function handleInput(event: Event) {
         const target = event.target as HTMLInputElement;
         const inputValue = target.value;
-        cursorPosition = target.selectionStart || 0;
+        const newCursorPosition = target.selectionStart || 0;
+
+        // Early return if no change in cursor position and no {{ pattern
+        if (inputValue === value && newCursorPosition === cursorPosition)
+            return;
 
         value = inputValue;
+        cursorPosition = newCursorPosition;
 
-        // Check if user typed {{ at cursor position
-        const textBeforeCursor = inputValue.substring(0, cursorPosition);
-        const match = textBeforeCursor.match(/\{\{([^}]*)$/);
+        // Optimized pattern matching
+        const textBeforeCursor = inputValue.substring(
+            Math.max(0, cursorPosition - 50),
+            cursorPosition,
+        );
+        const matchIndex = textBeforeCursor.lastIndexOf("{{");
 
-        if (match) {
-            searchQuery = match[1];
-            filteredVariables = globalVariableNames.filter((name) =>
-                name.toLowerCase().includes(searchQuery.toLowerCase()),
+        if (matchIndex !== -1) {
+            const searchStart = matchIndex + 2;
+            const potentialQuery = textBeforeCursor.substring(searchStart);
+
+            // Only proceed if we don't have a closing }}
+            if (!potentialQuery.includes("}}")) {
+                searchQuery = potentialQuery;
+                updateFilteredVariables();
+                selectedIndex = 0;
+                showPopoverWithPosition();
+                return;
+            }
+        }
+
+        showPopover = false;
+        searchQuery = "";
+    }
+
+    // Performance: Separate function for filtering to avoid inline operations
+    function updateFilteredVariables() {
+        if (!searchQuery) {
+            filteredVariables = globalVariableNames.slice(0, 10); // Limit results for performance
+            return;
+        }
+
+        const query = searchQuery.toLowerCase();
+        filteredVariables = globalVariableNames
+            .filter((name) => name.toLowerCase().includes(query))
+            .slice(0, 10); // Always limit results
+    }
+
+    // Update popover position when showing
+    function updatePopoverPosition() {
+        // Try to get the actual DOM element
+        let domElement = inputElement;
+
+        // If inputElement is a Svelte component, try to get the DOM element
+        if (inputElement && !inputElement.getBoundingClientRect) {
+            // Try common ways to get DOM element from UI component
+            domElement =
+                inputElement.$el ||
+                inputElement.getElement?.() ||
+                inputElement.element;
+        }
+
+        // Fallback: try to find by ID
+        if (!domElement || !domElement.getBoundingClientRect) {
+            domElement = document.getElementById(fieldId);
+        }
+
+        if (!domElement) {
+            console.warn(
+                "[TextInputWithGlobalVariables] DOM element not found",
             );
-            selectedIndex = 0;
-            showPopover = true;
-        } else {
-            showPopover = false;
-            searchQuery = "";
+            return;
+        }
+
+        if (typeof domElement.getBoundingClientRect !== "function") {
+            console.warn(
+                "[TextInputWithGlobalVariables] getBoundingClientRect not available on:",
+                domElement,
+            );
+            return;
+        }
+
+        try {
+            const rect = domElement.getBoundingClientRect();
+            console.log("[TextInputWithGlobalVariables] Element rect:", rect);
+
+            // Ensure we have valid coordinates
+            if (
+                rect &&
+                typeof rect.left === "number" &&
+                typeof rect.bottom === "number"
+            ) {
+                popoverPosition = {
+                    x: rect.left,
+                    y: rect.bottom + 4,
+                };
+                console.log(
+                    "[TextInputWithGlobalVariables] Updated popover position:",
+                    popoverPosition,
+                );
+            } else {
+                console.error(
+                    "[TextInputWithGlobalVariables] Invalid rect:",
+                    rect,
+                );
+            }
+        } catch (error) {
+            console.error(
+                "[TextInputWithGlobalVariables] Error getting element position:",
+                error,
+            );
         }
     }
 
+    function showPopoverWithPosition() {
+        // Ensure element is properly mounted before calculating position
+        if (!inputElement) {
+            console.warn(
+                "[TextInputWithGlobalVariables] Attempting to show popover before element is mounted",
+            );
+            return;
+        }
+
+        updatePopoverPosition();
+        showPopover = true;
+    }
+
     function handleKeydown(event: KeyboardEvent) {
-        if (!showPopover) return;
+        if (!showPopover || filteredVariables.length === 0) return;
 
         switch (event.key) {
             case "ArrowDown":
@@ -80,9 +196,7 @@
             case "Enter":
             case "Tab":
                 event.preventDefault();
-                if (filteredVariables[selectedIndex]) {
-                    insertVariable(filteredVariables[selectedIndex]);
-                }
+                insertVariable(filteredVariables[selectedIndex]);
                 break;
             case "Escape":
                 showPopover = false;
@@ -94,61 +208,47 @@
         const textBeforeCursor = value.substring(0, cursorPosition);
         const textAfterCursor = value.substring(cursorPosition);
 
-        // Find the {{ pattern and replace it
-        const beforeMatch = textBeforeCursor.replace(
-            /\{\{[^}]*$/,
-            `{{${variableName}}}`,
-        );
-        value = beforeMatch + textAfterCursor;
+        // More efficient replacement using lastIndexOf
+        const matchIndex = textBeforeCursor.lastIndexOf("{{");
+        if (matchIndex === -1) return;
 
-        // Update cursor position
-        const newCursorPos = beforeMatch.length;
+        const beforePattern = textBeforeCursor.substring(0, matchIndex);
+        const replacement = `{{${variableName}}}`;
+
+        value = beforePattern + replacement + textAfterCursor;
+        const newCursorPos = beforePattern.length + replacement.length;
 
         showPopover = false;
 
-        // Focus back to input and set cursor position
-        setTimeout(() => {
-            if (inputElement) {
-                inputElement.focus();
-                inputElement.setSelectionRange(newCursorPos, newCursorPos);
+        // Use tick for more reliable cursor positioning
+        tick().then(() => {
+            // Get the actual DOM element for focus and cursor positioning
+            let domElement = inputElement;
+
+            if (inputElement && !inputElement.focus) {
+                domElement =
+                    inputElement.$el ||
+                    inputElement.getElement?.() ||
+                    inputElement.element;
             }
-        }, 0);
-    }
 
-    function selectVariable(variableName: string) {
-        insertVariable(variableName);
-    }
-
-    function isString(value: any): value is string {
-        return typeof value === "string";
-    }
-
-    // Get popover positioning
-    function getPopoverPosition() {
-        // Try to get the DOM element using getElementById as fallback
-        if (
-            !inputElement ||
-            typeof inputElement.getBoundingClientRect !== "function"
-        ) {
-            const domElement = document.getElementById(fieldId);
-            if (domElement) {
-                inputElement = domElement as HTMLInputElement;
+            if (!domElement && fieldId) {
+                domElement = document.getElementById(fieldId);
             }
-        }
 
-        if (
-            !inputElement ||
-            typeof inputElement.getBoundingClientRect !== "function"
-        ) {
-            return { x: 100, y: 100 }; // Fallback position
-        }
-
-        const rect = inputElement.getBoundingClientRect();
-        return {
-            x: rect.left,
-            y: rect.bottom + window.scrollY,
-        };
+            if (
+                domElement &&
+                domElement.focus &&
+                domElement.setSelectionRange
+            ) {
+                domElement.focus();
+                domElement.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        });
     }
+
+    // Performance: Remove redundant function
+    const selectVariable = insertVariable;
 </script>
 
 <div class="relative">
@@ -176,7 +276,7 @@
                 <div
                     class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50"
                 >
-                    {#if isString(field.prefix)}
+                    {#if prefixIsString}
                         <span class="text-sm font-medium">{field.prefix}</span>
                     {:else}
                         <svelte:component
@@ -192,7 +292,7 @@
                 <div
                     class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 peer-disabled:opacity-50"
                 >
-                    {#if isString(field.suffix)}
+                    {#if suffixIsString}
                         <span class="text-sm font-medium">{field.suffix}</span>
                     {:else}
                         <svelte:component
@@ -223,22 +323,19 @@
         />
     {/if}
 
-    <!-- Global Variables Autocomplete Popover -->
-    {#if showPopover}
+    <!-- Optimized Popover with safe positioning -->
+    {#if showPopover && inputElement && popoverPosition.x > 0 && popoverPosition.y > 0}
         <div
             class="fixed bg-popover text-popover-foreground border rounded-md shadow-md p-0 w-80 max-h-60 overflow-y-auto z-50"
-            style="left: {getPopoverPosition().x}px; top: {getPopoverPosition()
-                .y + 4}px;"
+            style="left: {popoverPosition.x}px; top: {popoverPosition.y}px;"
         >
             <Command.Root>
                 <Command.List>
                     {#if filteredVariables.length === 0}
                         <Command.Empty>
-                            {#if globalVariableNames.length === 0}
-                                No global variables loaded.
-                            {:else}
-                                No variables match your search.
-                            {/if}
+                            {globalVariableNames.length === 0
+                                ? "No global variables loaded."
+                                : "No variables match your search."}
                         </Command.Empty>
                     {:else}
                         <Command.Group heading="Global Variables" class="p-2">
@@ -263,20 +360,18 @@
                                     <span class="font-mono text-sm"
                                         >{varName}</span
                                     >
-                                    <span
-                                        class="text-xs text-muted-foreground ml-auto truncate max-w-32"
-                                    >
-                                        {globalVariablesData[varName]
-                                            ? String(
-                                                  globalVariablesData[varName],
-                                              ).slice(0, 30) +
-                                              (String(
-                                                  globalVariablesData[varName],
-                                              ).length > 30
-                                                  ? "..."
-                                                  : "")
-                                            : ""}
-                                    </span>
+                                    {#if globalVariablesData[varName]}
+                                        {@const value = String(
+                                            globalVariablesData[varName],
+                                        )}
+                                        <span
+                                            class="text-xs text-muted-foreground ml-auto truncate max-w-32"
+                                        >
+                                            {value.length > 30
+                                                ? value.slice(0, 30) + "..."
+                                                : value}
+                                        </span>
+                                    {/if}
                                 </div>
                             {/each}
                         </Command.Group>
