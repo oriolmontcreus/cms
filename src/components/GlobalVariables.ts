@@ -1,4 +1,4 @@
-import { TextInput, Textarea, defineGrid, Tabs, TabField } from '@/lib/components/form-builder/fields';
+import { TextInput, Textarea, defineGrid, Tabs, TabField, Number, Toggle } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconCode, IconPalette, IconSettings, IconWorld } from '@tabler/icons-svelte';
 
@@ -56,6 +56,11 @@ themeTab.schema = [
     TextInput('accentColor')
         .label('Accent color')
         .placeholder('#007bff'),
+    Number('maxContentWidth')
+        .label('Max content width (px)')
+        .placeholder('1200')
+        .min(800)
+        .max(2000),
 ];
 
 const analyticsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
@@ -66,6 +71,8 @@ analyticsTab.schema = [
     TextInput('googleTagManagerId')
         .label('Google Tag Manager ID')
         .placeholder('GTM-XXXXXXX'),
+    Toggle('enableCookieConsent')
+        .label('Enable cookie consent'),
     Textarea('customTrackingCode')
         .label('Custom tracking code')
         .placeholder('Additional tracking or analytics code')

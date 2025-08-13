@@ -15,6 +15,10 @@
     import Spinner from "$lib/components/Spinner.svelte";
     import { GlobalVariables } from "@/components/GlobalVariables";
     import type { Component } from "@/lib/shared/types/pages.type";
+    import {
+        handleGetGlobalVariables,
+        handleUpdateGlobalVariables,
+    } from "@/services/globalVariables.service";
 
     let config: PageConfig | null = null;
     let components: Component[] = [];
@@ -23,6 +27,7 @@
     let mode = RenderMode.CONTENT;
     let formBuilderRef: any = null;
     let isSubmitting = false;
+    let globalVariablesData: Record<string, any> = {};
 
     // Create the config for global variables
     const globalVariablesConfig: PageConfig = {
@@ -39,20 +44,38 @@
 
     onMount(async () => {
         loading = true;
+        console.log("🔍 Loading global variables data...");
+
         try {
-            // For now, we'll create a mock structure
-            // In a real implementation, you'd load this from your backend
+            // Load global variables from the dedicated service
+            const data = await handleGetGlobalVariables();
+
+            console.log("📊 Global variables API response:", data);
+
+            if (data) {
+                globalVariablesData = data;
+            }
+
+            // Set up the form structure
             config = globalVariablesConfig;
             components = [
                 {
                     componentName: "GlobalVariables",
                     instanceId: "global-variables-main",
                     displayName: "GLOBAL VARIABLES",
-                    formData: {},
+                    formData: globalVariablesData, // Use the loaded data directly
                 },
             ];
+
+            console.log("✅ Form setup complete:", {
+                config,
+                components,
+                formData: components[0]?.formData,
+            });
+
             loading = false;
         } catch (err) {
+            console.error("❌ Failed to load global variables:", err);
             error = "Failed to load global variables";
             loading = false;
         }
@@ -62,13 +85,42 @@
         if (formBuilderRef) {
             isSubmitting = true;
             try {
-                await formBuilderRef.handleSubmit(
-                    mode === RenderMode.TRANSLATION,
+                // Get the current form data from the FormBuilder
+                const formData = formBuilderRef.formData;
+                console.log("🔍 Form data structure:", formData);
+
+                // Get the global variables data - it should be directly accessible
+                const globalVariablesComponent =
+                    formData["global-variables-main"];
+
+                if (!globalVariablesComponent) {
+                    console.error(
+                        "❌ Global variables component data not found in formData",
+                    );
+                    throw new Error("No form data found for global variables");
+                }
+
+                console.log(
+                    "🚀 Saving global variables:",
+                    globalVariablesComponent,
                 );
-                // Here you would save to your global variables endpoint
-                console.log("Global variables saved successfully");
+
+                // Save using the dedicated global variables service
+                const result = await handleUpdateGlobalVariables(
+                    globalVariablesComponent,
+                );
+
+                if (result) {
+                    console.log(
+                        "✅ Global variables saved successfully:",
+                        result,
+                    );
+                    globalVariablesData = result.data;
+                } else {
+                    throw new Error("Failed to save global variables");
+                }
             } catch (err) {
-                console.error("Failed to save global variables:", err);
+                console.error("❌ Failed to save global variables:", err);
             } finally {
                 isSubmitting = false;
             }
