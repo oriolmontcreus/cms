@@ -36,6 +36,11 @@
                 displayName: "GLOBAL VARIABLES",
             },
         ],
+        formBuilder: {
+            defaultExpanded: true, // All components expanded by default
+            hideComponentTitles: true, // Hide the component title
+            disableCollapsible: true, // Disable collapse/expand functionality
+        },
     };
 
     onMount(async () => {

@@ -359,6 +359,12 @@ export interface PageConfig {
     slug: string;
     parentSlug?: string;
     components: ComponentInstance[];
+    // Form builder configuration
+    formBuilder?: {
+        defaultExpanded?: boolean; // If true, all components are expanded by default
+        hideComponentTitles?: boolean; // If true, component titles are hidden
+        disableCollapsible?: boolean; // If true, components are not collapsible/expandable
+    };
 }
 
 export interface FormData {

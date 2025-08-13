@@ -41,26 +41,37 @@
 
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
+
+    // Get configuration options
+    $: defaultExpanded = config.formBuilder?.defaultExpanded ?? false;
+    $: hideComponentTitles = config.formBuilder?.hideComponentTitles ?? false;
+    $: disableCollapsible = config.formBuilder?.disableCollapsible ?? false;
+
     onMount(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
+            if (saved && !disableCollapsible) {
                 componentCollapseState = JSON.parse(saved);
             }
             config.components.forEach((comp) => {
                 if (!(comp.id in componentCollapseState)) {
-                    componentCollapseState[comp.id] = true;
+                    componentCollapseState[comp.id] = disableCollapsible
+                        ? false
+                        : !defaultExpanded;
                 }
             });
         } catch (error) {
             console.warn("Failed to load component collapse state:", error);
             config.components.forEach((comp) => {
-                componentCollapseState[comp.id] = true;
+                componentCollapseState[comp.id] = disableCollapsible
+                    ? false
+                    : !defaultExpanded;
             });
         }
     });
 
     function saveCollapseState() {
+        if (disableCollapsible) return;
         try {
             localStorage.setItem(
                 STORAGE_KEY,
@@ -72,6 +83,7 @@
     }
 
     function toggleComponentCollapse(componentId: string) {
+        if (disableCollapsible) return;
         componentCollapseState[componentId] =
             !componentCollapseState[componentId];
         saveCollapseState();
@@ -97,8 +109,8 @@
     $: allExpanded = config.components.every(
         (comp) => componentCollapseState[comp.id] === false,
     );
-    $: showCollapseButton = !allCollapsed;
-    $: showExpandButton = !allExpanded;
+    $: showCollapseButton = !disableCollapsible && !allCollapsed;
+    $: showExpandButton = !disableCollapsible && !allExpanded;
 
     const filesToDelete = writable<string[]>([]);
 
@@ -412,7 +424,10 @@
             {mode}
             {translationData}
             locales={SITE_LOCALES}
-            isCollapsed={componentCollapseState[componentInstance.id] ?? true}
+            isCollapsed={componentCollapseState[componentInstance.id] ??
+                !defaultExpanded}
+            {disableCollapsible}
+            {hideComponentTitles}
             onToggleCollapse={() =>
                 toggleComponentCollapse(componentInstance.id)}
         />
