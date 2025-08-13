@@ -122,14 +122,12 @@
                 {:else if config}
                     <div class="max-w-4xl mx-auto">
                         <div class="mb-6">
-                            <h1 class="text-2xl font-bold mb-2">
-                                Global Variables
-                            </h1>
                             <p class="text-muted-foreground">
                                 Configure global variables that will be
-                                available across your entire site. These
-                                settings can be used in components, pages, and
-                                templates.
+                                available across your entire site and CMS. You
+                                can call them using <code class="text-primary"
+                                    >&#123;&#123;variableName&#125;&#125;</code
+                                >
                             </p>
                         </div>
                         <FormBuilder
