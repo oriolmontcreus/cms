@@ -77,7 +77,12 @@
                 searchQuery = potentialQuery;
                 updateFilteredVariables();
                 selectedIndex = 0;
-                showPopoverWithPosition();
+
+                // Only calculate position if popover is not already open
+                if (!showPopover) {
+                    updatePopoverPosition();
+                }
+                showPopover = true;
                 return;
             }
         }
@@ -118,26 +123,13 @@
             domElement = document.getElementById(fieldId);
         }
 
-        if (!domElement) {
-            console.warn(
-                "[TextInputWithGlobalVariables] DOM element not found",
-            );
-            return;
-        }
-
-        if (typeof domElement.getBoundingClientRect !== "function") {
-            console.warn(
-                "[TextInputWithGlobalVariables] getBoundingClientRect not available on:",
-                domElement,
-            );
+        if (!domElement?.getBoundingClientRect) {
             return;
         }
 
         try {
             const rect = domElement.getBoundingClientRect();
-            console.log("[TextInputWithGlobalVariables] Element rect:", rect);
 
-            // Ensure we have valid coordinates
             if (
                 rect &&
                 typeof rect.left === "number" &&
@@ -147,15 +139,6 @@
                     x: rect.left,
                     y: rect.bottom + 4,
                 };
-                console.log(
-                    "[TextInputWithGlobalVariables] Updated popover position:",
-                    popoverPosition,
-                );
-            } else {
-                console.error(
-                    "[TextInputWithGlobalVariables] Invalid rect:",
-                    rect,
-                );
             }
         } catch (error) {
             console.error(
@@ -163,19 +146,6 @@
                 error,
             );
         }
-    }
-
-    function showPopoverWithPosition() {
-        // Ensure element is properly mounted before calculating position
-        if (!inputElement) {
-            console.warn(
-                "[TextInputWithGlobalVariables] Attempting to show popover before element is mounted",
-            );
-            return;
-        }
-
-        updatePopoverPosition();
-        showPopover = true;
     }
 
     function handleKeydown(event: KeyboardEvent) {
