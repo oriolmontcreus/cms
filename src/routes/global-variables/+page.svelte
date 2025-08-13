@@ -40,23 +40,17 @@
 
     onMount(async () => {
         loading = true;
-
         try {
-            // Load global variables from the dedicated service
             const data = await handleGetGlobalVariables();
-
-            if (data) {
-                globalVariablesData = data;
-            }
-
-            // Set up the form structure
+            if (data) globalVariablesData = data;
             config = globalVariablesConfig;
+
             components = [
                 {
                     componentName: "GlobalVariables",
                     instanceId: "global-variables-main",
                     displayName: "GLOBAL VARIABLES",
-                    formData: globalVariablesData, // Use the loaded data directly
+                    formData: globalVariablesData,
                 },
             ];
 
