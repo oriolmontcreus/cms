@@ -439,7 +439,7 @@
 <style>
     [contenteditable]:empty::before {
         content: attr(data-placeholder);
-        color: hsl(var(--muted-foreground));
+        color: var(--muted-foreground);
         pointer-events: none;
     }
 
