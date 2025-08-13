@@ -10,15 +10,11 @@
         IconLanguage,
         IconEdit,
         IconDeviceFloppy,
-        IconVariable,
     } from "@tabler/icons-svelte";
     import Spinner from "$lib/components/Spinner.svelte";
     import { GlobalVariables } from "@/components/GlobalVariables";
     import type { Component } from "@/lib/shared/types/pages.type";
-    import {
-        handleGetGlobalVariables,
-        handleUpdateGlobalVariables,
-    } from "@/services/globalVariables.service";
+    import { handleGetGlobalVariables } from "@/services/globalVariables.service";
 
     let config: PageConfig | null = null;
     let components: Component[] = [];
@@ -80,52 +76,6 @@
             loading = false;
         }
     });
-
-    async function handleSave() {
-        if (formBuilderRef) {
-            isSubmitting = true;
-            try {
-                // Get the current form data from the FormBuilder
-                const formData = formBuilderRef.formData;
-                console.log("🔍 Form data structure:", formData);
-
-                // Get the global variables data - it should be directly accessible
-                const globalVariablesComponent =
-                    formData["global-variables-main"];
-
-                if (!globalVariablesComponent) {
-                    console.error(
-                        "❌ Global variables component data not found in formData",
-                    );
-                    throw new Error("No form data found for global variables");
-                }
-
-                console.log(
-                    "🚀 Saving global variables:",
-                    globalVariablesComponent,
-                );
-
-                // Save using the dedicated global variables service
-                const result = await handleUpdateGlobalVariables(
-                    globalVariablesComponent,
-                );
-
-                if (result) {
-                    console.log(
-                        "✅ Global variables saved successfully:",
-                        result,
-                    );
-                    globalVariablesData = result.data;
-                } else {
-                    throw new Error("Failed to save global variables");
-                }
-            } catch (err) {
-                console.error("❌ Failed to save global variables:", err);
-            } finally {
-                isSubmitting = false;
-            }
-        }
-    }
 </script>
 
 <SiteHeader title="Global Variables">
@@ -157,8 +107,8 @@
             <Button
                 type="button"
                 size="sm"
-                onclick={handleSave}
-                disabled={isSubmitting}
+                onclick={() => formBuilderRef?.handleSubmit(false)}
+                disabled={formBuilderRef?.isSubmitting}
             >
                 <IconDeviceFloppy class="size-4" />
                 <span class="hidden sm:inline ml-2">Save</span>

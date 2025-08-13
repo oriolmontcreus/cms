@@ -12,7 +12,8 @@ export default defineConfig({
 		watch: {
 			usePolling: true,
 			ignored: [
-				'**/site/src/data/pages.json'
+				'**/site/src/data/pages.json',
+				'**/site/src/data/globalVariables.json'
 			]
 		},
 		fs: {
