@@ -4,12 +4,8 @@
     import { Input } from "@components/ui/input";
     import { cn } from "$lib/utils";
     import * as Command from "@components/ui/command";
-    import { handleGetGlobalVariables } from "@/services/globalVariables.service";
+    import { globalVariablesStore } from "@/stores/globalVariables";
     import { IconVariable } from "@tabler/icons-svelte";
-
-    console.log(
-        "[GlobalVariables] TextInputWithGlobalVariables component loaded",
-    );
 
     export let field: FormField;
     export let fieldId: string;
@@ -20,51 +16,25 @@
     let showPopover = false;
     let cursorPosition = 0;
     let searchQuery = "";
-    let globalVariableNames: string[] = [];
     let filteredVariables: string[] = [];
     let selectedIndex = 0;
-
-    // Store for global variables data
-    let globalVariablesData: Record<string, any> = {};
 
     $: hasPrefix = field.prefix !== undefined;
     $: hasSuffix = field.suffix !== undefined;
     $: inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
 
-    onMount(async () => {
-        // Load global variables on mount
-        console.log("[GlobalVariables] Loading global variables...");
-        const data = await handleGetGlobalVariables();
-        globalVariablesData = data;
-        console.log("[GlobalVariables] Loaded data:", data);
+    // Subscribe to the global variables store
+    $: globalVariablesState = $globalVariablesStore;
+    $: globalVariableNames = globalVariablesState.variableNames;
+    $: globalVariablesData = globalVariablesState.data;
 
-        // Extract variable names (excluding 'translations' and 'updatedAt')
-        globalVariableNames = Object.keys(data).filter(
-            (key) =>
-                key !== "translations" &&
-                key !== "updatedAt" &&
-                typeof data[key] !== "object",
-        );
-        console.log(
-            "[GlobalVariables] Available variable names:",
-            globalVariableNames,
-        );
-        console.log(
-            "[GlobalVariables] First variable name type:",
-            typeof globalVariableNames[0],
-        );
-        console.log(
-            "[GlobalVariables] First variable name value:",
-            globalVariableNames[0],
-        );
+    onMount(async () => {
+        // Load global variables using the shared store
+        await globalVariablesStore.load();
 
         // Get the actual DOM element from the Svelte Input component
         if (inputComponent && inputComponent.ref) {
             inputElement = inputComponent.ref;
-            console.log(
-                "[GlobalVariables] Got DOM element from Input component:",
-                inputElement,
-            );
         }
     });
 
@@ -73,23 +43,11 @@
         const inputValue = target.value;
         cursorPosition = target.selectionStart || 0;
 
-        console.log("[GlobalVariables] Input changed:", {
-            inputValue,
-            cursorPosition,
-            globalVariableNames: globalVariableNames.length,
-        });
-
         value = inputValue;
 
         // Check if user typed {{ at cursor position
         const textBeforeCursor = inputValue.substring(0, cursorPosition);
         const match = textBeforeCursor.match(/\{\{([^}]*)$/);
-
-        console.log("[GlobalVariables] Pattern check:", {
-            textBeforeCursor,
-            match: match ? match[0] : null,
-            searchTerm: match ? match[1] : null,
-        });
 
         if (match) {
             searchQuery = match[1];
@@ -97,22 +55,10 @@
                 name.toLowerCase().includes(searchQuery.toLowerCase()),
             );
             selectedIndex = 0;
-            showPopover = true; // Always show when we have a match, regardless of results
-            console.log("[GlobalVariables] Showing popover:", {
-                searchQuery,
-                searchQueryLength: searchQuery.length,
-                globalVariableNames,
-                globalVariableNamesCount: globalVariableNames.length,
-                filteredVariables,
-                filteredVariablesCount: filteredVariables.length,
-                firstFilteredType: typeof filteredVariables[0],
-                firstFilteredValue: filteredVariables[0],
-                showPopover,
-            });
+            showPopover = true;
         } else {
             showPopover = false;
             searchQuery = "";
-            console.log("[GlobalVariables] Hiding popover");
         }
     }
 
@@ -179,11 +125,6 @@
 
     // Get popover positioning
     function getPopoverPosition() {
-        console.log(
-            "[GlobalVariables] getPopoverPosition called, inputElement:",
-            inputElement,
-        );
-
         // Try to get the DOM element using getElementById as fallback
         if (
             !inputElement ||
@@ -192,47 +133,21 @@
             const domElement = document.getElementById(fieldId);
             if (domElement) {
                 inputElement = domElement as HTMLInputElement;
-                console.log(
-                    "[GlobalVariables] Retrieved DOM element using getElementById:",
-                    inputElement,
-                );
             }
         }
 
-        if (!inputElement) {
-            console.log(
-                "[GlobalVariables] No input element for positioning, using default position",
-            );
-            return { x: 100, y: 100 }; // Fallback position
-        }
-
-        console.log(
-            "[GlobalVariables] inputElement type:",
-            typeof inputElement,
-            inputElement,
-        );
-
-        // Check if inputElement has getBoundingClientRect method
-        if (typeof inputElement.getBoundingClientRect !== "function") {
-            console.error(
-                "[GlobalVariables] inputElement does not have getBoundingClientRect method",
-                inputElement,
-            );
+        if (
+            !inputElement ||
+            typeof inputElement.getBoundingClientRect !== "function"
+        ) {
             return { x: 100, y: 100 }; // Fallback position
         }
 
         const rect = inputElement.getBoundingClientRect();
-        const position = {
+        return {
             x: rect.left,
             y: rect.bottom + window.scrollY,
         };
-        console.log(
-            "[GlobalVariables] Popover position:",
-            position,
-            "Input rect:",
-            rect,
-        );
-        return position;
     }
 </script>
 
@@ -368,27 +283,6 @@
                     {/if}
                 </Command.List>
             </Command.Root>
-        </div>
-    {/if}
-
-    <!-- Debug display (remove this after testing) -->
-    {#if showPopover}
-        <div
-            class="fixed top-4 right-4 bg-red-100 border border-red-300 p-2 text-xs z-[9999] max-w-sm"
-        >
-            <div><strong>Debug Info:</strong></div>
-            <div>showPopover: {showPopover}</div>
-            <div>filteredVariables: {filteredVariables.length}</div>
-            <div>globalVariableNames: {globalVariableNames.length}</div>
-            <div>searchQuery: "{searchQuery}"</div>
-            <div>value: "{value}"</div>
-            <div><strong>Available vars:</strong></div>
-            {#each globalVariableNames.slice(0, 5) as varName}
-                <div>- {varName}: {globalVariablesData[varName]}</div>
-            {/each}
-            {#if globalVariableNames.length > 5}
-                <div>... and {globalVariableNames.length - 5} more</div>
-            {/if}
         </div>
     {/if}
 </div>
