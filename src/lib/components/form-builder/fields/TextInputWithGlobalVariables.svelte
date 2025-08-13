@@ -14,6 +14,7 @@
     export let value: string = "";
 
     let inputElement: any;
+    let overlayElement: HTMLDivElement;
     let open = false;
     let cursorPosition = 0;
     let searchQuery = "";
@@ -24,9 +25,50 @@
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
-    const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
+    const inputClasses = cn(
+        hasPrefix && "ps-9",
+        hasSuffix && "pe-9",
+    );
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
+
+    // Function to parse text and identify variables
+    function parseTextWithVariables(
+        text: string,
+    ): Array<{ content: string; isVariable: boolean }> {
+        const parts: Array<{ content: string; isVariable: boolean }> = [];
+        const regex = /(\{\{[^}]+\}\})/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+            // Add text before the variable
+            if (match.index > lastIndex) {
+                parts.push({
+                    content: text.substring(lastIndex, match.index),
+                    isVariable: false,
+                });
+            }
+
+            // Add the variable
+            parts.push({
+                content: match[1],
+                isVariable: true,
+            });
+
+            lastIndex = match.index + match[1].length;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+            parts.push({
+                content: text.substring(lastIndex),
+                isVariable: false,
+            });
+        }
+
+        return parts;
+    }
 
     const unsubscribe = globalVariablesStore.subscribe((state) => {
         globalVariableNames = state.variableNames;
@@ -180,6 +222,25 @@
 <div class="relative">
     {#if hasPrefix || hasSuffix}
         <div class="relative w-full">
+            <!-- Background overlay with colored variables -->
+            <div
+                bind:this={overlayElement}
+                class={cn(
+                    "absolute inset-0 pointer-events-none z-0",
+                    "flex items-center px-3 py-2",
+                    "text-sm font-[inherit] whitespace-pre overflow-hidden",
+                    hasPrefix && "ps-9",
+                    hasSuffix && "pe-9"
+                )}
+            >
+                {#each parseTextWithVariables(value) as part}
+                    <span class={part.isVariable ? "text-primary" : "text-transparent"}>
+                        {part.content}
+                    </span>
+                {/each}
+            </div>
+
+            <!-- Transparent input field -->
             <Input
                 bind:this={inputElement}
                 type="text"
@@ -192,15 +253,32 @@
                 minlength={field.min}
                 maxlength={field.max}
                 pattern={field.pattern}
-                class={inputClasses}
+                class={cn(inputClasses, "bg-transparent text-transparent caret-foreground relative z-10")}
                 bind:value
                 oninput={handleInput}
                 onkeydown={handleKeydown}
             />
 
+            <!-- Regular text overlay (for non-variable text) -->
+            <div
+                class={cn(
+                    "absolute inset-0 pointer-events-none z-5",
+                    "flex items-center px-3 py-2",
+                    "text-sm font-[inherit] whitespace-pre overflow-hidden text-foreground",
+                    hasPrefix && "ps-9",
+                    hasSuffix && "pe-9"
+                )}
+            >
+                {#each parseTextWithVariables(value) as part}
+                    <span class={part.isVariable ? "text-transparent" : "text-foreground"}>
+                        {part.content}
+                    </span>
+                {/each}
+            </div>
+
             {#if hasPrefix}
                 <div
-                    class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50"
+                    class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50 z-20"
                 >
                     {#if prefixIsString}
                         <span class="text-sm font-medium">{field.prefix}</span>
@@ -216,7 +294,7 @@
 
             {#if hasSuffix}
                 <div
-                    class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 peer-disabled:opacity-50"
+                    class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 peer-disabled:opacity-50 z-20"
                 >
                     {#if suffixIsString}
                         <span class="text-sm font-medium">{field.suffix}</span>
@@ -231,22 +309,49 @@
             {/if}
         </div>
     {:else}
-        <Input
-            bind:this={inputElement}
-            type="text"
-            id={fieldId}
-            name={fieldId}
-            placeholder={field.placeholder}
-            required={field.required}
-            disabled={field.disabled}
-            readonly={field.readonly}
-            minlength={field.min}
-            maxlength={field.max}
-            pattern={field.pattern}
-            bind:value
-            oninput={handleInput}
-            onkeydown={handleKeydown}
-        />
+        <div class="relative">
+            <!-- Background overlay with colored variables -->
+            <div
+                bind:this={overlayElement}
+                class="absolute inset-0 pointer-events-none z-0 flex items-center px-3 py-2 text-sm font-[inherit] whitespace-pre overflow-hidden"
+            >
+                {#each parseTextWithVariables(value) as part}
+                    <span class={part.isVariable ? "text-primary" : "text-transparent"}>
+                        {part.content}
+                    </span>
+                {/each}
+            </div>
+
+            <!-- Transparent input field -->
+            <Input
+                bind:this={inputElement}
+                type="text"
+                id={fieldId}
+                name={fieldId}
+                placeholder={field.placeholder}
+                required={field.required}
+                disabled={field.disabled}
+                readonly={field.readonly}
+                minlength={field.min}
+                maxlength={field.max}
+                pattern={field.pattern}
+                class="bg-transparent text-transparent caret-foreground relative z-10"
+                bind:value
+                oninput={handleInput}
+                onkeydown={handleKeydown}
+            />
+
+            <!-- Regular text overlay (for non-variable text) -->
+            <div
+                class="absolute inset-0 pointer-events-none z-5 flex items-center px-3 py-2 text-sm font-[inherit] whitespace-pre overflow-hidden text-foreground"
+            >
+                {#each parseTextWithVariables(value) as part}
+                    <span class={part.isVariable ? "text-transparent" : "text-foreground"}>
+                        {part.content}
+                    </span>
+                {/each}
+            </div>
+        </div>
     {/if}
 
     <Popover.Root bind:open>
