@@ -300,6 +300,7 @@
         <div
             bind:this={editableElement}
             contenteditable="true"
+            spellcheck="false"
             role="textbox"
             tabindex="0"
             id={fieldId}
