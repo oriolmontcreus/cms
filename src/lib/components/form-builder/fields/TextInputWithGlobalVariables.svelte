@@ -23,11 +23,7 @@
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
-    const inputClasses = cn(
-        hasPrefix && "ps-9",
-        hasSuffix && "pe-9",
-        "min-h-9 py-2 px-3",
-    );
+    const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
@@ -55,7 +51,6 @@
             element,
             NodeFilter.SHOW_TEXT,
             null,
-            false,
         );
 
         let node;
@@ -305,13 +300,13 @@
         <div
             bind:this={editableElement}
             contenteditable="true"
+            role="textbox"
+            tabindex="0"
             id={fieldId}
             class={cn(
-                "h-9 w-full rounded-md border border-input  text-sm shadow-sm transition-colors bg-background dark:bg-input/30",
-                "file:border-0 file:text-sm file:font-medium file:text-foreground",
-                "placeholder:text-muted-foreground",
-                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                "disabled:cursor-not-allowed disabled:opacity-50",
+                "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
                 inputClasses,
             )}
             style="line-height: 20px; padding: 8px 12px; display: block; white-space: nowrap; overflow-x: scroll; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none;"
