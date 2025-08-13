@@ -6,7 +6,7 @@
 </script>
 
 <div class="grid min-h-svh lg:grid-cols-2 dark:bg-background">
-    <div class="flex flex-col gap-4 p-6 md:p-10 bg-white">
+    <div class="flex flex-col gap-4 p-6 md:p-10 dark:bg-transparent bg-white">
         <div class="flex justify-center gap-1 md:justify-start">
             <CmsLogo textSize="text-sm" />
             {CMS_NAME}
