@@ -136,6 +136,21 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
+        const target = event.target as HTMLInputElement;
+        const currentCursorPosition = target.selectionStart || 0;
+
+        // Handle Backspace and Delete for variable blocks
+        if (event.key === "Backspace" || event.key === "Delete") {
+            const deleteSuccess = handleVariableBlockDeletion(
+                event.key,
+                currentCursorPosition,
+            );
+            if (deleteSuccess) {
+                event.preventDefault();
+                return;
+            }
+        }
+
         if (!open || filteredVariables.length === 0) return;
 
         switch (event.key) {
@@ -159,6 +174,87 @@
                 open = false;
                 break;
         }
+    }
+
+    function handleVariableBlockDeletion(
+        key: string,
+        cursorPos: number,
+    ): boolean {
+        // Find all variable matches in the current value
+        const variableRegex = /\{\{[^}]+\}\}/g;
+        const matches: Array<{ start: number; end: number; content: string }> =
+            [];
+        let match;
+
+        while ((match = variableRegex.exec(value)) !== null) {
+            matches.push({
+                start: match.index,
+                end: match.index + match[0].length,
+                content: match[0],
+            });
+        }
+
+        if (key === "Backspace") {
+            // Check if cursor is at the end of a variable (right after }})
+            const variableAtCursor = matches.find((m) => m.end === cursorPos);
+            if (variableAtCursor) {
+                // Delete the entire variable
+                const newValue =
+                    value.substring(0, variableAtCursor.start) +
+                    value.substring(variableAtCursor.end);
+                updateValueAndCursor(newValue, variableAtCursor.start);
+                return true;
+            }
+        } else if (key === "Delete") {
+            // Check if cursor is at the beginning of a variable (right before {{)
+            const variableAtCursor = matches.find((m) => m.start === cursorPos);
+            if (variableAtCursor) {
+                // Delete the entire variable
+                const newValue =
+                    value.substring(0, variableAtCursor.start) +
+                    value.substring(variableAtCursor.end);
+                updateValueAndCursor(newValue, variableAtCursor.start);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function updateValueAndCursor(newValue: string, newCursorPos: number) {
+        value = newValue;
+        cursorPosition = newCursorPos;
+
+        tick().then(() => {
+            let domElement: HTMLElement | null = null;
+
+            // Try to get the actual input element
+            if (inputElement) {
+                if (inputElement.focus) {
+                    domElement = inputElement;
+                } else {
+                    domElement =
+                        inputElement.$el ||
+                        inputElement.getElement?.() ||
+                        inputElement.element ||
+                        null;
+                }
+            }
+
+            // Fallback to getElementById
+            if (!domElement && fieldId) {
+                domElement = document.getElementById(
+                    fieldId,
+                ) as HTMLInputElement | null;
+            }
+
+            if (domElement && "setSelectionRange" in domElement) {
+                (domElement as HTMLInputElement).setSelectionRange(
+                    newCursorPos,
+                    newCursorPos,
+                );
+            }
+        });
     }
 
     function insertVariable(variableName: string) {
