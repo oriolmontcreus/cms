@@ -392,7 +392,7 @@
 </script>
 
 <div class={CSS_CLASSES.FORM_CONTAINER}>
-    <div class="flex gap-2 mb-4 min-h-[2.5rem] overflow-hidden">
+    <div class="flex gap-2 mb-4 overflow-hidden">
         {#if showCollapseButton}
             <div
                 transition:slide={{ duration: 200, axis: "x" }}
