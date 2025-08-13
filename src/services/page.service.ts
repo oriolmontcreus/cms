@@ -106,8 +106,6 @@ export async function handleUpdateComponents(slug: string, components: Component
             const globalVariablesComponent = components[0];
             const formData = globalVariablesComponent.formData;
 
-            console.log("🔄 Redirecting to global variables service:", formData);
-
             const [result, err] = await fetchWithToast(updateGlobalVariables(formData), {
                 loading: 'Updating global variables...',
                 success: () => `Global variables updated successfully.`,

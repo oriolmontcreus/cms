@@ -40,13 +40,10 @@
 
     onMount(async () => {
         loading = true;
-        console.log("🔍 Loading global variables data...");
 
         try {
             // Load global variables from the dedicated service
             const data = await handleGetGlobalVariables();
-
-            console.log("📊 Global variables API response:", data);
 
             if (data) {
                 globalVariablesData = data;
@@ -63,15 +60,8 @@
                 },
             ];
 
-            console.log("✅ Form setup complete:", {
-                config,
-                components,
-                formData: components[0]?.formData,
-            });
-
             loading = false;
         } catch (err) {
-            console.error("❌ Failed to load global variables:", err);
             error = "Failed to load global variables";
             loading = false;
         }
@@ -111,7 +101,6 @@
                 disabled={formBuilderRef?.isSubmitting}
             >
                 <IconDeviceFloppy class="size-4" />
-                <span class="hidden sm:inline ml-2">Save</span>
             </Button>
         {/if}
     </div>
