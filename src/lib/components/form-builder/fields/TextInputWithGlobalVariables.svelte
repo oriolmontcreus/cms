@@ -49,6 +49,14 @@
             "[GlobalVariables] Available variable names:",
             globalVariableNames,
         );
+        console.log(
+            "[GlobalVariables] First variable name type:",
+            typeof globalVariableNames[0],
+        );
+        console.log(
+            "[GlobalVariables] First variable name value:",
+            globalVariableNames[0],
+        );
 
         // Get the actual DOM element from the Svelte Input component
         if (inputComponent && inputComponent.ref) {
@@ -89,10 +97,16 @@
                 name.toLowerCase().includes(searchQuery.toLowerCase()),
             );
             selectedIndex = 0;
-            showPopover = true;
+            showPopover = true; // Always show when we have a match, regardless of results
             console.log("[GlobalVariables] Showing popover:", {
                 searchQuery,
+                searchQueryLength: searchQuery.length,
+                globalVariableNames,
+                globalVariableNamesCount: globalVariableNames.length,
                 filteredVariables,
+                filteredVariablesCount: filteredVariables.length,
+                firstFilteredType: typeof filteredVariables[0],
+                firstFilteredValue: filteredVariables[0],
                 showPopover,
             });
         } else {
@@ -295,7 +309,7 @@
     {/if}
 
     <!-- Global Variables Autocomplete Popover -->
-    {#if showPopover && filteredVariables.length > 0}
+    {#if showPopover}
         <div
             class="fixed bg-popover text-popover-foreground border rounded-md shadow-md p-0 w-80 max-h-60 overflow-y-auto z-50"
             style="left: {getPopoverPosition().x}px; top: {getPopoverPosition()
@@ -303,45 +317,55 @@
         >
             <Command.Root>
                 <Command.List>
-                    <Command.Empty>No global variables found.</Command.Empty>
-                    <Command.Group heading="Global Variables" class="p-2">
-                        {#each filteredVariables as variable, index (variable)}
-                            <div
-                                class={cn(
-                                    "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer rounded-sm hover:bg-accent hover:text-accent-foreground",
-                                    index === selectedIndex &&
-                                        "bg-accent text-accent-foreground",
-                                )}
-                                on:click={() => selectVariable(variable)}
-                                on:keydown={(e) =>
-                                    e.key === "Enter" &&
-                                    selectVariable(variable)}
-                                role="option"
-                                aria-selected={index === selectedIndex}
-                                tabindex="-1"
-                            >
-                                <IconVariable
-                                    class="h-4 w-4 text-muted-foreground"
-                                />
-                                <span class="font-mono text-sm"
-                                    >{{ variable }}</span
+                    {#if filteredVariables.length === 0}
+                        <Command.Empty>
+                            {#if globalVariableNames.length === 0}
+                                No global variables loaded.
+                            {:else}
+                                No variables match your search.
+                            {/if}
+                        </Command.Empty>
+                    {:else}
+                        <Command.Group heading="Global Variables" class="p-2">
+                            {#each filteredVariables as varName, index (varName)}
+                                <div
+                                    class={cn(
+                                        "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer rounded-sm hover:bg-accent hover:text-accent-foreground",
+                                        index === selectedIndex &&
+                                            "bg-accent text-accent-foreground",
+                                    )}
+                                    on:click={() => selectVariable(varName)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        selectVariable(varName)}
+                                    role="option"
+                                    aria-selected={index === selectedIndex}
+                                    tabindex="-1"
                                 >
-                                <span
-                                    class="text-xs text-muted-foreground ml-auto truncate max-w-32"
-                                >
-                                    {globalVariablesData[variable]
-                                        ? String(
-                                              globalVariablesData[variable],
-                                          ).slice(0, 30) +
-                                          (String(globalVariablesData[variable])
-                                              .length > 30
-                                              ? "..."
-                                              : "")
-                                        : ""}
-                                </span>
-                            </div>
-                        {/each}
-                    </Command.Group>
+                                    <IconVariable
+                                        class="h-4 w-4 text-muted-foreground"
+                                    />
+                                    <span class="font-mono text-sm"
+                                        >{varName}</span
+                                    >
+                                    <span
+                                        class="text-xs text-muted-foreground ml-auto truncate max-w-32"
+                                    >
+                                        {globalVariablesData[varName]
+                                            ? String(
+                                                  globalVariablesData[varName],
+                                              ).slice(0, 30) +
+                                              (String(
+                                                  globalVariablesData[varName],
+                                              ).length > 30
+                                                  ? "..."
+                                                  : "")
+                                            : ""}
+                                    </span>
+                                </div>
+                            {/each}
+                        </Command.Group>
+                    {/if}
                 </Command.List>
             </Command.Root>
         </div>
