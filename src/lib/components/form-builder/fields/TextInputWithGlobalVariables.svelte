@@ -7,6 +7,7 @@
     import * as Popover from "@components/ui/popover";
     import { globalVariablesStore } from "@/stores/globalVariables";
     import { IconVariable } from "@tabler/icons-svelte";
+    import ScrollArea from "../../ui/scroll-area/scroll-area.svelte";
 
     export let field: FormField;
     export let fieldId: string;
@@ -254,10 +255,7 @@
             <div></div>
         </Popover.Trigger>
 
-        <Popover.Content
-            class="w-80 max-h-60 overflow-y-hidden p-0"
-            align="start"
-        >
+        <Popover.Content class="w-80 p-0" align="start">
             <Command.Root>
                 <Command.Input
                     placeholder="Search variables..."
@@ -265,46 +263,48 @@
                     class="border-0 focus:ring-0"
                 />
                 <Command.List>
-                    {#if filteredVariables.length === 0}
-                        <Command.Empty>
-                            {globalVariableNames.length === 0
-                                ? "No global variables loaded."
-                                : "No variables match your search."}
-                        </Command.Empty>
-                    {:else}
-                        <Command.Group heading="Global Variables">
-                            {#each filteredVariables as varName, index (varName)}
-                                <Command.Item
-                                    value={varName}
-                                    onSelect={() => insertVariable(varName)}
-                                    class={cn(
-                                        "flex items-center gap-2 cursor-pointer",
-                                        index === selectedIndex &&
-                                            "bg-accent text-accent-foreground",
-                                    )}
-                                >
-                                    <IconVariable
-                                        class="h-4 w-4 text-muted-foreground"
-                                    />
-                                    <span class="font-mono text-sm"
-                                        >{varName}</span
-                                    >
-                                    {#if globalVariablesData[varName]}
-                                        {@const value = String(
-                                            globalVariablesData[varName],
+                    <ScrollArea class="h-52 flex flex-1 pr-2">
+                        {#if filteredVariables.length === 0}
+                            <Command.Empty>
+                                {globalVariableNames.length === 0
+                                    ? "No global variables loaded."
+                                    : "No variables match your search."}
+                            </Command.Empty>
+                        {:else}
+                            <Command.Group heading="Global Variables">
+                                {#each filteredVariables as varName, index (varName)}
+                                    <Command.Item
+                                        value={varName}
+                                        onSelect={() => insertVariable(varName)}
+                                        class={cn(
+                                            "flex items-center gap-2 cursor-pointer",
+                                            index === selectedIndex &&
+                                                "bg-accent text-accent-foreground",
                                         )}
-                                        <span
-                                            class="text-xs text-muted-foreground ml-auto truncate max-w-32"
+                                    >
+                                        <IconVariable
+                                            class="h-4 w-4 text-muted-foreground"
+                                        />
+                                        <span class="font-mono text-sm"
+                                            >{varName}</span
                                         >
-                                            {value.length > 30
-                                                ? value.slice(0, 30) + "..."
-                                                : value}
-                                        </span>
-                                    {/if}
-                                </Command.Item>
-                            {/each}
-                        </Command.Group>
-                    {/if}
+                                        {#if globalVariablesData[varName]}
+                                            {@const value = String(
+                                                globalVariablesData[varName],
+                                            )}
+                                            <span
+                                                class="text-xs text-muted-foreground ml-auto truncate max-w-32"
+                                            >
+                                                {value.length > 30
+                                                    ? value.slice(0, 30) + "..."
+                                                    : value}
+                                            </span>
+                                        {/if}
+                                    </Command.Item>
+                                {/each}
+                            </Command.Group>
+                        {/if}
+                    </ScrollArea>
                 </Command.List>
             </Command.Root>
         </Popover.Content>
