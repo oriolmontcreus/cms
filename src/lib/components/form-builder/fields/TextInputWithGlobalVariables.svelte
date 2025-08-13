@@ -17,24 +17,16 @@
     let searchQuery = "";
     let filteredVariables: string[] = [];
     let selectedIndex = 0;
-
-    // Performance: Cache position to avoid DOM calls in reactive context
     let popoverPosition = { x: 0, y: 0 };
-
-    // Performance: Cache computed values
     let globalVariableNames: string[] = [];
     let globalVariablesData: Record<string, any> = {};
 
-    // Performance: Memoize CSS classes
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
     const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
-
-    // Performance: Cache string type check result for prefix/suffix
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
-    // Single subscription for optimal reactivity
     const unsubscribe = globalVariablesStore.subscribe((state) => {
         globalVariableNames = state.variableNames;
         globalVariablesData = state.data;
@@ -42,26 +34,31 @@
 
     onMount(async () => {
         await globalVariablesStore.load();
+        document.addEventListener("click", handleClickOutside);
     });
 
     onDestroy(() => {
         unsubscribe();
+        document.removeEventListener("click", handleClickOutside);
     });
 
-    // Performance: Optimized input handler with early returns
+    function handleClickOutside(event: MouseEvent) {
+        if (showPopover && !event.target?.closest(".popover-content")) {
+            showPopover = false;
+        }
+    }
+
     function handleInput(event: Event) {
         const target = event.target as HTMLInputElement;
         const inputValue = target.value;
         const newCursorPosition = target.selectionStart || 0;
 
-        // Early return if no change in cursor position and no {{ pattern
         if (inputValue === value && newCursorPosition === cursorPosition)
             return;
 
         value = inputValue;
         cursorPosition = newCursorPosition;
 
-        // Optimized pattern matching
         const textBeforeCursor = inputValue.substring(
             Math.max(0, cursorPosition - 50),
             cursorPosition,
@@ -72,13 +69,11 @@
             const searchStart = matchIndex + 2;
             const potentialQuery = textBeforeCursor.substring(searchStart);
 
-            // Only proceed if we don't have a closing }}
             if (!potentialQuery.includes("}}")) {
                 searchQuery = potentialQuery;
                 updateFilteredVariables();
                 selectedIndex = 0;
 
-                // Only calculate position if popover is not already open
                 if (!showPopover) {
                     updatePopoverPosition();
                 }
@@ -91,34 +86,28 @@
         searchQuery = "";
     }
 
-    // Performance: Separate function for filtering to avoid inline operations
     function updateFilteredVariables() {
         if (!searchQuery) {
-            filteredVariables = globalVariableNames.slice(0, 10); // Limit results for performance
+            filteredVariables = globalVariableNames.slice(0, 10);
             return;
         }
 
         const query = searchQuery.toLowerCase();
         filteredVariables = globalVariableNames
             .filter((name) => name.toLowerCase().includes(query))
-            .slice(0, 10); // Always limit results
+            .slice(0, 10);
     }
 
-    // Update popover position when showing
     function updatePopoverPosition() {
-        // Try to get the actual DOM element
         let domElement = inputElement;
 
-        // If inputElement is a Svelte component, try to get the DOM element
         if (inputElement && !inputElement.getBoundingClientRect) {
-            // Try common ways to get DOM element from UI component
             domElement =
                 inputElement.$el ||
                 inputElement.getElement?.() ||
                 inputElement.element;
         }
 
-        // Fallback: try to find by ID
         if (!domElement || !domElement.getBoundingClientRect) {
             domElement = document.getElementById(fieldId);
         }
@@ -178,7 +167,6 @@
         const textBeforeCursor = value.substring(0, cursorPosition);
         const textAfterCursor = value.substring(cursorPosition);
 
-        // More efficient replacement using lastIndexOf
         const matchIndex = textBeforeCursor.lastIndexOf("{{");
         if (matchIndex === -1) return;
 
@@ -190,9 +178,7 @@
 
         showPopover = false;
 
-        // Use tick for more reliable cursor positioning
         tick().then(() => {
-            // Get the actual DOM element for focus and cursor positioning
             let domElement = inputElement;
 
             if (inputElement && !inputElement.focus) {
@@ -216,9 +202,6 @@
             }
         });
     }
-
-    // Performance: Remove redundant function
-    const selectVariable = insertVariable;
 </script>
 
 <div class="relative">
@@ -293,10 +276,9 @@
         />
     {/if}
 
-    <!-- Optimized Popover with safe positioning -->
     {#if showPopover && inputElement && popoverPosition.x > 0 && popoverPosition.y > 0}
         <div
-            class="fixed bg-popover text-popover-foreground border rounded-md shadow-md p-0 w-80 max-h-60 overflow-y-auto z-50"
+            class="popover-content fixed bg-popover text-popover-foreground border rounded-md shadow-md p-0 w-80 max-h-60 overflow-y-auto z-50"
             style="left: {popoverPosition.x}px; top: {popoverPosition.y}px;"
         >
             <Command.Root>
@@ -316,10 +298,10 @@
                                         index === selectedIndex &&
                                             "bg-accent text-accent-foreground",
                                     )}
-                                    on:click={() => selectVariable(varName)}
+                                    on:click={() => insertVariable(varName)}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
-                                        selectVariable(varName)}
+                                        insertVariable(varName)}
                                     role="option"
                                     aria-selected={index === selectedIndex}
                                     tabindex="-1"
