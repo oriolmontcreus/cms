@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { FormField } from "../types";
     import { onMount, onDestroy, tick } from "svelte";
-    import { Input } from "@components/ui/input";
     import { cn } from "$lib/utils";
     import * as Command from "@components/ui/command";
     import * as Popover from "@components/ui/popover";
@@ -13,8 +12,7 @@
     export let fieldId: string;
     export let value: string = "";
 
-    let inputElement: any;
-    let overlayElement: HTMLDivElement;
+    let editableElement: HTMLDivElement;
     let open = false;
     let cursorPosition = 0;
     let searchQuery = "";
@@ -25,52 +23,82 @@
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
-    const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
+    const inputClasses = cn(
+        hasPrefix && "ps-9",
+        hasSuffix && "pe-9",
+        "min-h-9 py-2 px-3",
+    );
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
-    // Function to parse text and identify variables
-    function parseTextWithVariables(
-        text: string,
-    ): Array<{ content: string; isVariable: boolean }> {
-        const parts: Array<{ content: string; isVariable: boolean }> = [];
-        const regex = /(\{\{[^}]+\}\})/g;
-        let lastIndex = 0;
-        let match;
+    // Function to render text with highlighted variables as HTML
+    function renderTextWithVariables(text: string): string {
+        return text.replace(
+            /(\{\{[^}]+\}\})/g,
+            '<span class="variable-highlight">$1</span>',
+        );
+    }
 
-        while ((match = regex.exec(text)) !== null) {
-            // Add text before the variable
-            if (match.index > lastIndex) {
-                parts.push({
-                    content: text.substring(lastIndex, match.index),
-                    isVariable: false,
-                });
+    // Function to get plain text from HTML (for form submission)
+    function getPlainTextValue(): string {
+        if (!editableElement) return value;
+        return editableElement.textContent || "";
+    }
+
+    // Function to set cursor position in contenteditable
+    function setCursorPosition(element: HTMLElement, offset: number) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+
+        let currentOffset = 0;
+        let walker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false,
+        );
+
+        let node;
+        while ((node = walker.nextNode())) {
+            if (currentOffset + node.textContent!.length >= offset) {
+                range.setStart(node, offset - currentOffset);
+                range.setEnd(node, offset - currentOffset);
+                break;
             }
-
-            // Add the variable
-            parts.push({
-                content: match[1],
-                isVariable: true,
-            });
-
-            lastIndex = match.index + match[1].length;
+            currentOffset += node.textContent!.length;
         }
 
-        // Add remaining text
-        if (lastIndex < text.length) {
-            parts.push({
-                content: text.substring(lastIndex),
-                isVariable: false,
-            });
+        if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
         }
+    }
 
-        return parts;
+    // Function to get current cursor position
+    function getCurrentCursorPosition(): number {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return 0;
+
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(editableElement);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+
+        return preCaretRange.toString().length;
     }
 
     const unsubscribe = globalVariablesStore.subscribe((state) => {
         globalVariableNames = state.variableNames;
         globalVariablesData = state.data;
     });
+
+    // Keep contenteditable in sync with value changes
+    $: if (editableElement && editableElement.textContent !== value) {
+        const htmlContent = renderTextWithVariables(value);
+        if (editableElement.innerHTML !== htmlContent) {
+            editableElement.innerHTML = htmlContent;
+        }
+    }
 
     onMount(async () => {
         await globalVariablesStore.load();
@@ -83,22 +111,29 @@
     function closeAndFocusTrigger() {
         open = false;
         tick().then(() => {
-            if (inputElement?.focus) {
-                inputElement.focus();
+            if (editableElement) {
+                editableElement.focus();
             }
         });
     }
 
     function handleInput(event: Event) {
-        const target = event.target as HTMLInputElement;
-        const inputValue = target.value;
-        const newCursorPosition = target.selectionStart || 0;
+        const target = event.target as HTMLDivElement;
+        const inputValue = target.textContent || "";
+        const newCursorPosition = getCurrentCursorPosition();
 
         if (inputValue === value && newCursorPosition === cursorPosition)
             return;
 
         value = inputValue;
         cursorPosition = newCursorPosition;
+
+        // Update the HTML content with highlighted variables
+        const htmlContent = renderTextWithVariables(inputValue);
+        if (target.innerHTML !== htmlContent) {
+            target.innerHTML = htmlContent;
+            setCursorPosition(target, cursorPosition);
+        }
 
         const textBeforeCursor = inputValue.substring(
             Math.max(0, cursorPosition - 50),
@@ -136,8 +171,13 @@
     }
 
     function handleKeydown(event: KeyboardEvent) {
-        const target = event.target as HTMLInputElement;
-        const currentCursorPosition = target.selectionStart || 0;
+        const currentCursorPosition = getCurrentCursorPosition();
+
+        // Prevent Enter key from creating line breaks
+        if (event.key === "Enter" && !open) {
+            event.preventDefault();
+            return;
+        }
 
         // Handle Backspace and Delete for variable blocks
         if (event.key === "Backspace" || event.key === "Delete") {
@@ -226,33 +266,10 @@
         cursorPosition = newCursorPos;
 
         tick().then(() => {
-            let domElement: HTMLElement | null = null;
-
-            // Try to get the actual input element
-            if (inputElement) {
-                if (inputElement.focus) {
-                    domElement = inputElement;
-                } else {
-                    domElement =
-                        inputElement.$el ||
-                        inputElement.getElement?.() ||
-                        inputElement.element ||
-                        null;
-                }
-            }
-
-            // Fallback to getElementById
-            if (!domElement && fieldId) {
-                domElement = document.getElementById(
-                    fieldId,
-                ) as HTMLInputElement | null;
-            }
-
-            if (domElement && "setSelectionRange" in domElement) {
-                (domElement as HTMLInputElement).setSelectionRange(
-                    newCursorPos,
-                    newCursorPos,
-                );
+            if (editableElement) {
+                const htmlContent = renderTextWithVariables(newValue);
+                editableElement.innerHTML = htmlContent;
+                setCursorPosition(editableElement, newCursorPos);
             }
         });
     }
@@ -273,198 +290,83 @@
         closeAndFocusTrigger();
 
         tick().then(() => {
-            let domElement: HTMLElement | null = null;
-
-            // Try to get the actual input element from the Input component
-            if (inputElement) {
-                // Check if it's a direct HTMLInputElement
-                if (inputElement.focus) {
-                    domElement = inputElement;
-                } else {
-                    // Try common component element properties
-                    domElement =
-                        inputElement.$el ||
-                        inputElement.getElement?.() ||
-                        inputElement.element ||
-                        null;
-                }
-            }
-
-            // Fallback to getElementById if we still don't have an element
-            if (!domElement && fieldId) {
-                domElement = document.getElementById(
-                    fieldId,
-                ) as HTMLInputElement | null;
-            }
-
-            if (
-                domElement &&
-                "focus" in domElement &&
-                "setSelectionRange" in domElement
-            ) {
-                (domElement as HTMLInputElement).focus();
-                (domElement as HTMLInputElement).setSelectionRange(
-                    newCursorPos,
-                    newCursorPos,
-                );
+            if (editableElement) {
+                const htmlContent = renderTextWithVariables(value);
+                editableElement.innerHTML = htmlContent;
+                setCursorPosition(editableElement, newCursorPos);
             }
         });
     }
 </script>
 
 <div class="relative">
-    {#if hasPrefix || hasSuffix}
-        <div class="relative w-full">
-            <!-- Background overlay with colored variables -->
-            <div
-                bind:this={overlayElement}
-                class={cn(
-                    "absolute inset-0 pointer-events-none z-0",
-                    "flex items-center px-3 py-2",
-                    "text-sm font-[inherit] whitespace-pre overflow-hidden",
-                    hasPrefix && "ps-9",
-                    hasSuffix && "pe-9",
-                )}
-            >
-                {#each parseTextWithVariables(value) as part}
-                    <span
-                        class={part.isVariable
-                            ? "text-primary"
-                            : "text-transparent"}
-                    >
-                        {part.content}
-                    </span>
-                {/each}
-            </div>
-
-            <!-- Transparent input field -->
-            <Input
-                bind:this={inputElement}
-                type="text"
-                id={fieldId}
-                name={fieldId}
-                placeholder={field.placeholder}
-                required={field.required}
-                disabled={field.disabled}
-                readonly={field.readonly}
-                minlength={field.min}
-                maxlength={field.max}
-                pattern={field.pattern}
-                class={cn(
-                    inputClasses,
-                    "bg-transparent text-transparent caret-foreground relative z-10",
-                )}
-                bind:value
-                oninput={handleInput}
-                onkeydown={handleKeydown}
-            />
-
-            <!-- Regular text overlay (for non-variable text) -->
-            <div
-                class={cn(
-                    "absolute inset-0 pointer-events-none z-5",
-                    "flex items-center px-3 py-2",
-                    "text-sm font-[inherit] whitespace-pre overflow-hidden text-foreground",
-                    hasPrefix && "ps-9",
-                    hasSuffix && "pe-9",
-                )}
-            >
-                {#each parseTextWithVariables(value) as part}
-                    <span
-                        class={part.isVariable
-                            ? "text-transparent"
-                            : "text-foreground"}
-                    >
-                        {part.content}
-                    </span>
-                {/each}
-            </div>
-
-            {#if hasPrefix}
-                <div
-                    class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50 z-20"
-                >
-                    {#if prefixIsString}
-                        <span class="text-sm font-medium">{field.prefix}</span>
-                    {:else}
-                        <svelte:component
-                            this={field.prefix}
-                            size={16}
-                            aria-hidden="true"
-                        />
-                    {/if}
-                </div>
-            {/if}
-
-            {#if hasSuffix}
-                <div
-                    class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 peer-disabled:opacity-50 z-20"
-                >
-                    {#if suffixIsString}
-                        <span class="text-sm font-medium">{field.suffix}</span>
-                    {:else}
-                        <svelte:component
-                            this={field.suffix}
-                            size={16}
-                            aria-hidden="true"
-                        />
-                    {/if}
-                </div>
-            {/if}
+    <div class="relative w-full">
+        <!-- Contenteditable div that looks like an input -->
+        <div
+            bind:this={editableElement}
+            contenteditable="true"
+            id={fieldId}
+            class={cn(
+                "h-9 w-full rounded-md border border-input bg-transparent text-sm shadow-sm transition-colors",
+                "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+                "placeholder:text-muted-foreground",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+                inputClasses,
+            )}
+            style="line-height: 20px; padding: 8px 12px; display: block; white-space: nowrap; overflow-x: scroll; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none;"
+            data-placeholder={field.placeholder}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
+        >
+            {@html renderTextWithVariables(value)}
         </div>
-    {:else}
-        <div class="relative">
-            <!-- Background overlay with colored variables -->
-            <div
-                bind:this={overlayElement}
-                class="absolute inset-0 pointer-events-none z-0 flex items-center px-3 py-2 text-sm font-[inherit] whitespace-pre overflow-hidden"
-            >
-                {#each parseTextWithVariables(value) as part}
-                    <span
-                        class={part.isVariable
-                            ? "text-primary"
-                            : "text-transparent"}
-                    >
-                        {part.content}
-                    </span>
-                {/each}
-            </div>
 
-            <!-- Transparent input field -->
-            <Input
-                bind:this={inputElement}
-                type="text"
-                id={fieldId}
-                name={fieldId}
-                placeholder={field.placeholder}
-                required={field.required}
-                disabled={field.disabled}
-                readonly={field.readonly}
-                minlength={field.min}
-                maxlength={field.max}
-                pattern={field.pattern}
-                class="bg-transparent text-transparent caret-foreground relative z-10"
-                bind:value
-                oninput={handleInput}
-                onkeydown={handleKeydown}
-            />
+        <!-- Hidden input for form submission -->
+        <input
+            type="hidden"
+            name={fieldId}
+            bind:value
+            required={field.required}
+            disabled={field.disabled}
+            readonly={field.readonly}
+            minlength={field.min}
+            maxlength={field.max}
+            pattern={field.pattern}
+        />
 
-            <!-- Regular text overlay (for non-variable text) -->
+        {#if hasPrefix}
             <div
-                class="absolute inset-0 pointer-events-none z-5 flex items-center px-3 py-2 text-sm font-[inherit] whitespace-pre overflow-hidden text-foreground"
+                class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50"
             >
-                {#each parseTextWithVariables(value) as part}
-                    <span
-                        class={part.isVariable
-                            ? "text-transparent"
-                            : "text-foreground"}
-                    >
-                        {part.content}
-                    </span>
-                {/each}
+                {#if prefixIsString}
+                    <span class="text-sm font-medium">{field.prefix}</span>
+                {:else}
+                    <svelte:component
+                        this={field.prefix}
+                        size={16}
+                        aria-hidden="true"
+                    />
+                {/if}
             </div>
-        </div>
-    {/if}
+        {/if}
+
+        {#if hasSuffix}
+            <div
+                class="text-muted-foreground/80 pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 peer-disabled:opacity-50"
+            >
+                {#if suffixIsString}
+                    <span class="text-sm font-medium">{field.suffix}</span>
+                {:else}
+                    <svelte:component
+                        this={field.suffix}
+                        size={16}
+                        aria-hidden="true"
+                    />
+                {/if}
+            </div>
+        {/if}
+    </div>
 
     <Popover.Root bind:open>
         <!-- Hidden trigger that we can programmatically control -->
@@ -527,3 +429,46 @@
         </Popover.Content>
     </Popover.Root>
 </div>
+
+<style>
+    [contenteditable]:empty::before {
+        content: attr(data-placeholder);
+        color: hsl(var(--muted-foreground));
+        pointer-events: none;
+    }
+
+    :global(.variable-highlight) {
+        color: var(--primary);
+        font-weight: 500;
+        border-radius: 0.25rem;
+        padding: 0.125rem 0.25rem;
+        margin: 0 1px;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+            "Liberation Mono", Menlo, monospace;
+        display: inline;
+        white-space: nowrap;
+    }
+
+    /* Ensure the contenteditable behaves like a single-line input */
+    [contenteditable] {
+        white-space: nowrap;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+
+    /* Hide scrollbars in Webkit browsers */
+    [contenteditable]::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Prevent line breaks */
+    :global([contenteditable] br) {
+        display: none;
+    }
+
+    :global([contenteditable] *) {
+        display: inline;
+    }
+</style>
