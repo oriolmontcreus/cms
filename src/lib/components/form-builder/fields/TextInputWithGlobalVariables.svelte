@@ -4,6 +4,7 @@
     import { Input } from "@components/ui/input";
     import { cn } from "$lib/utils";
     import * as Command from "@components/ui/command";
+    import * as Popover from "@components/ui/popover";
     import { globalVariablesStore } from "@/stores/globalVariables";
     import { IconVariable } from "@tabler/icons-svelte";
 
@@ -11,13 +12,12 @@
     export let fieldId: string;
     export let value: string = "";
 
-    let inputElement: any; // This will be the Input component, not HTMLInputElement
-    let showPopover = false;
+    let inputElement: any;
+    let open = false;
     let cursorPosition = 0;
     let searchQuery = "";
     let filteredVariables: string[] = [];
     let selectedIndex = 0;
-    let popoverPosition = { x: 0, y: 0 };
     let globalVariableNames: string[] = [];
     let globalVariablesData: Record<string, any> = {};
 
@@ -34,19 +34,19 @@
 
     onMount(async () => {
         await globalVariablesStore.load();
-        document.addEventListener("click", handleClickOutside);
     });
 
     onDestroy(() => {
         unsubscribe();
-        document.removeEventListener("click", handleClickOutside);
     });
 
-    function handleClickOutside(event: MouseEvent) {
-        const target = event.target as Element | null;
-        if (showPopover && target && !target.closest(".popover-content")) {
-            showPopover = false;
-        }
+    function closeAndFocusTrigger() {
+        open = false;
+        tick().then(() => {
+            if (inputElement?.focus) {
+                inputElement.focus();
+            }
+        });
     }
 
     function handleInput(event: Event) {
@@ -74,16 +74,12 @@
                 searchQuery = potentialQuery;
                 updateFilteredVariables();
                 selectedIndex = 0;
-
-                if (!showPopover) {
-                    updatePopoverPosition();
-                }
-                showPopover = true;
+                open = true;
                 return;
             }
         }
 
-        showPopover = false;
+        open = false;
         searchQuery = "";
     }
 
@@ -99,56 +95,8 @@
             .slice(0, 10);
     }
 
-    function updatePopoverPosition() {
-        let domElement: HTMLElement | null = null;
-
-        // Try to get the actual input element from the Input component
-        if (inputElement) {
-            // Check if it's a direct HTMLInputElement
-            if (inputElement.getBoundingClientRect) {
-                domElement = inputElement;
-            } else {
-                // Try common component element properties
-                domElement =
-                    inputElement.$el ||
-                    inputElement.getElement?.() ||
-                    inputElement.element ||
-                    null;
-            }
-        }
-
-        // Fallback to getElementById if we still don't have an element
-        if (!domElement || !domElement.getBoundingClientRect) {
-            domElement = document.getElementById(fieldId);
-        }
-
-        if (!domElement?.getBoundingClientRect) {
-            return;
-        }
-
-        try {
-            const rect = domElement.getBoundingClientRect();
-
-            if (
-                rect &&
-                typeof rect.left === "number" &&
-                typeof rect.bottom === "number"
-            ) {
-                popoverPosition = {
-                    x: rect.left,
-                    y: rect.bottom + 4,
-                };
-            }
-        } catch (error) {
-            console.error(
-                "[TextInputWithGlobalVariables] Error getting element position:",
-                error,
-            );
-        }
-    }
-
     function handleKeydown(event: KeyboardEvent) {
-        if (!showPopover || filteredVariables.length === 0) return;
+        if (!open || filteredVariables.length === 0) return;
 
         switch (event.key) {
             case "ArrowDown":
@@ -168,7 +116,7 @@
                 insertVariable(filteredVariables[selectedIndex]);
                 break;
             case "Escape":
-                showPopover = false;
+                open = false;
                 break;
         }
     }
@@ -186,7 +134,7 @@
         value = beforePattern + replacement + textAfterCursor;
         const newCursorPos = beforePattern.length + replacement.length;
 
-        showPopover = false;
+        closeAndFocusTrigger();
 
         tick().then(() => {
             let domElement: HTMLElement | null = null;
@@ -230,7 +178,7 @@
 
 <div class="relative">
     {#if hasPrefix || hasSuffix}
-        <div class="relative">
+        <div class="relative w-full">
             <Input
                 bind:this={inputElement}
                 type="text"
@@ -300,12 +248,22 @@
         />
     {/if}
 
-    {#if showPopover && inputElement && popoverPosition.x > 0 && popoverPosition.y > 0}
-        <div
-            class="popover-content fixed bg-popover text-popover-foreground border rounded-md shadow-md p-0 w-80 max-h-60 overflow-y-auto z-50"
-            style="left: {popoverPosition.x}px; top: {popoverPosition.y}px;"
+    <Popover.Root bind:open>
+        <!-- Hidden trigger that we can programmatically control -->
+        <Popover.Trigger class="sr-only" tabindex={-1}>
+            <div></div>
+        </Popover.Trigger>
+
+        <Popover.Content
+            class="w-80 max-h-60 overflow-y-hidden p-0"
+            align="start"
         >
             <Command.Root>
+                <Command.Input
+                    placeholder="Search variables..."
+                    value={searchQuery}
+                    class="border-0 focus:ring-0"
+                />
                 <Command.List>
                     {#if filteredVariables.length === 0}
                         <Command.Empty>
@@ -314,21 +272,16 @@
                                 : "No variables match your search."}
                         </Command.Empty>
                     {:else}
-                        <Command.Group heading="Global Variables" class="p-2">
+                        <Command.Group heading="Global Variables">
                             {#each filteredVariables as varName, index (varName)}
-                                <div
+                                <Command.Item
+                                    value={varName}
+                                    onSelect={() => insertVariable(varName)}
                                     class={cn(
-                                        "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer rounded-sm hover:bg-accent hover:text-accent-foreground",
+                                        "flex items-center gap-2 cursor-pointer",
                                         index === selectedIndex &&
                                             "bg-accent text-accent-foreground",
                                     )}
-                                    on:click={() => insertVariable(varName)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        insertVariable(varName)}
-                                    role="option"
-                                    aria-selected={index === selectedIndex}
-                                    tabindex="-1"
                                 >
                                     <IconVariable
                                         class="h-4 w-4 text-muted-foreground"
@@ -348,12 +301,12 @@
                                                 : value}
                                         </span>
                                     {/if}
-                                </div>
+                                </Command.Item>
                             {/each}
                         </Command.Group>
                     {/if}
                 </Command.List>
             </Command.Root>
-        </div>
-    {/if}
+        </Popover.Content>
+    </Popover.Root>
 </div>
