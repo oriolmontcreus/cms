@@ -7,7 +7,10 @@
     import VariablePopover from "../components/VariablePopover.svelte";
     import VariableTooltip from "../components/VariableTooltip.svelte";
     import { tick } from "svelte";
+    import type { FormField } from "../types";
 
+    export let field: FormField;
+    export let fieldId: string;
     export let value: string = "";
     export let placeholder: string = "Enter text with variables...";
     export let rows: number = 4;
@@ -15,9 +18,9 @@
     let textareaElement: HTMLDivElement;
     let isUpdating = false;
 
-    // Auto-resize functionality
+    // Auto-resize functionality (only when enabled)
     function autoResize() {
-        if (!textareaElement) return;
+        if (!field.autoResize || !textareaElement) return;
 
         // Reset height to auto to get the natural height
         textareaElement.style.height = "auto";
@@ -159,6 +162,7 @@
 <div class="relative">
     <div
         bind:this={textareaElement}
+        id={fieldId}
         contenteditable="true"
         spellcheck="false"
         role="textbox"
@@ -167,9 +171,14 @@
             "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
             "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-            "min-h-[80px] resize-none overflow-hidden",
+            "min-h-[80px]",
+            field.autoResize
+                ? "resize-none overflow-hidden"
+                : "resize-y overflow-auto",
         )}
-        style="height: auto; word-wrap: break-word; white-space: pre-wrap;"
+        style={field.autoResize
+            ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"
+            : `height: ${rows * 1.5}rem; word-wrap: break-word; white-space: pre-wrap;`}
         data-placeholder={placeholder}
         oninput={handleInput}
         onkeydown={handleKeydown}

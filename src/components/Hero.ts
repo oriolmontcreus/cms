@@ -15,7 +15,6 @@ mainTab.schema = [
         .label('Subtitle')
         .required()
         .placeholder('Enter the hero subtitle')
-        .autoResize()
         .translatable(),
 ];
 
