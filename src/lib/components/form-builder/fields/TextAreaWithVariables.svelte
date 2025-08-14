@@ -15,6 +15,24 @@
     let textareaElement: HTMLDivElement;
     let isUpdating = false;
 
+    // Auto-resize functionality
+    function autoResize() {
+        if (!textareaElement) return;
+
+        // Reset height to auto to get the natural height
+        textareaElement.style.height = "auto";
+
+        // Set height based on scroll height, with min and max constraints
+        const minHeight = rows * 24; // approximately 1.5rem per row
+        const maxHeight = Math.max(400, minHeight * 3); // max 3x the initial height
+        const newHeight = Math.max(
+            minHeight,
+            Math.min(textareaElement.scrollHeight, maxHeight),
+        );
+
+        textareaElement.style.height = `${newHeight}px`;
+    }
+
     // Use the same composables as TextInput
     const globalVariables = useGlobalVariables();
     const { data: globalVariablesData, variableNames } = globalVariables;
@@ -58,7 +76,8 @@
         contentEditable.setCursorPosition(textareaElement, cursorPos);
         isUpdating = false;
 
-        // Check for variable pattern to show popover
+        autoResize();
+
         const textBeforeCursor = inputValue.substring(
             Math.max(0, cursorPos - 50),
             cursorPos,
@@ -107,6 +126,7 @@
         tick().then(() => {
             updateElementContent(newValue, false);
             contentEditable.setCursorPosition(textareaElement, newCursorPos);
+            autoResize();
         });
     }
 
@@ -125,6 +145,7 @@
                         textareaElement,
                         newCursorPos,
                     );
+                    autoResize();
                 });
             },
         );
@@ -146,9 +167,9 @@
             "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
             "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-            "min-h-[80px] whitespace-pre-wrap",
+            "min-h-[80px] resize-none overflow-hidden",
         )}
-        style="height: {rows * 1.5}rem; overflow-y: auto;"
+        style="height: auto; word-wrap: break-word; white-space: pre-wrap;"
         data-placeholder={placeholder}
         oninput={handleInput}
         onkeydown={handleKeydown}
@@ -185,7 +206,7 @@
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
             "Liberation Mono", Menlo, monospace;
         display: inline;
-        white-space: nowrap;
+        white-space: pre-wrap;
         cursor: help;
         transition: background-color 0.15s ease;
     }
