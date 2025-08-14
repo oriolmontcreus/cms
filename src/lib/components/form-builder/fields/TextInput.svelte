@@ -1,28 +1,20 @@
 <script lang="ts">
     import type { FormField } from "../types";
-    import { onMount, onDestroy, tick } from "svelte";
+    import { tick } from "svelte";
     import { cn } from "$lib/utils";
-    import * as Command from "@components/ui/command";
-    import * as Popover from "@components/ui/popover";
-    import { globalVariablesStore } from "@/stores/globalVariables";
-    import { IconVariable } from "@tabler/icons-svelte";
-    import ScrollArea from "../../ui/scroll-area/scroll-area.svelte";
+    import { useGlobalVariables } from "../composables/useGlobalVariables";
+    import { useVariablePopover } from "../composables/useVariablePopover";
+    import { useVariableTooltip } from "../composables/useVariableTooltip";
+    import { useContentEditable } from "../composables/useContentEditable";
+    import VariablePopover from "../components/VariablePopover.svelte";
+    import VariableTooltip from "../components/VariableTooltip.svelte";
 
     export let field: FormField;
     export let fieldId: string;
     export let value: string = "";
 
     let editableElement: HTMLDivElement;
-    let open = false;
-    let searchQuery = "";
-    let filteredVariables: string[] = [];
-    let selectedIndex = -1;
-    let globalVariableNames: string[] = [];
-    let globalVariablesData: Record<string, any> = {};
     let isUpdating = false;
-    let showTooltip = false;
-    let tooltipContent = "";
-    let tooltipPosition = { x: 0, y: 0 };
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
@@ -30,88 +22,34 @@
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
-    function renderTextWithVariables(text: string): string {
-        return text.replace(/(\{\{[^}]+\}\})/g, (match) => {
-            const variableName = match.slice(2, -2);
-            const variableValue =
-                globalVariablesData[variableName] || "Variable not found";
-            return `<span class="variable-highlight" data-variable-name="${variableName}" data-variable-value="${String(variableValue).replace(/"/g, "&quot;")}">${match}</span>`;
-        });
-    }
+    // Use composables
+    const globalVariables = useGlobalVariables();
+    const { data: globalVariablesData, variableNames } = globalVariables;
+    const tooltip = useVariableTooltip();
+    const contentEditable = useContentEditable();
 
-    function setCursorPosition(element: HTMLElement, offset: number) {
-        const range = document.createRange();
-        const selection = window.getSelection();
-        if (!selection) return;
-
-        const textNode = getTextNodeAtOffset(element, offset);
-        if (textNode) {
-            range.setStart(textNode.node, textNode.offset);
-            range.setEnd(textNode.node, textNode.offset);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    }
-
-    function getTextNodeAtOffset(element: HTMLElement, offset: number) {
-        let currentOffset = 0;
-        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-
-        let node: Text | null = null;
-        while ((node = walker.nextNode() as Text)) {
-            const length = node.textContent?.length || 0;
-            if (currentOffset + length >= offset) {
-                return { node, offset: offset - currentOffset };
-            }
-            currentOffset += length;
-        }
-
-        if (node) {
-            return { node, offset: (node as Text).textContent?.length || 0 };
-        }
-        return null;
-    }
-
-    function getCurrentCursorPosition(): number {
-        const selection = window.getSelection();
-        if (!selection?.rangeCount || !editableElement) return 0;
-
-        const range = selection.getRangeAt(0);
-        const preCaretRange = range.cloneRange();
-        preCaretRange.selectNodeContents(editableElement);
-        preCaretRange.setEnd(range.endContainer, range.endOffset);
-
-        return preCaretRange.toString().length;
-    }
-
-    const unsubscribe = globalVariablesStore.subscribe((state) => {
-        globalVariableNames = state.variableNames;
-        globalVariablesData = state.data;
-    });
+    const popover = useVariablePopover(
+        () => $variableNames,
+        (variableName: string) => {
+            insertVariable(variableName);
+        },
+    );
 
     function updateElementContent(newValue: string, preserveCursor = true) {
         if (!editableElement || isUpdating) return;
 
         isUpdating = true;
-        const cursorPos = preserveCursor ? getCurrentCursorPosition() : 0;
-        editableElement.innerHTML = renderTextWithVariables(newValue);
-
-        if (preserveCursor) {
-            setCursorPosition(editableElement, cursorPos);
-        }
+        contentEditable.updateElementContent(
+            editableElement,
+            newValue,
+            globalVariables.renderTextWithVariables,
+            preserveCursor,
+        );
         isUpdating = false;
     }
 
-    onMount(async () => {
-        await globalVariablesStore.load();
-    });
-
-    onDestroy(() => {
-        unsubscribe();
-    });
-
     function closeAndFocusTrigger() {
-        open = false;
+        popover.closePopover();
         tick().then(() => {
             if (editableElement) {
                 editableElement.focus();
@@ -124,11 +62,19 @@
 
         const target = event.target as HTMLDivElement;
         const inputValue = target.textContent || "";
-        const cursorPos = getCurrentCursorPosition();
 
         value = inputValue;
-        updateElementContent(inputValue, true);
 
+        // Re-render with variable highlighting without changing cursor position
+        isUpdating = true;
+        const cursorPos =
+            contentEditable.getCurrentCursorPosition(editableElement);
+        editableElement.innerHTML =
+            globalVariables.renderTextWithVariables(inputValue);
+        contentEditable.setCursorPosition(editableElement, cursorPos);
+        isUpdating = false;
+
+        // Check for variable pattern to show popover
         const textBeforeCursor = inputValue.substring(
             Math.max(0, cursorPos - 50),
             cursorPos,
@@ -140,42 +86,29 @@
             const potentialQuery = textBeforeCursor.substring(searchStart);
 
             if (!potentialQuery.includes("}}")) {
-                searchQuery = potentialQuery;
-                updateFilteredVariables();
-                selectedIndex = -1;
-                open = true;
+                popover.openPopover(potentialQuery);
                 return;
             }
         }
 
-        open = false;
-        searchQuery = "";
-    }
-
-    function updateFilteredVariables() {
-        if (!searchQuery) {
-            filteredVariables = globalVariableNames.slice(0, 10);
-            return;
-        }
-
-        const query = searchQuery.toLowerCase();
-        filteredVariables = globalVariableNames
-            .filter((name) => name.toLowerCase().includes(query))
-            .slice(0, 10);
+        popover.closePopover();
     }
 
     function handleKeydown(event: KeyboardEvent) {
-        const currentCursorPosition = getCurrentCursorPosition();
+        const currentCursorPosition =
+            contentEditable.getCurrentCursorPosition(editableElement);
 
-        if (event.key === "Enter" && !open) {
+        if (event.key === "Enter" && !popover.isOpen) {
             event.preventDefault();
             return;
         }
 
         if (event.key === "Backspace" || event.key === "Delete") {
-            const deleteSuccess = handleVariableBlockDeletion(
+            const deleteSuccess = contentEditable.handleVariableBlockDeletion(
+                value,
                 event.key,
                 currentCursorPosition,
+                updateValueAndCursor,
             );
             if (deleteSuccess) {
                 event.preventDefault();
@@ -183,132 +116,45 @@
             }
         }
 
-        if (!open || filteredVariables.length === 0) return;
-
-        switch (event.key) {
-            case "ArrowDown":
-                event.preventDefault();
-                selectedIndex = selectedIndex < 0 ? 0 : (selectedIndex + 1) % filteredVariables.length;
-                break;
-            case "ArrowUp":
-                event.preventDefault();
-                if (selectedIndex < 0) {
-                    selectedIndex = filteredVariables.length - 1;
-                } else {
-                    selectedIndex = selectedIndex === 0 ? filteredVariables.length - 1 : selectedIndex - 1;
-                }
-                break;
-            case "Enter":
-            case "Tab":
-                event.preventDefault();
-                if (selectedIndex >= 0) {
-                    insertVariable(filteredVariables[selectedIndex]);
-                }
-                break;
-            case "Escape":
-                open = false;
-                break;
+        // Let the popover handle its own keydown events
+        const handled = popover.handleKeydown(event);
+        if (handled) {
+            return;
         }
-    }
-
-    function handleVariableBlockDeletion(
-        key: string,
-        cursorPos: number,
-    ): boolean {
-        const variableRegex = /\{\{[^}]+\}\}/g;
-        const matches: Array<{ start: number; end: number; content: string }> =
-            [];
-        let match;
-
-        while ((match = variableRegex.exec(value)) !== null) {
-            matches.push({
-                start: match.index,
-                end: match.index + match[0].length,
-                content: match[0],
-            });
-        }
-
-        if (key === "Backspace") {
-            const variableAtCursor = matches.find((m) => m.end === cursorPos);
-            if (variableAtCursor) {
-                const newValue =
-                    value.substring(0, variableAtCursor.start) +
-                    value.substring(variableAtCursor.end);
-                updateValueAndCursor(newValue, variableAtCursor.start);
-                return true;
-            }
-        } else if (key === "Delete") {
-            const variableAtCursor = matches.find((m) => m.start === cursorPos);
-            if (variableAtCursor) {
-                const newValue =
-                    value.substring(0, variableAtCursor.start) +
-                    value.substring(variableAtCursor.end);
-                updateValueAndCursor(newValue, variableAtCursor.start);
-                return true;
-            }
-        }
-
-        return false;
     }
 
     function updateValueAndCursor(newValue: string, newCursorPos: number) {
         value = newValue;
         tick().then(() => {
             updateElementContent(newValue, false);
-            setCursorPosition(editableElement, newCursorPos);
+            contentEditable.setCursorPosition(editableElement, newCursorPos);
         });
-    }
-
-    function handleMouseOver(event: MouseEvent) {
-        const target = event.target as HTMLElement;
-        if (target && target.classList.contains("variable-highlight")) {
-            const variableValue = target.getAttribute("data-variable-value");
-            if (variableValue) {
-                tooltipContent = `${variableValue}`;
-                const rect = target.getBoundingClientRect();
-                tooltipPosition = {
-                    x: rect.left + rect.width / 2,
-                    y: rect.top - 10,
-                };
-                showTooltip = true;
-            }
-        }
-    }
-
-    function handleMouseOut(event: MouseEvent) {
-        const target = event.target as HTMLElement;
-        if (target && target.classList.contains("variable-highlight")) {
-            showTooltip = false;
-        }
     }
 
     function handleFocus() {}
 
     function handleBlur() {
-        // Accessibility companion for mouseout
-        showTooltip = false;
+        tooltip.hideTooltip();
     }
 
     function insertVariable(variableName: string) {
-        const cursorPos = getCurrentCursorPosition();
-        const textBeforeCursor = value.substring(0, cursorPos);
-        const textAfterCursor = value.substring(cursorPos);
+        contentEditable.insertTextAtCursor(
+            editableElement,
+            value,
+            variableName,
+            (newValue: string, newCursorPos: number) => {
+                value = newValue;
+                closeAndFocusTrigger();
 
-        const matchIndex = textBeforeCursor.lastIndexOf("{{");
-        if (matchIndex === -1) return;
-
-        const beforePattern = textBeforeCursor.substring(0, matchIndex);
-        const replacement = `{{${variableName}}}`;
-
-        value = beforePattern + replacement + textAfterCursor;
-        const newCursorPos = beforePattern.length + replacement.length;
-
-        closeAndFocusTrigger();
-
-        tick().then(() => {
-            updateElementContent(value, false);
-            setCursorPosition(editableElement, newCursorPos);
-        });
+                tick().then(() => {
+                    updateElementContent(newValue, false);
+                    contentEditable.setCursorPosition(
+                        editableElement,
+                        newCursorPos,
+                    );
+                });
+            },
+        );
     }
 </script>
 
@@ -331,12 +177,12 @@
             data-placeholder={field.placeholder}
             oninput={handleInput}
             onkeydown={handleKeydown}
-            onmouseover={handleMouseOver}
-            onmouseout={handleMouseOut}
+            onmouseover={tooltip.handleMouseOver}
+            onmouseout={tooltip.handleMouseOut}
             onfocus={handleFocus}
             onblur={handleBlur}
         >
-            {@html renderTextWithVariables(value)}
+            {@html globalVariables.renderTextWithVariables(value)}
         </div>
 
         <input
@@ -384,75 +230,13 @@
         {/if}
     </div>
 
-    <Popover.Root bind:open>
-        <Popover.Trigger class="sr-only" tabindex={-1}>
-            <div></div>
-        </Popover.Trigger>
+    <VariablePopover
+        popoverState={popover.state}
+        globalVariablesData={$globalVariablesData}
+        onVariableSelect={popover.selectVariable}
+    />
 
-        <Popover.Content class="w-80 p-0" align="start">
-            <Command.Root>
-                <Command.Input
-                    placeholder="Search variables..."
-                    value={searchQuery}
-                    class="border-0 focus:ring-0"
-                />
-                <Command.List>
-                    <ScrollArea class="h-52 flex flex-1 pr-2">
-                        {#if filteredVariables.length === 0}
-                            <Command.Empty>
-                                {globalVariableNames.length === 0
-                                    ? "No global variables loaded."
-                                    : "No variables match your search."}
-                            </Command.Empty>
-                        {:else}
-                            <Command.Group heading="Global Variables">
-                                {#each filteredVariables as varName, index (varName)}
-                                    <Command.Item
-                                        value={varName}
-                                        onSelect={() => insertVariable(varName)}
-                                        class={cn(
-                                            "flex items-center gap-2 cursor-pointer",
-                                            index === selectedIndex &&
-                                                selectedIndex >= 0 &&
-                                                "bg-accent text-accent-foreground",
-                                        )}
-                                    >
-                                        <IconVariable
-                                            class="h-4 w-4 text-muted-foreground"
-                                        />
-                                        <span class="font-mono text-sm"
-                                            >{varName}</span
-                                        >
-                                        {#if globalVariablesData[varName]}
-                                            {@const value = String(
-                                                globalVariablesData[varName],
-                                            )}
-                                            <span
-                                                class="text-xs text-muted-foreground ml-auto truncate max-w-32"
-                                            >
-                                                {value.length > 30
-                                                    ? value.slice(0, 30) + "..."
-                                                    : value}
-                                            </span>
-                                        {/if}
-                                    </Command.Item>
-                                {/each}
-                            </Command.Group>
-                        {/if}
-                    </ScrollArea>
-                </Command.List>
-            </Command.Root>
-        </Popover.Content>
-    </Popover.Root>
-
-    {#if showTooltip}
-        <div
-            class="fixed z-50 bg-popover text-popover-foreground border border-border rounded-md px-3 py-1.5 text-sm shadow-md pointer-events-none"
-            style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px; transform: translateX(-50%) translateY(-100%);"
-        >
-            {tooltipContent}
-        </div>
-    {/if}
+    <VariableTooltip tooltipState={tooltip.state} />
 </div>
 
 <style>
