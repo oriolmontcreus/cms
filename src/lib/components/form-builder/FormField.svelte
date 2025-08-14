@@ -4,7 +4,7 @@
     import { CSS_CLASSES } from "./constants";
 
     // Import all field components
-    import TextInput from "./fields/TextInputWithGlobalVariables.svelte";
+    import TextInput from "./fields/TextInput.svelte";
     import TextareaInput from "./fields/TextareaInput.svelte";
     import NumberInput from "./fields/NumberInput.svelte";
     import DatePicker from "./fields/DatePicker.svelte";
