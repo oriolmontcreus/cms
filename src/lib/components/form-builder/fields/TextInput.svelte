@@ -16,7 +16,7 @@
     let open = false;
     let searchQuery = "";
     let filteredVariables: string[] = [];
-    let selectedIndex = 0;
+    let selectedIndex = -1;
     let globalVariableNames: string[] = [];
     let globalVariablesData: Record<string, any> = {};
     let isUpdating = false;
@@ -142,7 +142,7 @@
             if (!potentialQuery.includes("}}")) {
                 searchQuery = potentialQuery;
                 updateFilteredVariables();
-                selectedIndex = 0;
+                selectedIndex = -1;
                 open = true;
                 return;
             }
@@ -188,19 +188,22 @@
         switch (event.key) {
             case "ArrowDown":
                 event.preventDefault();
-                selectedIndex = (selectedIndex + 1) % filteredVariables.length;
+                selectedIndex = selectedIndex < 0 ? 0 : (selectedIndex + 1) % filteredVariables.length;
                 break;
             case "ArrowUp":
                 event.preventDefault();
-                selectedIndex =
-                    selectedIndex === 0
-                        ? filteredVariables.length - 1
-                        : selectedIndex - 1;
+                if (selectedIndex < 0) {
+                    selectedIndex = filteredVariables.length - 1;
+                } else {
+                    selectedIndex = selectedIndex === 0 ? filteredVariables.length - 1 : selectedIndex - 1;
+                }
                 break;
             case "Enter":
             case "Tab":
                 event.preventDefault();
-                insertVariable(filteredVariables[selectedIndex]);
+                if (selectedIndex >= 0) {
+                    insertVariable(filteredVariables[selectedIndex]);
+                }
                 break;
             case "Escape":
                 open = false;
@@ -410,6 +413,7 @@
                                         class={cn(
                                             "flex items-center gap-2 cursor-pointer",
                                             index === selectedIndex &&
+                                                selectedIndex >= 0 &&
                                                 "bg-accent text-accent-foreground",
                                         )}
                                     >
