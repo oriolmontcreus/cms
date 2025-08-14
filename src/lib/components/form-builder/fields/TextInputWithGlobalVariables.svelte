@@ -4,7 +4,6 @@
     import { cn } from "$lib/utils";
     import * as Command from "@components/ui/command";
     import * as Popover from "@components/ui/popover";
-    import * as Tooltip from "$lib/components/ui/tooltip";
     import { globalVariablesStore } from "@/stores/globalVariables";
     import { IconVariable } from "@tabler/icons-svelte";
     import ScrollArea from "../../ui/scroll-area/scroll-area.svelte";
@@ -20,7 +19,7 @@
     let selectedIndex = 0;
     let globalVariableNames: string[] = [];
     let globalVariablesData: Record<string, any> = {};
-    let isUpdating = false; // Prevent recursive updates
+    let isUpdating = false;
     let showTooltip = false;
     let tooltipContent = "";
     let tooltipPosition = { x: 0, y: 0 };
@@ -31,24 +30,20 @@
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
-    // Function to render text with highlighted variables as HTML
     function renderTextWithVariables(text: string): string {
         return text.replace(/(\{\{[^}]+\}\})/g, (match) => {
-            const variableName = match.slice(2, -2); // Remove {{ }}
+            const variableName = match.slice(2, -2);
             const variableValue =
                 globalVariablesData[variableName] || "Variable not found";
             return `<span class="variable-highlight" data-variable-name="${variableName}" data-variable-value="${String(variableValue).replace(/"/g, "&quot;")}">${match}</span>`;
         });
     }
 
-    // Simplified function to set cursor position
     function setCursorPosition(element: HTMLElement, offset: number) {
         const range = document.createRange();
         const selection = window.getSelection();
-
         if (!selection) return;
 
-        // Simple approach: get all text nodes and find the right position
         const textNode = getTextNodeAtOffset(element, offset);
         if (textNode) {
             range.setStart(textNode.node, textNode.offset);
@@ -58,7 +53,6 @@
         }
     }
 
-    // Helper function to find text node at specific offset
     function getTextNodeAtOffset(element: HTMLElement, offset: number) {
         let currentOffset = 0;
         const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -67,22 +61,17 @@
         while ((node = walker.nextNode() as Text)) {
             const length = node.textContent?.length || 0;
             if (currentOffset + length >= offset) {
-                return {
-                    node,
-                    offset: offset - currentOffset,
-                };
+                return { node, offset: offset - currentOffset };
             }
             currentOffset += length;
         }
 
-        // If we're at the end, return the last text node if it exists
         if (node) {
             return { node, offset: (node as Text).textContent?.length || 0 };
         }
         return null;
     }
 
-    // Simplified function to get current cursor position
     function getCurrentCursorPosition(): number {
         const selection = window.getSelection();
         if (!selection?.rangeCount || !editableElement) return 0;
@@ -100,19 +89,16 @@
         globalVariablesData = state.data;
     });
 
-    // Simplified content update function
     function updateElementContent(newValue: string, preserveCursor = true) {
         if (!editableElement || isUpdating) return;
 
         isUpdating = true;
         const cursorPos = preserveCursor ? getCurrentCursorPosition() : 0;
-
         editableElement.innerHTML = renderTextWithVariables(newValue);
 
         if (preserveCursor) {
             setCursorPosition(editableElement, cursorPos);
         }
-
         isUpdating = false;
     }
 
@@ -140,13 +126,9 @@
         const inputValue = target.textContent || "";
         const cursorPos = getCurrentCursorPosition();
 
-        // Update the value
         value = inputValue;
-
-        // Update HTML with highlighted variables, preserving cursor
         updateElementContent(inputValue, true);
 
-        // Check for variable autocomplete trigger
         const textBeforeCursor = inputValue.substring(
             Math.max(0, cursorPos - 50),
             cursorPos,
@@ -185,13 +167,11 @@
     function handleKeydown(event: KeyboardEvent) {
         const currentCursorPosition = getCurrentCursorPosition();
 
-        // Prevent Enter key from creating line breaks
         if (event.key === "Enter" && !open) {
             event.preventDefault();
             return;
         }
 
-        // Handle Backspace and Delete for variable blocks
         if (event.key === "Backspace" || event.key === "Delete") {
             const deleteSuccess = handleVariableBlockDeletion(
                 event.key,
@@ -232,7 +212,6 @@
         key: string,
         cursorPos: number,
     ): boolean {
-        // Find all variable matches in the current value
         const variableRegex = /\{\{[^}]+\}\}/g;
         const matches: Array<{ start: number; end: number; content: string }> =
             [];
@@ -247,10 +226,8 @@
         }
 
         if (key === "Backspace") {
-            // Check if cursor is at the end of a variable (right after }})
             const variableAtCursor = matches.find((m) => m.end === cursorPos);
             if (variableAtCursor) {
-                // Delete the entire variable
                 const newValue =
                     value.substring(0, variableAtCursor.start) +
                     value.substring(variableAtCursor.end);
@@ -258,10 +235,8 @@
                 return true;
             }
         } else if (key === "Delete") {
-            // Check if cursor is at the beginning of a variable (right before {{)
             const variableAtCursor = matches.find((m) => m.start === cursorPos);
             if (variableAtCursor) {
-                // Delete the entire variable
                 const newValue =
                     value.substring(0, variableAtCursor.start) +
                     value.substring(variableAtCursor.end);
@@ -281,22 +256,17 @@
         });
     }
 
-    // Handle mouse events for variable tooltips
     function handleMouseOver(event: MouseEvent) {
         const target = event.target as HTMLElement;
         if (target && target.classList.contains("variable-highlight")) {
             const variableValue = target.getAttribute("data-variable-value");
-
             if (variableValue) {
                 tooltipContent = `${variableValue}`;
-
-                // Position tooltip relative to mouse
                 const rect = target.getBoundingClientRect();
                 tooltipPosition = {
                     x: rect.left + rect.width / 2,
                     y: rect.top - 10,
                 };
-
                 showTooltip = true;
             }
         }
@@ -307,6 +277,13 @@
         if (target && target.classList.contains("variable-highlight")) {
             showTooltip = false;
         }
+    }
+
+    function handleFocus() {}
+
+    function handleBlur() {
+        // Accessibility companion for mouseout
+        showTooltip = false;
     }
 
     function insertVariable(variableName: string) {
@@ -334,7 +311,6 @@
 
 <div class="relative">
     <div class="relative w-full">
-        <!-- Contenteditable div that looks like an input -->
         <div
             bind:this={editableElement}
             contenteditable="true"
@@ -354,11 +330,12 @@
             onkeydown={handleKeydown}
             onmouseover={handleMouseOver}
             onmouseout={handleMouseOut}
+            onfocus={handleFocus}
+            onblur={handleBlur}
         >
             {@html renderTextWithVariables(value)}
         </div>
 
-        <!-- Hidden input for form submission -->
         <input
             type="hidden"
             name={fieldId}
@@ -405,7 +382,6 @@
     </div>
 
     <Popover.Root bind:open>
-        <!-- Hidden trigger that we can programmatically control -->
         <Popover.Trigger class="sr-only" tabindex={-1}>
             <div></div>
         </Popover.Trigger>
@@ -465,7 +441,6 @@
         </Popover.Content>
     </Popover.Root>
 
-    <!-- Variable tooltip -->
     {#if showTooltip}
         <div
             class="fixed z-50 bg-popover text-popover-foreground border border-border rounded-md px-3 py-1.5 text-sm shadow-md pointer-events-none"
@@ -501,21 +476,18 @@
         background-color: var(--accent);
     }
 
-    /* Ensure the contenteditable behaves like a single-line input */
     [contenteditable] {
         white-space: nowrap;
         overflow-x: scroll;
         overflow-y: hidden;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE/Edge */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
 
-    /* Hide scrollbars in Webkit browsers */
     [contenteditable]::-webkit-scrollbar {
         display: none;
     }
 
-    /* Prevent line breaks */
     :global([contenteditable] br) {
         display: none;
     }
