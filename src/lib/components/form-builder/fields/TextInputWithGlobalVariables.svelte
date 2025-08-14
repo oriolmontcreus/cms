@@ -4,6 +4,7 @@
     import { cn } from "$lib/utils";
     import * as Command from "@components/ui/command";
     import * as Popover from "@components/ui/popover";
+    import * as Tooltip from "$lib/components/ui/tooltip";
     import { globalVariablesStore } from "@/stores/globalVariables";
     import { IconVariable } from "@tabler/icons-svelte";
     import ScrollArea from "../../ui/scroll-area/scroll-area.svelte";
@@ -20,6 +21,9 @@
     let globalVariableNames: string[] = [];
     let globalVariablesData: Record<string, any> = {};
     let isUpdating = false; // Prevent recursive updates
+    let showTooltip = false;
+    let tooltipContent = "";
+    let tooltipPosition = { x: 0, y: 0 };
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
@@ -29,16 +33,12 @@
 
     // Function to render text with highlighted variables as HTML
     function renderTextWithVariables(text: string): string {
-        return text.replace(
-            /(\{\{[^}]+\}\})/g,
-            '<span class="variable-highlight">$1</span>',
-        );
-    }
-
-    // Function to get plain text from HTML (for form submission)
-    function getPlainTextValue(): string {
-        if (!editableElement) return value;
-        return editableElement.textContent || "";
+        return text.replace(/(\{\{[^}]+\}\})/g, (match) => {
+            const variableName = match.slice(2, -2); // Remove {{ }}
+            const variableValue =
+                globalVariablesData[variableName] || "Variable not found";
+            return `<span class="variable-highlight" data-variable-name="${variableName}" data-variable-value="${String(variableValue).replace(/"/g, "&quot;")}">${match}</span>`;
+        });
     }
 
     // Simplified function to set cursor position
@@ -281,6 +281,34 @@
         });
     }
 
+    // Handle mouse events for variable tooltips
+    function handleMouseOver(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (target && target.classList.contains("variable-highlight")) {
+            const variableValue = target.getAttribute("data-variable-value");
+
+            if (variableValue) {
+                tooltipContent = `${variableValue}`;
+
+                // Position tooltip relative to mouse
+                const rect = target.getBoundingClientRect();
+                tooltipPosition = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top - 10,
+                };
+
+                showTooltip = true;
+            }
+        }
+    }
+
+    function handleMouseOut(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (target && target.classList.contains("variable-highlight")) {
+            showTooltip = false;
+        }
+    }
+
     function insertVariable(variableName: string) {
         const cursorPos = getCurrentCursorPosition();
         const textBeforeCursor = value.substring(0, cursorPos);
@@ -324,6 +352,8 @@
             data-placeholder={field.placeholder}
             oninput={handleInput}
             onkeydown={handleKeydown}
+            onmouseover={handleMouseOver}
+            onmouseout={handleMouseOut}
         >
             {@html renderTextWithVariables(value)}
         </div>
@@ -434,6 +464,16 @@
             </Command.Root>
         </Popover.Content>
     </Popover.Root>
+
+    <!-- Variable tooltip -->
+    {#if showTooltip}
+        <div
+            class="fixed z-50 bg-popover text-popover-foreground border border-border rounded-md px-3 py-1.5 text-sm shadow-md pointer-events-none"
+            style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px; transform: translateX(-50%) translateY(-100%);"
+        >
+            {tooltipContent}
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -453,6 +493,12 @@
             "Liberation Mono", Menlo, monospace;
         display: inline;
         white-space: nowrap;
+        cursor: help;
+        transition: background-color 0.15s ease;
+    }
+
+    :global(.variable-highlight:hover) {
+        background-color: var(--accent);
     }
 
     /* Ensure the contenteditable behaves like a single-line input */
