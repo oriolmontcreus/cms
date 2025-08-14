@@ -21,8 +21,6 @@
     // Auto-resize functionality (only when enabled)
     function autoResize() {
         if (!field.autoResize || !textareaElement) return;
-
-        // Reset height to auto to get the natural height
         textareaElement.style.height = "auto";
 
         // Set height based on scroll height, with min and max constraints
@@ -167,17 +165,18 @@
         spellcheck="false"
         role="textbox"
         tabindex="0"
+        data-auto-resize={field.autoResize ? "true" : undefined}
         class={cn(
-            "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
             "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
             "min-h-[80px]",
             field.autoResize
-                ? "resize-none overflow-hidden"
-                : "resize-y overflow-auto",
+                ? "resize-none overflow-hidden transition-none"
+                : "resize-y overflow-auto transition-none",
         )}
         style={field.autoResize
-            ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"
+            ? "height: auto; word-wrap: break-word; white-space: pre-wrap; transition: none !important; animation: none !important;"
             : `height: ${rows * 1.5}rem; word-wrap: break-word; white-space: pre-wrap;`}
         data-placeholder={placeholder}
         oninput={handleInput}
@@ -204,6 +203,17 @@
         content: attr(data-placeholder);
         color: var(--muted-foreground);
         pointer-events: none;
+    }
+
+    /* Completely disable transitions for auto-resize textarea */
+    [contenteditable][data-auto-resize] {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    :global([contenteditable][data-auto-resize] *) {
+        transition: none !important;
+        animation: none !important;
     }
 
     :global(.variable-highlight) {
