@@ -5,7 +5,7 @@
 
     // Import all field components
     import TextInput from "./fields/TextInput.svelte";
-    import TextareaInput from "./fields/TextAreaWithVariables.svelte";
+    import TextareaInput from "./fields/TextareaInput.svelte";
     import NumberInput from "./fields/NumberInput.svelte";
     import DatePicker from "./fields/DatePicker.svelte";
     import DateRangePicker from "./fields/DateRangePicker.svelte";
