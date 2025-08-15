@@ -9,18 +9,12 @@ mainTab.schema = [
         .required()
         .min(3)
         .max(100)
-        .placeholder('Enter the hero title')
-        .translatable(),
+        .placeholder('Enter the hero title'),
     Textarea('subtitle')
         .label('Subtitle')
         .required()
         .placeholder('Enter the hero subtitle')
         .translatable(),
-    RichEditor('content')
-        .label('Content')
-        .required()
-        .placeholder('Enter the hero content')
-        .translatable()
 ];
 
 const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
