@@ -41,33 +41,22 @@ export function useContentEditable() {
 
     function getCurrentCursorPosition(element: HTMLElement, container?: Node, offset?: number): number {
         const selection = window.getSelection();
-        if (!selection?.rangeCount || !element) {
-            console.log("📍 getCurrentCursorPosition: No selection or element, returning 0");
-            return 0;
-        }
+        if (!selection?.rangeCount || !element) return 0;
 
         let range: Range;
         if (container !== undefined && offset !== undefined) {
             range = document.createRange();
             range.setStart(container, offset);
-            console.log("📍 getCurrentCursorPosition: Using provided container/offset");
         } else {
             range = selection.getRangeAt(0);
-            console.log("📍 getCurrentCursorPosition: Using selection range");
         }
 
         const preCaretRange = range.cloneRange();
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.endContainer, range.endOffset);
 
-        const position = preCaretRange.toString().length;
-        console.log("📍 getCurrentCursorPosition: Calculated position:", position);
-        console.log("📍 getCurrentCursorPosition: Element textContent:", JSON.stringify(element.textContent));
-
-        return position;
-    }
-
-    function getCurrentCursorPositionInPlainText(element: HTMLElement): number {
+        return preCaretRange.toString().length;
+    } function getCurrentCursorPositionInPlainText(element: HTMLElement): number {
         const selection = window.getSelection();
         if (!selection?.rangeCount || !element) return 0;
 
@@ -261,10 +250,6 @@ export function useContentEditable() {
         textToInsert: string,
         onUpdate: (newValue: string, newCursorPos: number) => void
     ) {
-        console.log("🔧 insertTextAtCursor called with:");
-        console.log("  - textToInsert:", textToInsert);
-        console.log("  - current value:", JSON.stringify(value));
-
         // Find all {{ patterns and determine which one is incomplete
         const regex = /\{\{/g;
         let lastIncompleteMatch = -1;
@@ -279,12 +264,10 @@ export function useContentEditable() {
             if (!closingMatch) {
                 // This is an incomplete variable pattern
                 lastIncompleteMatch = matchStart;
-                console.log("  - found incomplete {{ at index:", matchStart);
             }
         }
 
         if (lastIncompleteMatch === -1) {
-            console.log("  ❌ No incomplete {{ found, returning early");
             return;
         }
 
@@ -295,31 +278,16 @@ export function useContentEditable() {
         const patternLength = patternEndMatch ? patternEndMatch[0].length : 0;
         const patternEnd = lastIncompleteMatch + 2 + patternLength;
 
-        console.log("  - incomplete pattern starts at:", lastIncompleteMatch);
-        console.log("  - pattern content:", JSON.stringify(value.substring(lastIncompleteMatch, patternEnd)));
-        console.log("  - pattern ends at:", patternEnd);
-
         // Split the text properly
         const beforePattern = value.substring(0, lastIncompleteMatch);
         const afterPattern = value.substring(patternEnd);
 
-        console.log("  - before pattern:", JSON.stringify(beforePattern));
-        console.log("  - after pattern:", JSON.stringify(afterPattern));
-
         const replacement = `{{${textToInsert}}}`;
-        console.log("  - replacement:", JSON.stringify(replacement));
-
         const newValue = beforePattern + replacement + afterPattern;
         const newCursorPos = beforePattern.length + replacement.length;
 
-        console.log("  - new value:", JSON.stringify(newValue));
-        console.log("  - new cursor position:", newCursorPos);
-        console.log("  ✅ Calling onUpdate");
-
         onUpdate(newValue, newCursorPos);
-    }
-
-    return {
+    } return {
         setCursorPosition,
         getCurrentCursorPosition,
         getCurrentCursorPositionInPlainText,

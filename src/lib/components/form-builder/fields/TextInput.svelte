@@ -36,26 +36,7 @@
     );
 
     function updateElementContent(newValue: string, preserveCursor = true) {
-        console.log("📝 updateElementContent called with:");
-        console.log("  - newValue:", JSON.stringify(newValue));
-        console.log("  - preserveCursor:", preserveCursor);
-        console.log("  - isUpdating:", isUpdating);
-
-        if (!editableElement || isUpdating) {
-            console.log(
-                "📝 updateElementContent: Early return - no element or updating",
-            );
-            return;
-        }
-
-        console.log(
-            "📝 updateElementContent: Before update, element innerHTML:",
-            editableElement.innerHTML,
-        );
-        console.log(
-            "📝 updateElementContent: Before update, element textContent:",
-            JSON.stringify(editableElement.textContent),
-        );
+        if (!editableElement || isUpdating) return;
 
         isUpdating = true;
         contentEditable.updateElementContent(
@@ -64,16 +45,6 @@
             globalVariables.renderTextWithVariables,
             preserveCursor,
         );
-
-        console.log(
-            "📝 updateElementContent: After update, element innerHTML:",
-            editableElement.innerHTML,
-        );
-        console.log(
-            "📝 updateElementContent: After update, element textContent:",
-            JSON.stringify(editableElement.textContent),
-        );
-
         isUpdating = false;
     }
 
@@ -213,37 +184,20 @@
     }
 
     function insertVariable(variableName: string) {
-        console.log("🔀 insertVariable called with:", variableName);
-        console.log("🔀 Current value before insert:", JSON.stringify(value));
-
         contentEditable.insertTextAtCursor(
             editableElement,
             value,
             variableName,
             (newValue: string, newCursorPos: number) => {
-                console.log(
-                    "🔀 insertVariable callback - newValue:",
-                    JSON.stringify(newValue),
-                );
-                console.log(
-                    "🔀 insertVariable callback - newCursorPos:",
-                    newCursorPos,
-                );
-
                 value = newValue;
                 closeAndFocusTrigger();
 
                 tick().then(() => {
-                    console.log(
-                        "🔀 About to call updateElementContent with:",
-                        JSON.stringify(newValue),
-                    );
                     updateElementContent(newValue, false);
                     contentEditable.setCursorPosition(
                         editableElement,
                         newCursorPos,
                     );
-                    console.log("🔀 insertVariable completed");
                 });
             },
         );
