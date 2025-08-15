@@ -157,6 +157,57 @@ export function useContentEditable() {
         return false;
     }
 
+    function handleCursorNavigation(
+        value: string,
+        cursorPos: number,
+        key: string,
+        onUpdate: (newValue: string, newCursorPos: number) => void
+    ): boolean {
+        const variableRegex = /\{\{[^}]+\}\}/g;
+        const matches: Array<{ start: number; end: number; content: string }> = [];
+        let match;
+
+        while ((match = variableRegex.exec(value)) !== null) {
+            matches.push({
+                start: match.index,
+                end: match.index + match[0].length,
+                content: match[0],
+            });
+        }
+
+        if (key === 'ArrowRight') {
+            // Check if we're at the start of a variable block
+            const variableAtCursor = matches.find((m) => m.start === cursorPos);
+            if (variableAtCursor) {
+                onUpdate(value, variableAtCursor.end);
+                return true;
+            }
+
+            // Check if we're inside a variable block
+            const insideBlock = matches.find((m) => cursorPos > m.start && cursorPos < m.end);
+            if (insideBlock) {
+                onUpdate(value, insideBlock.end);
+                return true;
+            }
+        } else if (key === 'ArrowLeft') {
+            // Check if we're at the end of a variable block
+            const variableAtCursor = matches.find((m) => m.end === cursorPos);
+            if (variableAtCursor) {
+                onUpdate(value, variableAtCursor.start);
+                return true;
+            }
+
+            // Check if we're inside a variable block
+            const insideBlock = matches.find((m) => cursorPos > m.start && cursorPos < m.end);
+            if (insideBlock) {
+                onUpdate(value, insideBlock.start);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function insertTextAtCursor(
         element: HTMLElement,
         value: string,
@@ -186,6 +237,7 @@ export function useContentEditable() {
         handleVariableBlockDeletion,
         insertTextAtCursor,
         preventEditingInsideVariable,
-        isInsideVariableBlock
+        isInsideVariableBlock,
+        handleCursorNavigation
     };
 }

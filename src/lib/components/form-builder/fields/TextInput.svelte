@@ -119,6 +119,20 @@
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(editableElement);
 
+        // Handle cursor navigation to jump over variable blocks
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            const navigationHandled = contentEditable.handleCursorNavigation(
+                value,
+                currentCursorPosition,
+                event.key,
+                updateValueAndCursor,
+            );
+            if (navigationHandled) {
+                event.preventDefault();
+                return;
+            }
+        }
+
         // First check if we're trying to edit inside a variable block
         const preventedEdit = contentEditable.preventEditingInsideVariable(
             value,
