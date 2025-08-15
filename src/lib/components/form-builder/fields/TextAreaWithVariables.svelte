@@ -65,16 +65,37 @@
 
         const target = event.target as HTMLDivElement;
         const inputValue = target.textContent || "";
+        const cursorPos =
+            contentEditable.getCurrentCursorPosition(textareaElement);
+
+        // Check if cursor is inside a variable block and prevent editing
+        const insideBlock = contentEditable.isInsideVariableBlock(
+            inputValue,
+            cursorPos,
+        );
+        if (insideBlock.isInside) {
+            // Restore previous value and move cursor to end of block
+            target.textContent = value;
+            if (insideBlock.blockEnd) {
+                tick().then(() => {
+                    contentEditable.setCursorPosition(
+                        textareaElement,
+                        insideBlock.blockEnd!,
+                    );
+                });
+            }
+            return;
+        }
 
         value = inputValue;
 
         // Re-render with variable highlighting without changing cursor position
         isUpdating = true;
-        const cursorPos =
+        const currentCursorPos =
             contentEditable.getCurrentCursorPosition(textareaElement);
         textareaElement.innerHTML =
             globalVariables.renderTextWithVariables(inputValue);
-        contentEditable.setCursorPosition(textareaElement, cursorPos);
+        contentEditable.setCursorPosition(textareaElement, currentCursorPos);
         isUpdating = false;
 
         autoResize();
@@ -101,6 +122,31 @@
     function handleKeydown(event: KeyboardEvent) {
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(textareaElement);
+
+        // Handle cursor navigation to jump over variable blocks
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            const navigationHandled = contentEditable.handleCursorNavigation(
+                value,
+                currentCursorPosition,
+                event.key,
+                updateValueAndCursor,
+            );
+            if (navigationHandled) {
+                event.preventDefault();
+                return;
+            }
+        }
+
+        // Check if we're trying to edit inside a variable block
+        const preventedEdit = contentEditable.preventEditingInsideVariable(
+            value,
+            currentCursorPosition,
+            event,
+            updateValueAndCursor,
+        );
+        if (preventedEdit) {
+            return;
+        }
 
         if (event.key === "Backspace" || event.key === "Delete") {
             const deleteSuccess = contentEditable.handleVariableBlockDeletion(
