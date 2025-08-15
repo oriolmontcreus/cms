@@ -31,7 +31,7 @@ This folder contains reusable composables and components for implementing global
     let element: HTMLDivElement;
 
     const globalVariables = useGlobalVariables();
-    const tooltip = useVariableTooltip();
+    const tooltip = useVariableTooltip(globalVariables.getCurrentGlobalVariablesData);
     const contentEditable = useContentEditable();
     
     const popover = useVariablePopover(
@@ -100,12 +100,15 @@ See `TextInput.svelte` and `TextAreaWithVariables.svelte` for complete implement
 - `handleKeydown(event)` - Handles keyboard navigation
 - `selectVariable(name)` - Selects a specific variable
 
-### useVariableTooltip()
+### useVariableTooltip(getGlobalVariablesData?)
 - `state` - Reactive store with tooltip state
-- `handleMouseOver(event)` - Shows tooltip on variable hover
+- `handleMouseOver(event)` - Shows tooltip on variable hover with current variable values
 - `handleMouseOut(event)` - Hides tooltip
 - `showTooltip(content, x, y)` - Manually show tooltip
 - `hideTooltip()` - Manually hide tooltip
+
+**Parameters:**
+- `getGlobalVariablesData` - Optional function that returns current global variables data for dynamic tooltip values
 
 ### useContentEditable()
 - `setCursorPosition(element, offset)` - Sets cursor to specific position

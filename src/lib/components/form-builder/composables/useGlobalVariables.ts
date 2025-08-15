@@ -51,6 +51,7 @@ export function useGlobalVariables() {
                 const variableValue = globalVariablesData[variableName] || "Variable not found";
                 return `<span class="variable-highlight" data-variable-name="${variableName}" data-variable-value="${String(variableValue).replace(/"/g, "&quot;")}">${match}</span>`;
             });
-        }
+        },
+        getCurrentGlobalVariablesData: (): Record<string, any> => globalVariablesData
     };
 }

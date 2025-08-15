@@ -37,7 +37,9 @@
     // Use the same composables as TextInput
     const globalVariables = useGlobalVariables();
     const { data: globalVariablesData, variableNames } = globalVariables;
-    const tooltip = useVariableTooltip();
+    const tooltip = useVariableTooltip(
+        globalVariables.getCurrentGlobalVariablesData,
+    );
     const contentEditable = useContentEditable();
 
     const popover = useVariablePopover(

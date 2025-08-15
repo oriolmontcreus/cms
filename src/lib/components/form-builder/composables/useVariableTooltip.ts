@@ -7,7 +7,7 @@ export interface TooltipState {
     position: { x: number; y: number };
 }
 
-export function useVariableTooltip() {
+export function useVariableTooltip(getGlobalVariablesData?: () => Record<string, any>) {
     const state = writable<TooltipState>({
         show: false,
         content: "",
@@ -29,8 +29,21 @@ export function useVariableTooltip() {
     function handleMouseOver(event: MouseEvent) {
         const target = event.target as HTMLElement;
         if (target && target.classList.contains("variable-highlight")) {
-            const variableValue = target.getAttribute("data-variable-value");
-            if (variableValue) {
+            const variableName = target.getAttribute("data-variable-name");
+
+            if (variableName) {
+                // Get the current variable value dynamically instead of relying on static attribute
+                let variableValue: string;
+
+                if (getGlobalVariablesData) {
+                    const globalVariablesData = getGlobalVariablesData();
+                    const currentValue = globalVariablesData[variableName];
+                    variableValue = currentValue !== undefined ? String(currentValue) : "Variable not found";
+                } else {
+                    // Fallback to the static attribute if no dynamic getter is provided
+                    variableValue = target.getAttribute("data-variable-value") || "Variable not found";
+                }
+
                 const rect = target.getBoundingClientRect();
                 showTooltip(
                     variableValue,
