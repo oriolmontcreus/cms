@@ -218,11 +218,11 @@
             "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
             "min-h-[80px]",
             field.autoResize
-                ? "resize-none overflow-hidden transition-none"
-                : "resize-y overflow-auto transition-none",
+                ? "resize-none overflow-hidden transition-all duration-300 ease-in-out"
+                : "resize-y overflow-auto",
         )}
         style={field.autoResize
-            ? "height: auto; word-wrap: break-word; white-space: pre-wrap; transition: none !important; animation: none !important;"
+            ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"
             : `height: ${rows * 1.5}rem; word-wrap: break-word; white-space: pre-wrap;`}
         data-placeholder={placeholder}
         oninput={handleInput}
@@ -251,15 +251,14 @@
         pointer-events: none;
     }
 
-    /* Completely disable transitions for auto-resize textarea */
-    [contenteditable][data-auto-resize] {
-        transition: none !important;
-        animation: none !important;
-    }
-
-    :global([contenteditable][data-auto-resize] *) {
-        transition: none !important;
-        animation: none !important;
+    /* For manual resize textareas, only animate focus/border/ring states, not size */
+    [contenteditable]:not([data-auto-resize]) {
+        transition:
+            border-color 300ms ease-in-out,
+            box-shadow 300ms ease-in-out,
+            background-color 300ms ease-in-out,
+            color 300ms ease-in-out,
+            opacity 300ms ease-in-out;
     }
 
     :global(.variable-highlight) {
