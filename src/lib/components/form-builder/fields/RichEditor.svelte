@@ -307,7 +307,12 @@
     });
 
     function handleInput() {
-        if (isUpdating) return;
+        if (isUpdating) {
+            console.log("⚠️ handleInput skipped - isUpdating is true");
+            return;
+        }
+
+        console.log("🔄 handleInput called");
 
         // Get both HTML and plain text content
         const htmlValue = editorRef.innerHTML;
@@ -315,30 +320,19 @@
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(editorRef);
 
-        // Update the value with HTML content
+        console.log("📝 Content analysis:", {
+            htmlValue,
+            plainTextValue,
+            currentCursorPosition,
+            hasVariables:
+                plainTextValue.includes("{{") && plainTextValue.includes("}}"),
+            hasHighlighting: htmlValue.includes("variable-highlight"),
+        });
+
+        // Update the value with HTML content (preserve formatting)
         value = htmlValue;
 
         makeLinksFocusable();
-
-        // Apply variable highlighting by working with plain text only
-        isUpdating = true;
-
-        // If the plain text contains variables, re-render everything from plain text
-        if (plainTextValue.includes("{{") && plainTextValue.includes("}}")) {
-            const rendered =
-                globalVariables.renderTextWithVariables(plainTextValue);
-
-            // Only update if the content actually changed to avoid cursor jumping
-            if (editorRef.innerHTML !== rendered) {
-                editorRef.innerHTML = rendered;
-                contentEditable.setCursorPosition(
-                    editorRef,
-                    currentCursorPosition,
-                );
-            }
-        }
-
-        isUpdating = false;
 
         // Check for variable popover trigger using plain text
         const textBeforeCursor = plainTextValue.substring(
@@ -346,6 +340,8 @@
             currentCursorPosition,
         );
         const matchIndex = textBeforeCursor.lastIndexOf("{{");
+
+        let shouldApplyVariableHighlighting = false;
 
         if (matchIndex !== -1) {
             const searchStart = matchIndex + 2;
@@ -355,19 +351,96 @@
                 popover.openPopover(potentialQuery);
             } else {
                 popover.closePopover();
+                // Only apply highlighting if we just typed "}}" (check if cursor is right after "}}")
+                const justTypedClosing =
+                    plainTextValue.substring(
+                        currentCursorPosition - 2,
+                        currentCursorPosition,
+                    ) === "}}";
+                if (justTypedClosing) {
+                    shouldApplyVariableHighlighting = true;
+                    console.log(
+                        "🎯 Variable just completed - will apply highlighting",
+                    );
+                }
             }
         } else {
             popover.closePopover();
+        }
+
+        // Only apply variable highlighting in specific cases:
+        // 1. When a variable was just completed (}} was just typed)
+        // 2. When content contains variables but doesn't have highlighting yet
+        const hasVariables =
+            plainTextValue.includes("{{") && plainTextValue.includes("}}");
+        const hasHighlighting = htmlValue.includes("variable-highlight");
+
+        console.log("🔍 Variable highlighting decision:", {
+            hasVariables,
+            hasHighlighting,
+            shouldApplyVariableHighlighting,
+            willApplyHighlighting:
+                hasVariables &&
+                (shouldApplyVariableHighlighting || !hasHighlighting),
+        });
+
+        if (
+            hasVariables &&
+            (shouldApplyVariableHighlighting || !hasHighlighting)
+        ) {
+            console.log("🎨 Applying variable highlighting...");
+            isUpdating = true;
+
+            const rendered =
+                globalVariables.renderTextWithVariables(plainTextValue);
+
+            console.log("📝 Rendered content:", rendered);
+
+            if (editorRef.innerHTML !== rendered) {
+                console.log(
+                    "📝 Updating editor content from:",
+                    editorRef.innerHTML,
+                );
+                console.log("📝 Updating editor content to:", rendered);
+                editorRef.innerHTML = rendered;
+                contentEditable.setCursorPosition(
+                    editorRef,
+                    currentCursorPosition,
+                );
+                value = rendered; // Update the value after rendering
+                console.log("📝 Editor content updated");
+            } else {
+                console.log("📝 Editor content unchanged - no update needed");
+            }
+
+            isUpdating = false;
         }
 
         setTimeout(updateActiveFormats, 0);
     }
 
     function updateActiveFormats() {
-        if (!editorRef || document.activeElement !== editorRef) return;
+        if (!editorRef || document.activeElement !== editorRef) {
+            console.log("⚠️ updateActiveFormats skipped:", {
+                hasEditorRef: !!editorRef,
+                isActiveElement: document.activeElement === editorRef,
+                activeElement: document.activeElement?.tagName,
+            });
+            return;
+        }
 
-        activeFormats = getActiveFormats();
-        activeAlignment = getActiveAlignment();
+        const newActiveFormats = getActiveFormats();
+        const newActiveAlignment = getActiveAlignment();
+
+        console.log("🔄 updateActiveFormats:", {
+            previousFormats: activeFormats,
+            newFormats: newActiveFormats,
+            previousAlignment: activeAlignment,
+            newAlignment: newActiveAlignment,
+        });
+
+        activeFormats = newActiveFormats;
+        activeAlignment = newActiveAlignment;
     }
 
     function handlePaste(e: ClipboardEvent) {
@@ -379,13 +452,33 @@
     function execCommand(command: string, value?: string) {
         if (isReadonly) return;
 
+        console.log("🎯 execCommand called:", { command, value, isReadonly });
+        console.log("📝 Editor content before:", editorRef.innerHTML);
+        console.log("🎯 Editor focused:", document.activeElement === editorRef);
+
         editorRef.focus();
-        document.execCommand(command, false, value);
+        const success = document.execCommand(command, false, value);
+        console.log("✅ execCommand success:", success);
+        console.log(
+            "📝 Editor content after execCommand:",
+            editorRef.innerHTML,
+        );
+
         handleInput();
+        console.log(
+            "📝 Editor content after handleInput:",
+            editorRef.innerHTML,
+        );
     }
 
     function handleFormatToggle(formats: string[]) {
         if (isReadonly) return;
+
+        console.log("🎨 handleFormatToggle called:", { formats, isReadonly });
+        console.log(
+            "📝 Editor content before formatting:",
+            editorRef.innerHTML,
+        );
 
         ensureEditorFocus();
 
@@ -393,12 +486,23 @@
             const isCurrentlyActive = document.queryCommandState(format);
             const shouldBeActive = formats.includes(format);
 
+            console.log(`🔍 Format "${format}":`, {
+                isCurrentlyActive,
+                shouldBeActive,
+            });
+
             if (isCurrentlyActive !== shouldBeActive) {
-                document.execCommand(format, false);
+                const success = document.execCommand(format, false);
+                console.log(`✅ execCommand "${format}" success:`, success);
             }
         });
 
+        console.log("📝 Editor content after formatting:", editorRef.innerHTML);
         handleInput();
+        console.log(
+            "📝 Editor content after handleInput:",
+            editorRef.innerHTML,
+        );
     }
 
     function handleAlignmentChange(alignment: string) {
