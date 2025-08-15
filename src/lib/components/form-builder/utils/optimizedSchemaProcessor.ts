@@ -88,7 +88,10 @@ function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
 
         if (items.type === SCHEMA_TYPES.TABS_CONTAINER && items.tabs) {
             for (const tab of items.tabs) {
-                if (tab.schema) traverse(tab.schema);
+                if (tab.schema) {
+                    const tabSchema = Array.isArray(tab.schema) ? tab.schema : [tab.schema];
+                    traverse(tabSchema);
+                }
             }
             return;
         }
