@@ -8,19 +8,6 @@ siteTab.schema = [
         .label('Site name')
         .required()
         .placeholder('Enter your site name')
-        .translatable(),
-    TextInput('siteDescription')
-        .label('Site description')
-        .required()
-        .placeholder('Enter your site description')
-        .translatable(),
-    TextInput('siteUrl')
-        .label('Site URL')
-        .required()
-        .placeholder('https://yoursite.com'),
-    TextInput('contactEmail')
-        .label('Contact email')
-        .placeholder('contact@yoursite.com'),
 ];
 
 export const GlobalVariables: Component = {
