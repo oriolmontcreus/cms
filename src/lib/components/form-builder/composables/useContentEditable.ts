@@ -69,6 +69,22 @@ export function useContentEditable() {
         }
     }
 
+    function isInsideVariableBlock(value: string, cursorPos: number): { isInside: boolean; blockStart?: number; blockEnd?: number } {
+        const variableRegex = /\{\{[^}]+\}\}/g;
+        let match;
+
+        while ((match = variableRegex.exec(value)) !== null) {
+            const start = match.index;
+            const end = match.index + match[0].length;
+
+            if (cursorPos > start && cursorPos < end) {
+                return { isInside: true, blockStart: start, blockEnd: end };
+            }
+        }
+
+        return { isInside: false };
+    }
+
     function handleVariableBlockDeletion(
         value: string,
         key: string,
@@ -110,6 +126,37 @@ export function useContentEditable() {
         return false;
     }
 
+    function preventEditingInsideVariable(
+        value: string,
+        cursorPos: number,
+        event: KeyboardEvent,
+        onUpdate: (newValue: string, newCursorPos: number) => void
+    ): boolean {
+        const insideBlock = isInsideVariableBlock(value, cursorPos);
+
+        if (insideBlock.isInside && insideBlock.blockStart !== undefined && insideBlock.blockEnd !== undefined) {
+            // Prevent most character input inside variable blocks
+            if (event.key.length === 1 ||
+                event.key === 'Backspace' ||
+                event.key === 'Delete' ||
+                event.key === 'Enter' ||
+                event.key === 'Space') {
+
+                // Allow navigation keys
+                if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                    'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) {
+                    event.preventDefault();
+
+                    // Move cursor to the end of the variable block for easier navigation
+                    onUpdate(value, insideBlock.blockEnd);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     function insertTextAtCursor(
         element: HTMLElement,
         value: string,
@@ -137,6 +184,8 @@ export function useContentEditable() {
         getCurrentCursorPosition,
         updateElementContent,
         handleVariableBlockDeletion,
-        insertTextAtCursor
+        insertTextAtCursor,
+        preventEditingInsideVariable,
+        isInsideVariableBlock
     };
 }

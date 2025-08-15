@@ -62,16 +62,37 @@
 
         const target = event.target as HTMLDivElement;
         const inputValue = target.textContent || "";
+        const cursorPos =
+            contentEditable.getCurrentCursorPosition(editableElement);
+
+        // Check if cursor is inside a variable block and prevent editing
+        const insideBlock = contentEditable.isInsideVariableBlock(
+            inputValue,
+            cursorPos,
+        );
+        if (insideBlock.isInside) {
+            // Restore previous value and move cursor to end of block
+            target.textContent = value;
+            if (insideBlock.blockEnd) {
+                tick().then(() => {
+                    contentEditable.setCursorPosition(
+                        editableElement,
+                        insideBlock.blockEnd!,
+                    );
+                });
+            }
+            return;
+        }
 
         value = inputValue;
 
         // Re-render with variable highlighting without changing cursor position
         isUpdating = true;
-        const cursorPos =
+        const currentCursorPos =
             contentEditable.getCurrentCursorPosition(editableElement);
         editableElement.innerHTML =
             globalVariables.renderTextWithVariables(inputValue);
-        contentEditable.setCursorPosition(editableElement, cursorPos);
+        contentEditable.setCursorPosition(editableElement, currentCursorPos);
         isUpdating = false;
 
         // Check for variable pattern to show popover
@@ -97,6 +118,17 @@
     function handleKeydown(event: KeyboardEvent) {
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(editableElement);
+
+        // First check if we're trying to edit inside a variable block
+        const preventedEdit = contentEditable.preventEditingInsideVariable(
+            value,
+            currentCursorPosition,
+            event,
+            updateValueAndCursor,
+        );
+        if (preventedEdit) {
+            return;
+        }
 
         if (event.key === "Enter" && !popover.isOpen) {
             event.preventDefault();
