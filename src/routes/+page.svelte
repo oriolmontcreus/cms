@@ -112,12 +112,7 @@
 </script>
 
 <SiteHeader title="Dashboard">
-  <Button
-    variant="outline"
-    size="sm"
-    onclick={() => goto("/pages")}
-    class="bg-white"
-  >
+  <Button variant="outline" size="sm" onclick={() => goto("/pages")}>
     <PlusIcon size={16} />
     <span class="hidden sm:inline">New Page</span>
   </Button>
@@ -225,7 +220,7 @@
             </div>
           {:else}
             <Button
-              variant="outline"
+              variant="outlineBackground"
               size="sm"
               class="w-full justify-start"
               disabled={isBuildingWelcomeMessage}
@@ -247,7 +242,11 @@
             <Card.Title class="flex items-center gap-2 font-normal">
               Recent pages
             </Card.Title>
-            <Button variant="outline" size="sm" onclick={() => goto("/pages")}>
+            <Button
+              variant="outlineBackground"
+              size="sm"
+              onclick={() => goto("/pages")}
+            >
               View all
             </Button>
           </div>
@@ -270,7 +269,7 @@
               <FileTextIcon class="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No pages created yet</p>
               <Button
-                variant="outline"
+                variant="outlineBackground"
                 size="sm"
                 class="mt-3"
                 onclick={() => goto("/pages")}
@@ -332,7 +331,7 @@
             </Card.Title>
             {#if $loggedUser?.permissions === 7}
               <Button
-                variant="outline"
+                variant="outlineBackground"
                 size="sm"
                 onclick={() => goto("/users")}
               >

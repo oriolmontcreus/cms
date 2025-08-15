@@ -97,6 +97,41 @@ export async function handleGetPageBySlug(slug: string): Promise<Page | null> {
 }
 
 export async function handleUpdateComponents(slug: string, components: Component[]): Promise<Page | null> {
+    // Special handling for global variables
+    if (slug === "global-variables") {
+        // Import global variables service dynamically to avoid circular dependencies
+        const { updateGlobalVariables } = await import("@/services/globalVariables.service");
+
+        if (components.length > 0) {
+            const globalVariablesComponent = components[0];
+            const formData = globalVariablesComponent.formData;
+
+            const [result, err] = await fetchWithToast(updateGlobalVariables(formData), {
+                loading: 'Updating global variables...',
+                success: () => `Global variables updated successfully.`,
+                error: 'Error updating global variables. Please try again.'
+            });
+
+            if (err) return null;
+
+            // Return a Page-like structure for consistency
+            return {
+                _id: slug,
+                slug: slug,
+                title: "Global Variables",
+                parentSlug: undefined,
+                content: "",
+                config: {
+                    title: "Global Variables",
+                    slug: "global-variables",
+                    components: []
+                },
+                components: components,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            } as Page;
+        }
+    }    // Regular page handling
     const [data, err] = await fetchWithToast(updateComponents(slug, components), {
         loading: 'Updating components...',
         success: () => `Components updated successfully.`,

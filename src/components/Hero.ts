@@ -1,4 +1,4 @@
-import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea } from '@/lib/components/form-builder/fields';
+import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea, RichEditor } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconBrandGithub, IconLink } from '@tabler/icons-svelte';
 
@@ -9,13 +9,11 @@ mainTab.schema = [
         .required()
         .min(3)
         .max(100)
-        .placeholder('Enter the hero title')
-        .translatable(),
+        .placeholder('Enter the hero title'),
     Textarea('subtitle')
         .label('Subtitle')
         .required()
         .placeholder('Enter the hero subtitle')
-        .autoResize()
         .translatable(),
 ];
 

@@ -165,7 +165,7 @@
 {#snippet PageTreeNode(node: PageNode, depth: number)}
     <div class="group">
         <div
-            class="flex items-center gap-3 p-3 rounded-lg border bg-card/50 dark:bg-card/20 hover:bg-accent cursor-pointer dark:hover:bg-accent transition-all duration-200"
+            class="flex items-center gap-3 p-3 rounded-lg border bg-card dark:bg-card/20 hover:bg-accent cursor-pointer dark:hover:bg-accent transition-all duration-200"
             style="margin-left: {depth * 20}px"
         >
             {#if node.children.length > 0}

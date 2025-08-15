@@ -81,13 +81,17 @@ function extractAllFields(schema: Layout | SchemaItem[]): FormField[] {
 
         // Handle containers
         if (items.type === SCHEMA_TYPES.GRID && items.schema) {
-            traverse(items.schema);
+            const gridSchema = Array.isArray(items.schema) ? items.schema : [items.schema];
+            traverse(gridSchema);
             return;
         }
 
         if (items.type === SCHEMA_TYPES.TABS_CONTAINER && items.tabs) {
             for (const tab of items.tabs) {
-                traverse(tab.schema);
+                if (tab.schema) {
+                    const tabSchema = Array.isArray(tab.schema) ? tab.schema : [tab.schema];
+                    traverse(tabSchema);
+                }
             }
             return;
         }
@@ -368,12 +372,8 @@ function hasTranslatableContent(item: SchemaItem): boolean {
     // Handle containers
     if ('type' in item) {
         if (item.type === SCHEMA_TYPES.GRID && 'schema' in item && !item.hidden) {
-            return (item.schema as FormField[]).some(f =>
-                !f.hidden && (f.translatable === true ||
-                    (f.type === 'repeater' && f.schema && hasTranslatableFieldsInSchema(
-                        typeof f.schema === 'function' ? f.schema(0) : f.schema
-                    )))
-            );
+            const gridSchema = Array.isArray(item.schema) ? item.schema : [item.schema];
+            return gridSchema.some(schemaItem => hasTranslatableContent(schemaItem));
         }
 
         if (item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item && !item.hidden) {
