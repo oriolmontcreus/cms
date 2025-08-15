@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { FormField } from '../../types';
-    import { onMount } from 'svelte';
+    import type { FormField } from "../../types";
+    import { onMount } from "svelte";
 
     export let field: FormField;
     export let fieldId: string;
-    export let value: string = '';
+    export let value: string = "";
     export let showCharCount: boolean;
     export let onInput: () => void;
     export let onPaste: (e: ClipboardEvent) => void;
@@ -13,18 +13,21 @@
     export let onLinkClick: (e: MouseEvent) => void;
     export let onLinkKeydown: (e: KeyboardEvent) => void;
     export let onKeydown: (e: KeyboardEvent) => void;
+    export let onMouseOver: ((e: MouseEvent) => void) | undefined = undefined;
+    export let onMouseOut: ((e: MouseEvent) => void) | undefined = undefined;
+    export let onBlur: (() => void) | undefined = undefined;
 
     let editorRef: HTMLDivElement;
 
     onMount(() => {
         if (editorRef) {
-            editorRef.innerHTML = value || '';
-            
+            editorRef.innerHTML = value || "";
+
             // Make existing links focusable
-            const links = editorRef.querySelectorAll('a');
-            links.forEach(link => {
-                if (!link.hasAttribute('tabindex')) {
-                    link.setAttribute('tabindex', '0');
+            const links = editorRef.querySelectorAll("a");
+            links.forEach((link) => {
+                if (!link.hasAttribute("tabindex")) {
+                    link.setAttribute("tabindex", "0");
                 }
             });
         }
@@ -54,8 +57,14 @@
         onLinkKeydown(e);
         onKeydown(e);
     }}
+    on:mouseover={onMouseOver}
+    on:mouseout={onMouseOut}
+    on:focus={() => {}}
+    on:blur={(e) => {
+        if (onBlur) onBlur();
+    }}
     role="textbox"
     aria-multiline="true"
     aria-label={field.label}
     tabindex="0"
-></div> 
+></div>

@@ -1,85 +1,106 @@
 <script lang="ts">
-    import type { FormField } from '../types';
-    import { onMount } from 'svelte';
-    import RichEditorToolbar from './rich-editor/RichEditorToolbar.svelte';
-    import RichEditorContent from './rich-editor/RichEditorContent.svelte';
-    import EditLinkPopover from './rich-editor/EditLinkPopover.svelte';
+    import type { FormField } from "../types";
+    import { onMount, tick } from "svelte";
+    import RichEditorToolbar from "./rich-editor/RichEditorToolbar.svelte";
+    import RichEditorContent from "./rich-editor/RichEditorContent.svelte";
+    import EditLinkPopover from "./rich-editor/EditLinkPopover.svelte";
+    import { useGlobalVariables } from "../composables/useGlobalVariables";
+    import { useVariablePopover } from "../composables/useVariablePopover";
+    import { useVariableTooltip } from "../composables/useVariableTooltip";
+    import { useContentEditable } from "../composables/useContentEditable";
+    import VariablePopover from "../components/VariablePopover.svelte";
+    import VariableTooltip from "../components/VariableTooltip.svelte";
 
     // Constants
-    const FORMATS = ['bold', 'italic', 'underline'] as const;
+    const FORMATS = ["bold", "italic", "underline"] as const;
     const ALIGNMENTS = {
-        left: 'justifyLeft',
-        center: 'justifyCenter',
-        right: 'justifyRight'
+        left: "justifyLeft",
+        center: "justifyCenter",
+        right: "justifyRight",
     } as const;
     const KEYBOARD_SHORTCUTS = {
-        'b': 'bold',
-        'i': 'italic',
-        'u': 'underline',
-        'k': 'link'
+        b: "bold",
+        i: "italic",
+        u: "underline",
+        k: "link",
     } as const;
 
     export let field: FormField;
     export let fieldId: string;
-    export let value: string = '';
+    export let value: string = "";
 
     // Editor state
     let editorRef: HTMLDivElement;
     let richEditorContent: RichEditorContent;
     let activeFormats: string[] = [];
-    let activeAlignment = '';
+    let activeAlignment = "";
+    let isUpdating = false;
 
     // Link state
-    let linkUrl = '';
-    let linkText = '';
+    let linkUrl = "";
+    let linkText = "";
     let linkPopoverOpen = false;
     let savedSelection: Range | null = null;
 
     // Edit link state
     let editLinkTrigger: HTMLButtonElement;
     let editLinkPopoverOpen = false;
-    let editLinkUrl = '';
-    let editLinkText = '';
+    let editLinkUrl = "";
+    let editLinkText = "";
     let currentLinkElement: HTMLAnchorElement | null = null;
+
+    // Global variables composables
+    const globalVariables = useGlobalVariables();
+    const { data: globalVariablesData, variableNames } = globalVariables;
+    const tooltip = useVariableTooltip();
+    const contentEditable = useContentEditable();
+
+    const popover = useVariablePopover(
+        () => $variableNames,
+        (variableName: string) => {
+            insertVariable(variableName);
+        },
+    );
 
     // Computed properties
     $: isReadonly = field.readonly || field.disabled;
-    $: currentLength = value?.replace(/<[^>]*>/g, '').length || 0;
+    $: currentLength = value?.replace(/<[^>]*>/g, "").length || 0;
     $: maxLength = field.max;
     $: showCharCount = maxLength && maxLength > 0;
     $: if (richEditorContent) editorRef = richEditorContent.getEditorRef();
 
     // Utility functions
-    const getEventListeners = () => [
-        ['input', handleInput],
-        ['paste', handlePaste],
-        ['mouseup', updateActiveFormats],
-        ['keyup', updateActiveFormats],
-        ['click', handleLinkClick],
-        ['keydown', handleLinkKeydown]
-    ] as const;
+    const getEventListeners = () =>
+        [
+            ["input", handleInput],
+            ["paste", handlePaste],
+            ["mouseup", updateActiveFormats],
+            ["keyup", updateActiveFormats],
+            ["click", handleLinkClick],
+            ["keydown", handleLinkKeydown],
+        ] as const;
 
     const addEventListeners = () => {
         if (!editorRef) return;
-        
+
         getEventListeners().forEach(([event, handler]) => {
             editorRef.addEventListener(event, handler as EventListener);
         });
-        document.addEventListener('selectionchange', updateActiveFormats);
+        document.addEventListener("selectionchange", updateActiveFormats);
     };
 
     const removeEventListeners = () => {
         if (!editorRef) return;
-        
+
         getEventListeners().forEach(([event, handler]) => {
             editorRef.removeEventListener(event, handler as EventListener);
         });
-        document.removeEventListener('selectionchange', updateActiveFormats);
+        document.removeEventListener("selectionchange", updateActiveFormats);
     };
 
     const ensureEditorFocus = () => {
         if (!editorRef || document.activeElement === editorRef) return;
-        
+
         editorRef.focus();
         const selection = window.getSelection();
         if (selection && selection.rangeCount === 0) {
@@ -91,54 +112,107 @@
     };
 
     const makeLinksFocusable = () => {
-        const links = editorRef.querySelectorAll('a:not([tabindex])');
-        links.forEach(link => link.setAttribute('tabindex', '0'));
+        const links = editorRef.querySelectorAll("a:not([tabindex])");
+        links.forEach((link) => link.setAttribute("tabindex", "0"));
     };
 
     const getActiveFormats = () => {
-        return FORMATS.filter(format => document.queryCommandState(format));
+        return FORMATS.filter((format) => document.queryCommandState(format));
     };
 
     const getActiveAlignment = () => {
-        const alignmentEntry = Object.entries(ALIGNMENTS)
-            .find(([_, command]) => document.queryCommandState(command));
-        return alignmentEntry?.[0] || '';
+        const alignmentEntry = Object.entries(ALIGNMENTS).find(([_, command]) =>
+            document.queryCommandState(command),
+        );
+        return alignmentEntry?.[0] || "";
     };
 
-    const positionPopover = (element: HTMLElement, trigger: HTMLButtonElement) => {
+    const positionPopover = (
+        element: HTMLElement,
+        trigger: HTMLButtonElement,
+    ) => {
         const rect = element.getBoundingClientRect();
-        trigger.style.position = 'absolute';
+        trigger.style.position = "absolute";
         trigger.style.left = `${rect.left}px`;
         trigger.style.top = `${rect.bottom}px`;
     };
 
     const resetLinkPopoverState = () => {
         linkPopoverOpen = false;
-        linkUrl = '';
-        linkText = '';
+        linkUrl = "";
+        linkText = "";
         savedSelection = null;
     };
 
     const resetEditLinkPopoverState = () => {
         editLinkPopoverOpen = false;
-        editLinkUrl = '';
-        editLinkText = '';
+        editLinkUrl = "";
+        editLinkText = "";
         currentLinkElement = null;
+    };
+
+    const updateValueAndCursor = (newValue: string, newCursorPos: number) => {
+        tick().then(() => {
+            isUpdating = true;
+            // For rich editor, we need to preserve formatting while adding variable highlighting
+            let processedHtml = newValue;
+            if (newValue.includes("{{") && newValue.includes("}}")) {
+                processedHtml =
+                    globalVariables.renderTextWithVariables(newValue);
+            }
+
+            if (editorRef.innerHTML !== processedHtml) {
+                editorRef.innerHTML = processedHtml;
+                contentEditable.setCursorPosition(editorRef, newCursorPos);
+            }
+            isUpdating = false;
+
+            value = editorRef.innerHTML;
+            makeLinksFocusable();
+        });
+    };
+
+    const insertVariable = (variableName: string) => {
+        const plainTextValue = editorRef.textContent || "";
+        contentEditable.insertTextAtCursor(
+            editorRef,
+            plainTextValue,
+            variableName,
+            (newValue: string, newCursorPos: number) => {
+                popover.closePopover();
+
+                tick().then(() => {
+                    isUpdating = true;
+                    const rendered =
+                        globalVariables.renderTextWithVariables(newValue);
+                    editorRef.innerHTML = rendered;
+                    contentEditable.setCursorPosition(editorRef, newCursorPos);
+                    isUpdating = false;
+
+                    value = editorRef.innerHTML;
+                    makeLinksFocusable();
+                });
+            },
+        );
+    };
+
+    const handleBlur = () => {
+        tooltip.hideTooltip();
     };
 
     const prepareEditLinkState = (linkElement: HTMLAnchorElement) => {
         currentLinkElement = linkElement;
         editLinkUrl = linkElement.href;
-        editLinkText = linkElement.textContent || '';
-        
+        editLinkText = linkElement.textContent || "";
+
         if (editLinkTrigger) positionPopover(linkElement, editLinkTrigger);
         editLinkPopoverOpen = true;
     };
 
     const createLinkElement = (url: string, text: string) => {
-        const linkElement = document.createElement('a');
+        const linkElement = document.createElement("a");
         linkElement.href = url;
-        linkElement.target = '_blank';
+        linkElement.target = "_blank";
         linkElement.tabIndex = 0;
         linkElement.textContent = text;
         return linkElement;
@@ -147,31 +221,137 @@
     // Event handlers
     onMount(() => {
         addEventListeners();
+
+        // Apply initial variable highlighting if value contains variables
+        if (
+            value &&
+            editorRef &&
+            (value.includes("{{") || editorRef.textContent?.includes("{{"))
+        ) {
+            tick().then(() => {
+                const textContent = editorRef.textContent || "";
+                if (textContent.includes("{{") && textContent.includes("}}")) {
+                    isUpdating = true;
+                    const rendered =
+                        globalVariables.renderTextWithVariables(textContent);
+                    editorRef.innerHTML = rendered;
+                    isUpdating = false;
+                    makeLinksFocusable();
+                }
+            });
+        }
+
         return removeEventListeners;
     });
 
     function handleInput() {
-        value = editorRef.innerHTML;
+        if (isUpdating) return;
+
+        // Get both HTML and plain text content
+        const htmlValue = editorRef.innerHTML;
+        const plainTextValue = editorRef.textContent || "";
+
+        // Update the value with HTML content
+        value = htmlValue;
+
         makeLinksFocusable();
+
+        // Handle global variables functionality
+        const currentCursorPosition =
+            contentEditable.getCurrentCursorPosition(editorRef);
+
+        // Apply variable highlighting to the HTML content
+        isUpdating = true;
+
+        // First, get the current HTML content and extract text for variable processing
+        let processedHtml = htmlValue;
+
+        // Process variables in plain text sections (not within HTML tags)
+        processedHtml = processedHtml.replace(
+            />([^<]*)</g,
+            (match, textContent) => {
+                if (textContent.includes("{{") && textContent.includes("}}")) {
+                    const highlightedText =
+                        globalVariables.renderTextWithVariables(textContent);
+                    return match.replace(
+                        textContent,
+                        highlightedText.replace(/<[^>]*>/g, (tag) => tag),
+                    );
+                }
+                return match;
+            },
+        );
+
+        // Also handle text at the beginning and end that might not be wrapped in tags
+        processedHtml = processedHtml.replace(
+            /^([^<]*?)(?=<|$)/g,
+            (match, textContent) => {
+                if (textContent.includes("{{") && textContent.includes("}}")) {
+                    return globalVariables.renderTextWithVariables(textContent);
+                }
+                return match;
+            },
+        );
+
+        processedHtml = processedHtml.replace(
+            /(?:>|^)([^<]*?)$/g,
+            (match, textContent) => {
+                if (textContent.includes("{{") && textContent.includes("}}")) {
+                    return match.replace(
+                        textContent,
+                        globalVariables.renderTextWithVariables(textContent),
+                    );
+                }
+                return match;
+            },
+        );
+
+        if (editorRef.innerHTML !== processedHtml) {
+            editorRef.innerHTML = processedHtml;
+            contentEditable.setCursorPosition(editorRef, currentCursorPosition);
+        }
+
+        isUpdating = false;
+
+        // Check for variable popover trigger using plain text
+        const textBeforeCursor = plainTextValue.substring(
+            Math.max(0, currentCursorPosition - 50),
+            currentCursorPosition,
+        );
+        const matchIndex = textBeforeCursor.lastIndexOf("{{");
+
+        if (matchIndex !== -1) {
+            const searchStart = matchIndex + 2;
+            const potentialQuery = textBeforeCursor.substring(searchStart);
+
+            if (!potentialQuery.includes("}}")) {
+                popover.openPopover(potentialQuery);
+            } else {
+                popover.closePopover();
+            }
+        } else {
+            popover.closePopover();
+        }
+
         setTimeout(updateActiveFormats, 0);
     }
 
     function updateActiveFormats() {
         if (!editorRef || document.activeElement !== editorRef) return;
-        
+
         activeFormats = getActiveFormats();
         activeAlignment = getActiveAlignment();
     }
 
     function handlePaste(e: ClipboardEvent) {
         e.preventDefault();
-        const text = e.clipboardData?.getData('text/plain') || '';
-        document.execCommand('insertText', false, text);
+        const text = e.clipboardData?.getData("text/plain") || "";
+        document.execCommand("insertText", false, text);
     }
 
     function execCommand(command: string, value?: string) {
         if (isReadonly) return;
-        
+
         editorRef.focus();
         document.execCommand(command, false, value);
         handleInput();
@@ -179,24 +359,24 @@
 
     function handleFormatToggle(formats: string[]) {
         if (isReadonly) return;
-        
+
         ensureEditorFocus();
-        
-        FORMATS.forEach(format => {
+
+        FORMATS.forEach((format) => {
             const isCurrentlyActive = document.queryCommandState(format);
             const shouldBeActive = formats.includes(format);
-            
+
             if (isCurrentlyActive !== shouldBeActive) {
                 document.execCommand(format, false);
             }
         });
-        
+
         handleInput();
     }
 
     function handleAlignmentChange(alignment: string) {
         if (isReadonly || !alignment || alignment === activeAlignment) return;
-        
+
         ensureEditorFocus();
         const command = ALIGNMENTS[alignment as keyof typeof ALIGNMENTS];
         if (command) {
@@ -206,16 +386,20 @@
         }
     }
 
-    function handleLinkInteraction(e: MouseEvent | KeyboardEvent, isKeyboard = false) {
+    function handleLinkInteraction(
+        e: MouseEvent | KeyboardEvent,
+        isKeyboard = false,
+    ) {
         if (isReadonly) return;
-        
+
         const target = e.target as HTMLElement;
-        const linkElement = target.closest('a') as HTMLAnchorElement;
-        
+        const linkElement = target.closest("a") as HTMLAnchorElement;
+
         if (!linkElement || !editorRef.contains(linkElement)) return;
-        
-        if (isKeyboard && !['Enter', ' '].includes((e as KeyboardEvent).key)) return;
-        
+
+        if (isKeyboard && !["Enter", " "].includes((e as KeyboardEvent).key))
+            return;
+
         e.preventDefault();
         e.stopPropagation();
         prepareEditLinkState(linkElement);
@@ -231,17 +415,17 @@
 
     function handleLinkPopoverOpenChange(isOpen: boolean) {
         if (!isOpen) return;
-        
+
         const selection = window.getSelection();
-        
+
         if (selection && selection.rangeCount > 0) {
             savedSelection = selection.getRangeAt(0).cloneRange();
             linkText = selection.toString();
         } else {
             savedSelection = null;
-            linkText = '';
+            linkText = "";
         }
-        linkUrl = '';
+        linkUrl = "";
         linkPopoverOpen = isOpen;
     }
 
@@ -258,24 +442,30 @@
             if (selection && savedSelection) {
                 selection.removeAllRanges();
                 selection.addRange(savedSelection);
-                
-                const linkElement = createLinkElement(linkUrl, linkText || savedSelection.toString());
-                
+
+                const linkElement = createLinkElement(
+                    linkUrl,
+                    linkText || savedSelection.toString(),
+                );
+
                 savedSelection.deleteContents();
                 savedSelection.insertNode(linkElement);
-                
+
                 selection.removeAllRanges();
                 const newRange = document.createRange();
                 newRange.setStartAfter(linkElement);
                 newRange.collapse(true);
                 selection.addRange(newRange);
-                
+
                 handleInput();
             }
         } else {
-            execCommand('insertHTML', `<a href="${linkUrl}" target="_blank" tabindex="0">${displayText}</a>`);
+            execCommand(
+                "insertHTML",
+                `<a href="${linkUrl}" target="_blank" tabindex="0">${displayText}</a>`,
+            );
         }
-        
+
         resetLinkPopoverState();
     }
 
@@ -284,7 +474,7 @@
             resetEditLinkPopoverState();
             return;
         }
-        
+
         currentLinkElement.href = editLinkUrl;
         currentLinkElement.textContent = editLinkText || editLinkUrl;
         handleInput();
@@ -292,13 +482,13 @@
     }
 
     function visitLink() {
-        if (editLinkUrl) window.open(editLinkUrl, '_blank');
+        if (editLinkUrl) window.open(editLinkUrl, "_blank");
         resetEditLinkPopoverState();
     }
 
     function removeLink() {
         if (currentLinkElement) {
-            const textContent = currentLinkElement.textContent || '';
+            const textContent = currentLinkElement.textContent || "";
             currentLinkElement.outerHTML = textContent;
             handleInput();
         }
@@ -306,14 +496,40 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
+        const currentCursorPosition =
+            contentEditable.getCurrentCursorPosition(editorRef);
+        const plainTextValue = editorRef.textContent || "";
+
+        // Handle variable block deletion
+        if (e.key === "Backspace" || e.key === "Delete") {
+            const deleteSuccess = contentEditable.handleVariableBlockDeletion(
+                plainTextValue,
+                e.key,
+                currentCursorPosition,
+                updateValueAndCursor,
+            );
+            if (deleteSuccess) {
+                e.preventDefault();
+                return;
+            }
+        }
+
+        // Let the popover handle its own keydown events first
+        const popoverHandled = popover.handleKeydown(e);
+        if (popoverHandled) {
+            return;
+        }
+
+        // Handle keyboard shortcuts
         if (!(e.ctrlKey || e.metaKey)) return;
-        
-        const shortcut = KEYBOARD_SHORTCUTS[e.key as keyof typeof KEYBOARD_SHORTCUTS];
+
+        const shortcut =
+            KEYBOARD_SHORTCUTS[e.key as keyof typeof KEYBOARD_SHORTCUTS];
         if (!shortcut) return;
-        
+
         e.preventDefault();
-        
-        if (shortcut === 'link') {
+
+        if (shortcut === "link") {
             linkPopoverOpen = true;
         } else {
             execCommand(shortcut);
@@ -322,7 +538,7 @@
 </script>
 
 <div>
-    <RichEditorToolbar 
+    <RichEditorToolbar
         {activeFormats}
         {activeAlignment}
         disabled={isReadonly}
@@ -336,7 +552,7 @@
         onCloseLinkPopover={resetLinkPopoverState}
     />
 
-    <RichEditorContent 
+    <RichEditorContent
         bind:this={richEditorContent}
         {field}
         {fieldId}
@@ -349,9 +565,20 @@
         onLinkClick={handleLinkClick}
         onLinkKeydown={handleLinkKeydown}
         onKeydown={handleKeydown}
+        onMouseOver={tooltip.handleMouseOver}
+        onMouseOut={tooltip.handleMouseOut}
+        onBlur={handleBlur}
     />
 
-    <EditLinkPopover 
+    <VariablePopover
+        popoverState={popover.state}
+        globalVariablesData={$globalVariablesData}
+        onVariableSelect={popover.selectVariable}
+    />
+
+    <VariableTooltip tooltipState={tooltip.state} />
+
+    <EditLinkPopover
         open={editLinkPopoverOpen}
         bind:linkUrl={editLinkUrl}
         bind:linkText={editLinkText}
@@ -360,11 +587,15 @@
         onVisitLink={visitLink}
         onRemoveLink={removeLink}
         onClose={resetEditLinkPopoverState}
-        onOpenChange={(isOpen) => { if (!isOpen) resetEditLinkPopoverState(); }}
+        onOpenChange={(isOpen) => {
+            if (!isOpen) resetEditLinkPopoverState();
+        }}
     />
 
     {#if field.helperText || showCharCount}
-        <div class="flex justify-between items-center text-sm text-muted-foreground -mt-4">
+        <div
+            class="flex justify-between items-center text-sm text-muted-foreground -mt-4"
+        >
             {#if field.helperText}
                 <p id="{fieldId}-help">{field.helperText}</p>
             {:else}
@@ -377,11 +608,30 @@
                     role="status"
                     aria-live="polite"
                 >
-                    <span class="tabular-nums">{currentLength}/{maxLength}</span>
+                    <span class="tabular-nums">{currentLength}/{maxLength}</span
+                    >
                 </p>
             {/if}
         </div>
     {/if}
 </div>
 
- 
+<style>
+    :global(.variable-highlight) {
+        color: var(--primary);
+        font-weight: 500;
+        border-radius: 0.25rem;
+        padding: 0.125rem 0.25rem;
+        margin: 0 1px;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+            "Liberation Mono", Menlo, monospace;
+        display: inline;
+        white-space: pre-wrap;
+        cursor: help;
+        transition: background-color 0.15s ease;
+    }
+
+    :global(.variable-highlight:hover) {
+        background-color: var(--accent);
+    }
+</style>

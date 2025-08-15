@@ -1,4 +1,4 @@
-import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea } from '@/lib/components/form-builder/fields';
+import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea, RichEditor } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconBrandGithub, IconLink } from '@tabler/icons-svelte';
 
@@ -16,6 +16,11 @@ mainTab.schema = [
         .required()
         .placeholder('Enter the hero subtitle')
         .translatable(),
+    RichEditor('content')
+        .label('Content')
+        .required()
+        .placeholder('Enter the hero content')
+        .translatable()
 ];
 
 const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
