@@ -13,6 +13,7 @@
     export let onLinkClick: (e: MouseEvent) => void;
     export let onLinkKeydown: (e: KeyboardEvent) => void;
     export let onKeydown: (e: KeyboardEvent) => void;
+    export let onBeforeInput: ((e: InputEvent) => void) | undefined = undefined;
     export let onMouseOver: ((e: MouseEvent) => void) | undefined = undefined;
     export let onMouseOut: ((e: MouseEvent) => void) | undefined = undefined;
     export let onBlur: (() => void) | undefined = undefined;
@@ -48,6 +49,9 @@
     style="min-height: {field.rows ? field.rows * 1.5 : 8}rem;"
     placeholder={field.placeholder}
     aria-describedby={showCharCount ? `${fieldId}-characters-left` : undefined}
+    on:beforeinput={(e) => {
+        if (onBeforeInput) onBeforeInput(e);
+    }}
     on:input={onInput}
     on:paste={onPaste}
     on:mouseup={onMouseUp}

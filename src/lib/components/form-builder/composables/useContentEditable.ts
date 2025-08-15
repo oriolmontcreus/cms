@@ -51,6 +51,37 @@ export function useContentEditable() {
         return preCaretRange.toString().length;
     }
 
+    function getCurrentCursorPositionInPlainText(element: HTMLElement): number {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || !element) return 0;
+
+        // Create a text-only version for position calculation
+        const walker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_TEXT,
+            null
+        );
+
+        let textLength = 0;
+        let node: Text | null = null;
+        const range = selection.getRangeAt(0);
+
+        while ((node = walker.nextNode() as Text)) {
+            if (node === range.startContainer) {
+                return textLength + range.startOffset;
+            } else if (node.parentNode && element.contains(node) &&
+                range.startContainer.contains &&
+                range.startContainer.contains(node)) {
+                // If the cursor is inside an element that contains this text node
+                break;
+            } else {
+                textLength += node.textContent?.length || 0;
+            }
+        }
+
+        return textLength;
+    }
+
     function updateElementContent(
         element: HTMLElement,
         newValue: string,
@@ -233,6 +264,7 @@ export function useContentEditable() {
     return {
         setCursorPosition,
         getCurrentCursorPosition,
+        getCurrentCursorPositionInPlainText,
         updateElementContent,
         handleVariableBlockDeletion,
         insertTextAtCursor,

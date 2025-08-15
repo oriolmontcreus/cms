@@ -97,7 +97,6 @@
         });
         document.removeEventListener("selectionchange", updateActiveFormats);
     };
-
     const ensureEditorFocus = () => {
         if (!editorRef || document.activeElement === editorRef) return;
 
@@ -196,6 +195,83 @@
         );
     };
 
+    const handleBeforeInput = (e: InputEvent) => {
+        if (isUpdating) return;
+
+        const plainTextValue = editorRef.textContent || "";
+        const selection = window.getSelection();
+
+        if (!selection?.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+
+        // Check if we're inside a variable highlight span
+        let currentNode = range.startContainer;
+        let parentElement =
+            currentNode.nodeType === Node.TEXT_NODE
+                ? currentNode.parentElement
+                : (currentNode as Element);
+
+        // Check if we're inside or adjacent to a variable highlight
+        while (parentElement && parentElement !== editorRef) {
+            if (parentElement.classList?.contains("variable-highlight")) {
+                // We're inside a variable block - prevent input and move cursor to end
+                e.preventDefault();
+
+                // Move cursor to after the variable highlight span
+                const newRange = document.createRange();
+                newRange.setStartAfter(parentElement);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+                return;
+            }
+            parentElement = parentElement.parentElement;
+        }
+
+        // Also check using plain text position as backup
+        const currentCursorPosition =
+            contentEditable.getCurrentCursorPosition(editorRef);
+        const insideBlock = contentEditable.isInsideVariableBlock(
+            plainTextValue,
+            currentCursorPosition,
+        );
+
+        if (insideBlock.isInside) {
+            e.preventDefault();
+            if (insideBlock.blockEnd) {
+                tick().then(() => {
+                    contentEditable.setCursorPosition(
+                        editorRef,
+                        insideBlock.blockEnd!,
+                    );
+                });
+            }
+            return;
+        }
+
+        // For delete operations, check if we're deleting a variable block
+        if (
+            e.inputType === "deleteContentBackward" ||
+            e.inputType === "deleteContentForward"
+        ) {
+            const key =
+                e.inputType === "deleteContentBackward"
+                    ? "Backspace"
+                    : "Delete";
+            const deleteSuccess = contentEditable.handleVariableBlockDeletion(
+                plainTextValue,
+                key,
+                currentCursorPosition,
+                updateValueAndCursor,
+            );
+            if (deleteSuccess) {
+                e.preventDefault();
+                return;
+            }
+        }
+    };
+
     const handleBlur = () => {
         tooltip.hideTooltip();
     };
@@ -250,65 +326,30 @@
         // Get both HTML and plain text content
         const htmlValue = editorRef.innerHTML;
         const plainTextValue = editorRef.textContent || "";
+        const currentCursorPosition =
+            contentEditable.getCurrentCursorPosition(editorRef);
 
         // Update the value with HTML content
         value = htmlValue;
 
         makeLinksFocusable();
 
-        // Handle global variables functionality
-        const currentCursorPosition =
-            contentEditable.getCurrentCursorPosition(editorRef);
-
-        // Apply variable highlighting to the HTML content
+        // Apply variable highlighting by working with plain text only
         isUpdating = true;
 
-        // First, get the current HTML content and extract text for variable processing
-        let processedHtml = htmlValue;
+        // If the plain text contains variables, re-render everything from plain text
+        if (plainTextValue.includes("{{") && plainTextValue.includes("}}")) {
+            const rendered =
+                globalVariables.renderTextWithVariables(plainTextValue);
 
-        // Process variables in plain text sections (not within HTML tags)
-        processedHtml = processedHtml.replace(
-            />([^<]*)</g,
-            (match, textContent) => {
-                if (textContent.includes("{{") && textContent.includes("}}")) {
-                    const highlightedText =
-                        globalVariables.renderTextWithVariables(textContent);
-                    return match.replace(
-                        textContent,
-                        highlightedText.replace(/<[^>]*>/g, (tag) => tag),
-                    );
-                }
-                return match;
-            },
-        );
-
-        // Also handle text at the beginning and end that might not be wrapped in tags
-        processedHtml = processedHtml.replace(
-            /^([^<]*?)(?=<|$)/g,
-            (match, textContent) => {
-                if (textContent.includes("{{") && textContent.includes("}}")) {
-                    return globalVariables.renderTextWithVariables(textContent);
-                }
-                return match;
-            },
-        );
-
-        processedHtml = processedHtml.replace(
-            /(?:>|^)([^<]*?)$/g,
-            (match, textContent) => {
-                if (textContent.includes("{{") && textContent.includes("}}")) {
-                    return match.replace(
-                        textContent,
-                        globalVariables.renderTextWithVariables(textContent),
-                    );
-                }
-                return match;
-            },
-        );
-
-        if (editorRef.innerHTML !== processedHtml) {
-            editorRef.innerHTML = processedHtml;
-            contentEditable.setCursorPosition(editorRef, currentCursorPosition);
+            // Only update if the content actually changed to avoid cursor jumping
+            if (editorRef.innerHTML !== rendered) {
+                editorRef.innerHTML = rendered;
+                contentEditable.setCursorPosition(
+                    editorRef,
+                    currentCursorPosition,
+                );
+            }
         }
 
         isUpdating = false;
@@ -496,19 +537,51 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
-        const currentCursorPosition =
-            contentEditable.getCurrentCursorPosition(editorRef);
         const plainTextValue = editorRef.textContent || "";
+        const selection = window.getSelection();
 
-        // Handle variable block deletion
-        if (e.key === "Backspace" || e.key === "Delete") {
-            const deleteSuccess = contentEditable.handleVariableBlockDeletion(
+        // Handle cursor navigation to jump over variable blocks
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            if (!selection?.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            let currentNode = range.startContainer;
+            let parentElement =
+                currentNode.nodeType === Node.TEXT_NODE
+                    ? currentNode.parentElement
+                    : (currentNode as Element);
+
+            // Check if we're inside or adjacent to a variable highlight
+            while (parentElement && parentElement !== editorRef) {
+                if (parentElement.classList?.contains("variable-highlight")) {
+                    e.preventDefault();
+
+                    const newRange = document.createRange();
+                    if (e.key === "ArrowRight") {
+                        // Move to after the variable highlight
+                        newRange.setStartAfter(parentElement);
+                    } else {
+                        // Move to before the variable highlight
+                        newRange.setStartBefore(parentElement);
+                    }
+                    newRange.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                    return;
+                }
+                parentElement = parentElement.parentElement;
+            }
+
+            // Fall back to the original cursor navigation logic
+            const currentCursorPosition =
+                contentEditable.getCurrentCursorPosition(editorRef);
+            const navigationHandled = contentEditable.handleCursorNavigation(
                 plainTextValue,
-                e.key,
                 currentCursorPosition,
+                e.key,
                 updateValueAndCursor,
             );
-            if (deleteSuccess) {
+            if (navigationHandled) {
                 e.preventDefault();
                 return;
             }
@@ -558,6 +631,7 @@
         {fieldId}
         bind:value
         showCharCount={!!showCharCount}
+        onBeforeInput={handleBeforeInput}
         onInput={handleInput}
         onPaste={handlePaste}
         onMouseUp={updateActiveFormats}
@@ -626,9 +700,10 @@
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
             "Liberation Mono", Menlo, monospace;
         display: inline;
-        white-space: pre-wrap;
+        white-space: nowrap;
         cursor: help;
         transition: background-color 0.15s ease;
+        box-sizing: border-box;
     }
 
     :global(.variable-highlight:hover) {
