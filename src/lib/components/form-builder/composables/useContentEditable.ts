@@ -39,11 +39,18 @@ export function useContentEditable() {
         return null;
     }
 
-    function getCurrentCursorPosition(element: HTMLElement): number {
+    function getCurrentCursorPosition(element: HTMLElement, container?: Node, offset?: number): number {
         const selection = window.getSelection();
         if (!selection?.rangeCount || !element) return 0;
 
-        const range = selection.getRangeAt(0);
+        let range: Range;
+        if (container !== undefined && offset !== undefined) {
+            range = document.createRange();
+            range.setStart(container, offset);
+        } else {
+            range = selection.getRangeAt(0);
+        }
+
         const preCaretRange = range.cloneRange();
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.endContainer, range.endOffset);

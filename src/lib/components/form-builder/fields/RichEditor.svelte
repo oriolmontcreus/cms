@@ -180,17 +180,31 @@
             (newValue: string, newCursorPos: number) => {
                 popover.closePopover();
 
-                tick().then(() => {
+                // Use setTimeout to ensure proper timing
+                setTimeout(() => {
                     isUpdating = true;
                     const rendered =
                         globalVariables.renderTextWithVariables(newValue);
                     editorRef.innerHTML = rendered;
-                    contentEditable.setCursorPosition(editorRef, newCursorPos);
-                    isUpdating = false;
 
-                    value = editorRef.innerHTML;
-                    makeLinksFocusable();
-                });
+                    // Ensure editor focus before setting cursor position
+                    editorRef.focus();
+
+                    // Use tick to ensure DOM has updated
+                    tick().then(() => {
+                        contentEditable.setCursorPosition(
+                            editorRef,
+                            newCursorPos,
+                        );
+
+                        // Add extra delay to ensure input state is reset
+                        setTimeout(() => {
+                            isUpdating = false;
+                            value = editorRef.innerHTML;
+                            makeLinksFocusable();
+                        }, 50);
+                    });
+                }, 0);
             },
         );
     };
@@ -199,39 +213,10 @@
         if (isUpdating) return;
 
         const plainTextValue = editorRef.textContent || "";
-        const selection = window.getSelection();
-
-        if (!selection?.rangeCount) return;
-
-        const range = selection.getRangeAt(0);
-
-        // Check if we're inside a variable highlight span
-        let currentNode = range.startContainer;
-        let parentElement =
-            currentNode.nodeType === Node.TEXT_NODE
-                ? currentNode.parentElement
-                : (currentNode as Element);
-
-        // Check if we're inside or adjacent to a variable highlight
-        while (parentElement && parentElement !== editorRef) {
-            if (parentElement.classList?.contains("variable-highlight")) {
-                // We're inside a variable block - prevent input and move cursor to end
-                e.preventDefault();
-
-                // Move cursor to after the variable highlight span
-                const newRange = document.createRange();
-                newRange.setStartAfter(parentElement);
-                newRange.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
-                return;
-            }
-            parentElement = parentElement.parentElement;
-        }
-
-        // Also check using plain text position as backup
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(editorRef);
+
+        // Check if we're inside a variable block
         const insideBlock = contentEditable.isInsideVariableBlock(
             plainTextValue,
             currentCursorPosition,
@@ -239,13 +224,14 @@
 
         if (insideBlock.isInside) {
             e.preventDefault();
-            if (insideBlock.blockEnd) {
-                tick().then(() => {
+            // Move cursor to end of the variable block
+            if (insideBlock.blockEnd !== undefined) {
+                setTimeout(() => {
                     contentEditable.setCursorPosition(
                         editorRef,
                         insideBlock.blockEnd!,
                     );
-                });
+                }, 0);
             }
             return;
         }
@@ -538,49 +524,20 @@
 
     function handleKeydown(e: KeyboardEvent) {
         const plainTextValue = editorRef.textContent || "";
-        const selection = window.getSelection();
 
         // Handle cursor navigation to jump over variable blocks
         if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            if (!selection?.rangeCount) return;
-
-            const range = selection.getRangeAt(0);
-            let currentNode = range.startContainer;
-            let parentElement =
-                currentNode.nodeType === Node.TEXT_NODE
-                    ? currentNode.parentElement
-                    : (currentNode as Element);
-
-            // Check if we're inside or adjacent to a variable highlight
-            while (parentElement && parentElement !== editorRef) {
-                if (parentElement.classList?.contains("variable-highlight")) {
-                    e.preventDefault();
-
-                    const newRange = document.createRange();
-                    if (e.key === "ArrowRight") {
-                        // Move to after the variable highlight
-                        newRange.setStartAfter(parentElement);
-                    } else {
-                        // Move to before the variable highlight
-                        newRange.setStartBefore(parentElement);
-                    }
-                    newRange.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
-                    return;
-                }
-                parentElement = parentElement.parentElement;
-            }
-
-            // Fall back to the original cursor navigation logic
             const currentCursorPosition =
                 contentEditable.getCurrentCursorPosition(editorRef);
             const navigationHandled = contentEditable.handleCursorNavigation(
                 plainTextValue,
                 currentCursorPosition,
                 e.key,
-                updateValueAndCursor,
+                (newValue: string, newCursorPos: number) => {
+                    contentEditable.setCursorPosition(editorRef, newCursorPos);
+                },
             );
+
             if (navigationHandled) {
                 e.preventDefault();
                 return;
