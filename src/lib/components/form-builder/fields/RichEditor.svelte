@@ -308,26 +308,14 @@
 
     function handleInput() {
         if (isUpdating) {
-            console.log("⚠️ handleInput skipped - isUpdating is true");
             return;
         }
-
-        console.log("🔄 handleInput called");
 
         // Get both HTML and plain text content
         const htmlValue = editorRef.innerHTML;
         const plainTextValue = editorRef.textContent || "";
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(editorRef);
-
-        console.log("📝 Content analysis:", {
-            htmlValue,
-            plainTextValue,
-            currentCursorPosition,
-            hasVariables:
-                plainTextValue.includes("{{") && plainTextValue.includes("}}"),
-            hasHighlighting: htmlValue.includes("variable-highlight"),
-        });
 
         // Update the value with HTML content (preserve formatting)
         value = htmlValue;
@@ -359,9 +347,6 @@
                     ) === "}}";
                 if (justTypedClosing) {
                     shouldApplyVariableHighlighting = true;
-                    console.log(
-                        "🎯 Variable just completed - will apply highlighting",
-                    );
                 }
             }
         } else {
@@ -375,42 +360,22 @@
             plainTextValue.includes("{{") && plainTextValue.includes("}}");
         const hasHighlighting = htmlValue.includes("variable-highlight");
 
-        console.log("🔍 Variable highlighting decision:", {
-            hasVariables,
-            hasHighlighting,
-            shouldApplyVariableHighlighting,
-            willApplyHighlighting:
-                hasVariables &&
-                (shouldApplyVariableHighlighting || !hasHighlighting),
-        });
-
         if (
             hasVariables &&
             (shouldApplyVariableHighlighting || !hasHighlighting)
         ) {
-            console.log("🎨 Applying variable highlighting...");
             isUpdating = true;
 
             const rendered =
                 globalVariables.renderTextWithVariables(plainTextValue);
 
-            console.log("📝 Rendered content:", rendered);
-
             if (editorRef.innerHTML !== rendered) {
-                console.log(
-                    "📝 Updating editor content from:",
-                    editorRef.innerHTML,
-                );
-                console.log("📝 Updating editor content to:", rendered);
                 editorRef.innerHTML = rendered;
                 contentEditable.setCursorPosition(
                     editorRef,
                     currentCursorPosition,
                 );
                 value = rendered; // Update the value after rendering
-                console.log("📝 Editor content updated");
-            } else {
-                console.log("📝 Editor content unchanged - no update needed");
             }
 
             isUpdating = false;
@@ -421,23 +386,11 @@
 
     function updateActiveFormats() {
         if (!editorRef || document.activeElement !== editorRef) {
-            console.log("⚠️ updateActiveFormats skipped:", {
-                hasEditorRef: !!editorRef,
-                isActiveElement: document.activeElement === editorRef,
-                activeElement: document.activeElement?.tagName,
-            });
             return;
         }
 
         const newActiveFormats = getActiveFormats();
         const newActiveAlignment = getActiveAlignment();
-
-        console.log("🔄 updateActiveFormats:", {
-            previousFormats: activeFormats,
-            newFormats: newActiveFormats,
-            previousAlignment: activeAlignment,
-            newAlignment: newActiveAlignment,
-        });
 
         activeFormats = newActiveFormats;
         activeAlignment = newActiveAlignment;
@@ -452,33 +405,14 @@
     function execCommand(command: string, value?: string) {
         if (isReadonly) return;
 
-        console.log("🎯 execCommand called:", { command, value, isReadonly });
-        console.log("📝 Editor content before:", editorRef.innerHTML);
-        console.log("🎯 Editor focused:", document.activeElement === editorRef);
-
         editorRef.focus();
         const success = document.execCommand(command, false, value);
-        console.log("✅ execCommand success:", success);
-        console.log(
-            "📝 Editor content after execCommand:",
-            editorRef.innerHTML,
-        );
 
         handleInput();
-        console.log(
-            "📝 Editor content after handleInput:",
-            editorRef.innerHTML,
-        );
     }
 
     function handleFormatToggle(formats: string[]) {
         if (isReadonly) return;
-
-        console.log("🎨 handleFormatToggle called:", { formats, isReadonly });
-        console.log(
-            "📝 Editor content before formatting:",
-            editorRef.innerHTML,
-        );
 
         ensureEditorFocus();
 
@@ -486,23 +420,12 @@
             const isCurrentlyActive = document.queryCommandState(format);
             const shouldBeActive = formats.includes(format);
 
-            console.log(`🔍 Format "${format}":`, {
-                isCurrentlyActive,
-                shouldBeActive,
-            });
-
             if (isCurrentlyActive !== shouldBeActive) {
                 const success = document.execCommand(format, false);
-                console.log(`✅ execCommand "${format}" success:`, success);
             }
         });
 
-        console.log("📝 Editor content after formatting:", editorRef.innerHTML);
         handleInput();
-        console.log(
-            "📝 Editor content after handleInput:",
-            editorRef.innerHTML,
-        );
     }
 
     function handleAlignmentChange(alignment: string) {
