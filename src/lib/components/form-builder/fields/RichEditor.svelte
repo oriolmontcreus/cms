@@ -269,9 +269,6 @@
                 node.nodeType === Node.ELEMENT_NODE &&
                 (node as Element).classList?.contains("variable-highlight")
             ) {
-                console.log(
-                    "🔧 Cursor was inside variable span, moving it outside",
-                );
                 // Move cursor to after the variable span
                 const newRange = document.createRange();
                 newRange.setStartAfter(node);
@@ -285,14 +282,6 @@
     };
 
     const handleBeforeInput = (e: InputEvent) => {
-        console.log(
-            "🔥 BEFOREINPUT:",
-            e.inputType,
-            e.data,
-            "Target:",
-            e.target,
-        );
-
         // FIRST: Ensure cursor is not inside a variable span before any input
         if (e.inputType.startsWith("insert")) {
             ensureCursorOutsideVariableSpans();
@@ -323,105 +312,6 @@
                 e.preventDefault();
                 return;
             }
-        }
-    };
-
-    // New approach: Use MutationObserver to protect variable spans
-    let mutationObserver: MutationObserver | null = null;
-
-    const setupVariableProtection = () => {
-        if (!editorRef) return;
-
-        // Clean up existing observer if any
-        if (mutationObserver) {
-            mutationObserver.disconnect();
-        }
-
-        mutationObserver = new MutationObserver((mutations) => {
-            console.log("🔥 MUTATION OBSERVED:", mutations.length, "mutations");
-            let needsRestoration = false;
-            let savedSelection: Range | null = null;
-
-            // Save current selection
-            const selection = window.getSelection();
-            if (selection && selection.rangeCount > 0) {
-                savedSelection = selection.getRangeAt(0).cloneRange();
-            }
-
-            mutations.forEach((mutation) => {
-                console.log(
-                    "🔍 Mutation:",
-                    mutation.type,
-                    mutation.target,
-                    mutation.addedNodes.length,
-                    mutation.removedNodes.length,
-                );
-
-                if (
-                    mutation.type === "childList" ||
-                    mutation.type === "characterData"
-                ) {
-                    // Check if any variable spans were modified
-                    const variableSpans = editorRef.querySelectorAll(
-                        ".variable-highlight",
-                    );
-                    variableSpans.forEach((span) => {
-                        const expectedContent = `{{${span.getAttribute("data-variable-name")}}}`;
-                        console.log("🔍 Variable span check:", {
-                            expectedContent: expectedContent,
-                            actualContent: span.textContent,
-                            needsFixing: span.textContent !== expectedContent,
-                        });
-                        if (span.textContent !== expectedContent) {
-                            console.log("🔧 FIXING variable span content");
-                            span.textContent = expectedContent;
-                            needsRestoration = true;
-                        }
-                    });
-                }
-            });
-
-            if (needsRestoration && savedSelection) {
-                console.log("🔧 RESTORING cursor position");
-                // Move cursor outside of any variable spans
-                setTimeout(() => {
-                    const selection = window.getSelection();
-                    if (selection) {
-                        // Find the nearest position outside variable spans
-                        let node: Node | null = savedSelection!.startContainer;
-                        while (node && node !== editorRef) {
-                            if (
-                                node.nodeType === Node.ELEMENT_NODE &&
-                                (node as Element).classList?.contains(
-                                    "variable-highlight",
-                                )
-                            ) {
-                                // Move cursor to after this span
-                                const range = document.createRange();
-                                range.setStartAfter(node);
-                                range.collapse(true);
-                                selection.removeAllRanges();
-                                selection.addRange(range);
-                                break;
-                            }
-                            node = node.parentNode;
-                        }
-                    }
-                }, 0);
-            }
-        });
-
-        mutationObserver.observe(editorRef, {
-            childList: true,
-            subtree: true,
-            characterData: true,
-        });
-    };
-
-    const cleanupVariableProtection = () => {
-        if (mutationObserver) {
-            mutationObserver.disconnect();
-            mutationObserver = null;
         }
     };
 
@@ -479,15 +369,7 @@
     });
 
     function handleInput() {
-        console.log("🔥 INPUT EVENT:", {
-            isUpdating: isUpdating,
-            htmlValue: editorRef.innerHTML,
-            textContent: editorRef.textContent,
-            valueLength: (editorRef.textContent || "").length,
-        });
-
         if (isUpdating) {
-            console.log("❌ Skipping handleInput because isUpdating is true");
             return;
         }
 
@@ -496,12 +378,6 @@
         const plainTextValue = editorRef.textContent || "";
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(editorRef);
-
-        console.log("📊 Input state:", {
-            htmlValue: htmlValue,
-            plainTextValue: plainTextValue,
-            currentCursorPosition: currentCursorPosition,
-        });
 
         // Update the value with HTML content (preserve formatting)
         value = htmlValue;
