@@ -272,7 +272,6 @@ async function createPage() {
 
 export const config: PageConfig = {
     title: "${pageConfig.title}",
-    slug: "${pageConfig.slug}",${pageConfig.parentSlug ? `\n    parentSlug: "${pageConfig.parentSlug}",` : ''}
     components: []
 };
 `;

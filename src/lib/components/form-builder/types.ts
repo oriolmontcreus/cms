@@ -356,8 +356,6 @@ export interface ComponentInstance {
 
 export interface PageConfig {
     title: string;
-    slug: string;
-    parentSlug?: string;
     components: ComponentInstance[];
     // Form builder configuration
     formBuilder?: {
