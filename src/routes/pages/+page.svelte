@@ -76,7 +76,7 @@
 
     function getDisplaySlug(page: Page): string {
         const slug = getFullSlug(page);
-        if (!slug || slug === "" || slug === "/") {
+        if (!slug || slug === "" || slug === "index") {
             return "Main route /";
         }
         return `/${slug}`;

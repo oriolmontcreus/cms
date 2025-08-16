@@ -285,7 +285,7 @@
                     <div class="flex items-center gap-2">
                       <h4 class="font-medium truncate">{page.title}</h4>
                       <Badge variant="secondary" class="text-xs">
-                        /{page.slug}
+                        /{page.slug === "index" ? "" : page.slug}
                       </Badge>
                     </div>
                     <div class="flex items-center gap-4 mt-1">
