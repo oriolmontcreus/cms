@@ -287,6 +287,8 @@ export interface FormField {
     tab?: string; // Tab name this field belongs to
     // Translation properties
     translatable?: boolean; // Whether this field supports translations
+    // Default values
+    defaultValue?: any; // Default value for the field
     // Visibility properties
     hidden?: boolean; // Whether this field should be hidden from rendering
 }
@@ -333,6 +335,7 @@ export interface FieldBuilder {
     tab(tabName: string): FieldBuilder;
     responsiveGrid(columns?: number, gap?: number, responsive?: { sm?: number; md?: number; lg?: number }): FieldBuilder;
     translatable(isTranslatable?: boolean): FieldBuilder;
+    default(value: any): FieldBuilder;
     hidden(isHidden?: boolean): FieldBuilder;
 }
 

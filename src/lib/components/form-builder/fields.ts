@@ -225,6 +225,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    default(value: any): this {
+        this.field.defaultValue = value;
+        return this;
+    }
+
     toJSON(): FormField { return this.field; }
     get type(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }

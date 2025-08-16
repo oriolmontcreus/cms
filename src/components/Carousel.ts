@@ -47,25 +47,32 @@ settingsTab.schema = [
         .options(['top', 'bottom']),
 
     Toggle('showNavigation')
-        .label('Show Navigation Arrows'),
+        .label('Show Navigation Arrows')
+        .default(true),
 
     Toggle('showIndicators')
-        .label('Show Indicators'),
+        .label('Show Indicators')
+        .default(true),
 
     Toggle('showProgress')
-        .label('Show Progress Bar'),
+        .label('Show Progress Bar')
+        .default(false),
 
     Toggle('backgroundTips')
-        .label('Background Tips Style'),
+        .label('Background Tips Style')
+        .default(false),
 
     Toggle('backgroundGradient')
-        .label('Show Background Gradient'),
+        .label('Show Background Gradient')
+        .default(true),
 
     Toggle('shuffleTips')
-        .label('Shuffle Tips Order'),
+        .label('Shuffle Tips Order')
+        .default(false),
 
     Toggle('animateText')
         .label('Animate Text')
+        .default(true)
 ];
 
 export const Carousel: Component = {
