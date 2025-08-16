@@ -178,6 +178,11 @@ const fieldDefaultValues = new Map<string, any>([
 ]);
 
 export function getFieldDefaultValue(field: FormField): any {
+    // Check if the field has a custom default value first
+    if (field.defaultValue !== undefined) {
+        return field.defaultValue;
+    }
+
     if (field.type === 'select') {
         return field.multiple ? DEFAULT_VALUES.EMPTY_ARRAY : DEFAULT_VALUES.EMPTY_STRING;
     }
