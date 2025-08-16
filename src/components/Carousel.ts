@@ -14,17 +14,17 @@ import type { Component } from '@/lib/components/form-builder/types';
 const slidesTab = defineGrid(1, 4);
 slidesTab.schema = [
     Repeater('slides')
-        .label('Carousel Slides')
+        .label('Carousel slides')
         .min(1)
         .max(10)
         .schema([
             TextInput('text')
-                .label('Slide Text')
+                .label('Slide text')
                 .required()
                 .placeholder('Enter the slide description')
                 .translatable(),
             FileInput('image')
-                .label('Slide Image')
+                .label('Slide image')
                 .required(),
             TextInput('url')
                 .label('Link URL (optional)')
