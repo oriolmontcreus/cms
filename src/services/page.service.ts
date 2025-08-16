@@ -1,7 +1,7 @@
 import type { Page, Component } from "@/lib/shared/types/pages.type";
 import { fetchWithToast, safeFetch } from "@/lib/utils/safeFetch";
 import { errorToast } from "@/services/toast.service";
-import { getPageConfig, getAllPageSlugs } from "@/lib/page-registry";
+import { getPageConfig, getAllPageSlugs, getParentSlugFromKey } from "@/lib/page-registry";
 import { api } from "@/lib/utils/api";
 import { CMS_FULLNAME, FRONTEND_URL } from "@shared/env";
 
@@ -38,8 +38,8 @@ function configToPageDTO(config: any, fullSlug: string, existingPage?: Page): Pa
     return {
         _id: existingPage?._id || fullSlug,
         title: config.title,
-        slug: fullSlug, // Use the full slug (e.g., "home/services") instead of config.slug
-        parentSlug: config.parentSlug,
+        slug: fullSlug,
+        parentSlug: getParentSlugFromKey(fullSlug),
         content: existingPage?.content || "",
         config: config,
         components: components,

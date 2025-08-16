@@ -178,21 +178,17 @@ async function createPage() {
             parentSlug
         };
 
-        // Create the pages directory if it doesn't exist first
+        // Prepare paths but don't create directories yet
         const pagesDir = join(process.cwd(), 'src', 'pages');
-        await mkdir(pagesDir, { recursive: true });
-
-        // For nested pages, create the parent directory structure
         let pageConfigPath: string;
         let targetDir: string;
 
         if (response.parentSlug) {
-            // Create nested structure: pages/parent/child.ts
+            // Prepare nested structure: pages/parent/child.ts
             targetDir = join(pagesDir, response.parentSlug);
-            await mkdir(targetDir, { recursive: true });
             pageConfigPath = join(targetDir, `${response.slug}.ts`);
         } else {
-            // Create flat structure: pages/slug.ts
+            // Prepare flat structure: pages/slug.ts
             targetDir = pagesDir;
             pageConfigPath = join(targetDir, `${response.slug}.ts`);
         }
@@ -246,9 +242,15 @@ async function createPage() {
             return;
         }
 
-        // Create the pages directory if it doesn't exist
+        // Now create the directories after confirmation
         logStep('Creating pages directory...');
         await mkdir(pagesDir, { recursive: true });
+
+        // For nested pages, create the parent directory structure
+        if (response.parentSlug) {
+            await mkdir(targetDir, { recursive: true });
+        }
+
         logStep('Pages directory ready', 'success');
 
         // Create the page configuration file
@@ -272,7 +274,6 @@ async function createPage() {
 
 export const config: PageConfig = {
     title: "${pageConfig.title}",
-    slug: "${pageConfig.slug}",${pageConfig.parentSlug ? `\n    parentSlug: "${pageConfig.parentSlug}",` : ''}
     components: []
 };
 `;

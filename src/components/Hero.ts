@@ -1,4 +1,4 @@
-import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea, RichEditor } from '@/lib/components/form-builder/fields';
+import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconBrandGithub, IconLink } from '@tabler/icons-svelte';
 
@@ -32,7 +32,8 @@ buttonsTab.schema = [
     TextInput('githubUrl')
         .label('GitHub repo url')
         .suffix(IconBrandGithub)
-        .placeholder('https://github.com/username/repo'),];
+        .placeholder('https://github.com/username/repo')
+];
 
 export const Hero: Component = {
     name: 'Hero',
