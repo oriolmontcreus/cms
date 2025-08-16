@@ -36,11 +36,11 @@ export class PageService {
       // Create a new page if it doesn't exist
       const newPage: Page = {
         _id: `page_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-        title: slug === '/' ? 'Home' : slug,
+        title: slug === 'index' ? 'Home' : slug,
         slug: slug,
         content: '',
         config: {
-          title: slug === '/' ? 'Home' : slug,
+          title: slug === 'index' ? 'Home' : slug,
           slug: slug
         },
         components: components,
