@@ -31,7 +31,9 @@
         const fullSlug = Array.isArray(slugParam)
             ? slugParam.join("/")
             : slugParam;
-        const normalizedSlug = fullSlug || "/";
+
+        const normalizedSlug =
+            fullSlug === "/" || !fullSlug ? "index" : fullSlug;
 
         const [data, err] = await safeFetch(getPageBySlug(normalizedSlug));
         loading = false;

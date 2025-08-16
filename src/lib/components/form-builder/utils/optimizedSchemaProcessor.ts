@@ -165,9 +165,7 @@ export function processComponentSchema(component: any): ProcessedSchema {
 
     processedSchemaCache.set(component, result);
     return result;
-}
-
-/**
+}/**
  * Get default value for field type - optimized with lookup table
  */
 const fieldDefaultValues = new Map<string, any>([
@@ -216,9 +214,7 @@ export function initializeFormDataOptimized(
     }
 
     return formData;
-}
-
-/**
+}/**
  * Initialize translation data with optimized structure building
  */
 export function initializeTranslationDataOptimized(

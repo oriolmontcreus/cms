@@ -3,7 +3,7 @@ import { Hero } from '../components/Hero';
 import { CarouselComponent } from '@/components/Carousel';
 export const config: PageConfig = {
     title: "Home",
-    slug: "home",
+    slug: "index",
     components: [
         {
             component: Hero,

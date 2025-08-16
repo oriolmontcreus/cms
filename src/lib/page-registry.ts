@@ -6,15 +6,13 @@ import { config as homeServicesConfig } from '../pages/home/services';
 
 // Page registry - add new pages here
 const pageConfigs: Record<string, PageConfig> = {
-    '/': homeConfig,
-    'home/services': homeServicesConfig,
+    'index': homeConfig,
+    'index/services': homeServicesConfig,
 };
 
 export function getPageConfig(slug: string): PageConfig | null {
     return pageConfigs[slug] || null;
-}
-
-export function getAllPageSlugs(): string[] {
+} export function getAllPageSlugs(): string[] {
     return Object.keys(pageConfigs);
 }
 
