@@ -5,7 +5,7 @@ import {
     defineGrid,
     Tabs,
     TabField,
-    Number,
+    NumberInput,
     Select,
     Toggle
 } from '@/lib/components/form-builder/fields';
@@ -32,7 +32,7 @@ slidesTab.schema = [
         ])
 ]; const settingsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
 settingsTab.schema = [
-    Number('autoplayInterval')
+    NumberInput('autoplayInterval')
         .label('Autoplay Interval (ms)')
         .min(1000)
         .max(10000)

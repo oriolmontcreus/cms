@@ -238,10 +238,9 @@ class FieldBuilder implements IFieldBuilder {
 // Factory functions that return FieldBuilder instances
 export const TextInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('text', name);
 export const Textarea = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('textarea', name);
-export const Number = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('number', name);
+export const NumberInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('number', name);
 export const DatePicker = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('date', name);
 export const DateRangePicker = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('dateRange', name);
-export const Email = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('email', name);
 export const Select = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('select', name);
 export const Toggle = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('toggle', name);
 export const ColorPicker = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('color', name);
