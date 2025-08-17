@@ -20,6 +20,7 @@
     export let formData: FormData;
     export let translationData: TranslationData = {};
     export let locales: readonly { code: string; name: string }[] = [];
+    export let validationErrors: Record<string, string> = {};
 
     const formBuilderContext = getContext<FormBuilderContext>("formBuilder");
 
@@ -393,6 +394,7 @@
             currentLocale={activeLocale}
             isDefaultLocale={activeLocale === CMS_LOCALE}
             {translationData}
+            {validationErrors}
         />
     {/if}
 {:else}

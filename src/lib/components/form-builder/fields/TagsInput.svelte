@@ -6,6 +6,7 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: string[] = [];
+    export let validationError: string | null = null;
 
     // Ensure value is always an array
     $: if (!Array.isArray(value)) {
@@ -60,7 +61,11 @@
     disabled={field.disabled || isMaxReached}
     allowDuplicates={field.allowDuplicates}
     {validate}
-    class={cn("w-full", field.disabled && "opacity-50 cursor-not-allowed")}
+    class={cn(
+        "w-full",
+        field.disabled && "opacity-50 cursor-not-allowed",
+        validationError && "border-destructive",
+    )}
     id={fieldId}
     name={fieldId}
 />

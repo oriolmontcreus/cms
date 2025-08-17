@@ -13,6 +13,7 @@
     export let fieldId: string;
     export let value: string = "";
     export let placeholder: string = "Enter text with variables...";
+    export let validationError: string | null = null;
     export let rows: number = 4;
 
     let textareaElement: HTMLDivElement;
@@ -222,6 +223,8 @@
             field.autoResize
                 ? "resize-none overflow-hidden transition-all duration-300 ease-in-out"
                 : "resize-y overflow-auto",
+            validationError &&
+                "border-destructive focus-visible:border-destructive",
         )}
         style={field.autoResize
             ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"

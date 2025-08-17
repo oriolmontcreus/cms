@@ -15,6 +15,11 @@ mainTab.schema = [
         .required()
         .placeholder('Enter the hero subtitle')
         .translatable(),
+    TextInput('contactEmail')
+        .label('Contact email')
+        .required()
+        .type("email")
+        .placeholder('Enter the contact email')
 ];
 
 const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });

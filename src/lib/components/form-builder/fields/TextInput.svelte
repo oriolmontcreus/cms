@@ -13,6 +13,7 @@
     export let fieldId: string;
     export let value: string = "";
     export let type: string = "text";
+    export let validationError: string | null = null;
 
     let editableElement: HTMLDivElement;
     let inputElement: HTMLInputElement;
@@ -20,7 +21,12 @@
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
-    const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
+    const inputClasses = cn(
+        hasPrefix && "ps-9",
+        hasSuffix && "pe-9",
+        validationError &&
+            "border-destructive focus-visible:border-destructive",
+    );
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
 
