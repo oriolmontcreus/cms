@@ -86,6 +86,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    type(inputType: 'text' | 'email' | 'password' | 'url' | 'tel'): this {
+        this.field.type = inputType as FieldType;
+        return this;
+    }
+
     options(optionsList: string[]): this {
         this.field.options = optionsList;
         return this;
@@ -231,11 +236,12 @@ class FieldBuilder implements IFieldBuilder {
     }
 
     toJSON(): FormField { return this.field; }
-    get type(): FieldType { return this.field.type; }
+    get fieldType(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }
 }
 
 // Factory functions that return FieldBuilder instances
+// TextInput: Regular text input with variable support. Use .type() to specify input type (email, password, etc.)
 export const TextInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('text', name);
 export const Textarea = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('textarea', name);
 export const NumberInput = <T extends string>(name: ValidFieldName<T>) => new FieldBuilder('number', name);

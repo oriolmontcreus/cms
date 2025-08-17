@@ -10,7 +10,6 @@
     import DatePicker from "./fields/DatePicker.svelte";
     import DateRangePicker from "./fields/DateRangePicker.svelte";
     import SelectInput from "./fields/SelectInput.svelte";
-    import EmailInput from "./fields/EmailInput.svelte";
     import ToggleInput from "./fields/ToggleInput.svelte";
     import ColorPicker from "./fields/ColorPicker.svelte";
     import RichEditor from "./fields/RichEditor.svelte";
@@ -30,12 +29,15 @@
 
     const FIELD_COMPONENTS: Record<string, any> = {
         text: TextInput,
+        email: TextInput,
+        password: TextInput,
+        url: TextInput,
+        tel: TextInput,
         textarea: TextareaInput,
         number: NumberInput,
         date: DatePicker,
         dateRange: DateRangePicker,
         select: SelectInput,
-        email: EmailInput,
         toggle: ToggleInput,
         color: ColorPicker,
         richtext: RichEditor,
@@ -78,6 +80,7 @@
                 {field}
                 {fieldId}
                 bind:value
+                type={field.type}
             />
         {/if}
     {:else}

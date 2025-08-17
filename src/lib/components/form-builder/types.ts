@@ -295,7 +295,7 @@ export interface FormField {
 
 // Type for FieldBuilder instances (for better type checking)
 export interface FieldBuilder {
-    type: FieldType;
+    fieldType: FieldType;
     name: string;
     toJSON(): FormField;
     label(text: string): FieldBuilder;
@@ -313,6 +313,7 @@ export interface FieldBuilder {
     allowDecimals(allow?: boolean): FieldBuilder;
     pattern(regex: string): FieldBuilder;
     url(): FieldBuilder;
+    type(inputType: 'text' | 'email' | 'password' | 'url' | 'tel'): FieldBuilder;
     options(optionsList: string[]): FieldBuilder;
     multiple(isMultiple?: boolean): FieldBuilder;
     searchable(isSearchable?: boolean): FieldBuilder;

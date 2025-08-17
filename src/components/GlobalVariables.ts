@@ -7,7 +7,10 @@ siteTab.schema = [
     TextInput('siteName')
         .label('Site name')
         .required()
-        .placeholder('Enter your site name')
+        .placeholder('Enter your site name'),
+    TextInput('contactEmail')
+        .label('Contact Email')
+        .type('email')
 ];
 
 export const GlobalVariables: Component = {

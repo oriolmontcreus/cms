@@ -12,8 +12,10 @@
     export let field: FormField;
     export let fieldId: string;
     export let value: string = "";
+    export let type: string = "text";
 
     let editableElement: HTMLDivElement;
+    let inputElement: HTMLInputElement;
     let isUpdating = false;
 
     const hasPrefix = field.prefix !== undefined;
@@ -21,6 +23,11 @@
     const inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
     const prefixIsString = typeof field.prefix === "string";
     const suffixIsString = typeof field.suffix === "string";
+
+    // Determine if we should use contenteditable (for variable support) or regular input
+    const supportsVariables =
+        type === "text" || type === "url" || type === "tel";
+    const inputType = type === "text" ? "text" : type;
 
     // Use composables
     const globalVariables = useGlobalVariables();
@@ -185,6 +192,11 @@
         tooltip.hideTooltip();
     }
 
+    function handleRegularInput(event: Event) {
+        const target = event.target as HTMLInputElement;
+        value = target.value;
+    }
+
     function insertVariable(variableName: string) {
         contentEditable.insertTextAtCursor(
             editableElement,
@@ -208,42 +220,69 @@
 
 <div class="relative">
     <div class="relative w-full">
-        <div
-            bind:this={editableElement}
-            contenteditable="true"
-            spellcheck="false"
-            role="textbox"
-            tabindex="0"
-            id={fieldId}
-            class={cn(
-                "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-                "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-                inputClasses,
-            )}
-            style="line-height: 20px; padding: 8px 12px; display: block; white-space: nowrap; overflow-x: scroll; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none;"
-            data-placeholder={field.placeholder}
-            oninput={handleInput}
-            onkeydown={handleKeydown}
-            onmouseover={tooltip.handleMouseOver}
-            onmouseout={tooltip.handleMouseOut}
-            onfocus={handleFocus}
-            onblur={handleBlur}
-        >
-            {@html globalVariables.renderTextWithVariables(value)}
-        </div>
+        {#if supportsVariables}
+            <div
+                bind:this={editableElement}
+                contenteditable="true"
+                spellcheck="false"
+                role="textbox"
+                tabindex="0"
+                id={fieldId}
+                class={cn(
+                    "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                    "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                    "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                    inputClasses,
+                )}
+                style="line-height: 20px; padding: 8px 12px; display: block; white-space: nowrap; overflow-x: scroll; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none;"
+                data-placeholder={field.placeholder}
+                oninput={handleInput}
+                onkeydown={handleKeydown}
+                onmouseover={tooltip.handleMouseOver}
+                onmouseout={tooltip.handleMouseOut}
+                onfocus={handleFocus}
+                onblur={handleBlur}
+            >
+                {@html globalVariables.renderTextWithVariables(value)}
+            </div>
+        {:else}
+            <input
+                bind:this={inputElement}
+                type={inputType}
+                id={fieldId}
+                class={cn(
+                    "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                    "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                    "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                    inputClasses,
+                )}
+                placeholder={field.placeholder}
+                bind:value
+                oninput={handleRegularInput}
+                onfocus={handleFocus}
+                onblur={handleBlur}
+                required={field.required}
+                disabled={field.disabled}
+                readonly={field.readonly}
+                minlength={field.min}
+                maxlength={field.max}
+                pattern={field.pattern}
+            />
+        {/if}
 
-        <input
-            type="hidden"
-            name={fieldId}
-            bind:value
-            required={field.required}
-            disabled={field.disabled}
-            readonly={field.readonly}
-            minlength={field.min}
-            maxlength={field.max}
-            pattern={field.pattern}
-        />
+        {#if supportsVariables}
+            <input
+                type="hidden"
+                name={fieldId}
+                bind:value
+                required={field.required}
+                disabled={field.disabled}
+                readonly={field.readonly}
+                minlength={field.min}
+                maxlength={field.max}
+                pattern={field.pattern}
+            />
+        {/if}
 
         {#if hasPrefix}
             <div
@@ -278,13 +317,15 @@
         {/if}
     </div>
 
-    <VariablePopover
-        popoverState={popover.state}
-        globalVariablesData={$globalVariablesData}
-        onVariableSelect={popover.selectVariable}
-    />
+    {#if supportsVariables}
+        <VariablePopover
+            popoverState={popover.state}
+            globalVariablesData={$globalVariablesData}
+            onVariableSelect={popover.selectVariable}
+        />
 
-    <VariableTooltip tooltipState={tooltip.state} />
+        <VariableTooltip tooltipState={tooltip.state} />
+    {/if}
 </div>
 
 <style>
