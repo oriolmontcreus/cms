@@ -320,8 +320,6 @@
      * Validates all form data and updates validation state
      */
     async function validateForm(dataToValidate: any): Promise<boolean> {
-        console.log("[FormBuilder] validateForm called with:", dataToValidate);
-
         // Clear previous validation errors
         validationErrors = {};
         hasValidationErrors = false;
@@ -331,38 +329,17 @@
             const componentData = dataToValidate[componentInstance.id] || {};
             const componentSchema = componentInstance.component.schema;
 
-            console.log(
-                `[FormBuilder] Validating component ${componentInstance.id}:`,
-                {
-                    componentData,
-                    componentSchema,
-                },
-            );
-
             const validation = validateFormData(componentSchema, componentData);
-
-            console.log(
-                `[FormBuilder] Validation result for ${componentInstance.id}:`,
-                validation,
-            );
 
             if (!validation.isValid) {
                 validation.errors.forEach((error) => {
                     const fullFieldKey = `${componentInstance.id}.${error.field}`;
                     validationErrors[fullFieldKey] = error.message;
-                    console.log(
-                        `[FormBuilder] Added validation error: ${fullFieldKey} = ${error.message}`,
-                    );
                 });
             }
         }
 
         hasValidationErrors = Object.keys(validationErrors).length > 0;
-
-        console.log("[FormBuilder] Final validation state:", {
-            hasValidationErrors,
-            validationErrors,
-        });
 
         if (hasValidationErrors) {
             const errorCount = Object.keys(validationErrors).length;
