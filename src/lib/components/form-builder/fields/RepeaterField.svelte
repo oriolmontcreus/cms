@@ -74,7 +74,8 @@
 
 <div class="space-y-4">
     {#if !isTranslationMode}
-        <div class="flex items-center justify-between">
+        <!-- Add Button at top -->
+        <div class="flex items-center justify-between mb-4">
             <Button type="button" variant="outline" onclick={addItem}>
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Add Item
@@ -166,4 +167,19 @@
             {/if}
         {/each}
     </div>
+
+    {#if !isTranslationMode && value.length > 0}
+        <!-- Add Item button at the bottom -->
+        <div class="flex justify-center mt-6 pt-4 border-t border-border/50">
+            <Button
+                type="button"
+                variant="outline"
+                onclick={addItem}
+                class="w-full max-w-xs"
+            >
+                <PlusIcon class="w-4 h-4 mr-2" />
+                Add Item
+            </Button>
+        </div>
+    {/if}
 </div>
