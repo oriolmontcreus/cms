@@ -31,8 +31,7 @@
     const suffixIsString = typeof field.suffix === "string";
 
     // Determine if we should use contenteditable (for variable support) or regular input
-    const supportsVariables =
-        type === "text" || type === "url" || type === "tel";
+    const supportsVariables = field.allowVariables !== false;
     const inputType = type === "text" ? "text" : type;
 
     // Use composables

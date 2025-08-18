@@ -289,6 +289,8 @@ export interface FormField {
     translatable?: boolean; // Whether this field supports translations
     // Default values
     defaultValue?: any; // Default value for the field
+    // Variable support
+    allowVariables?: boolean; // Whether this field supports global variables (default: true for text-based fields)
     // Visibility properties
     hidden?: boolean; // Whether this field should be hidden from rendering
 }
@@ -337,6 +339,7 @@ export interface FieldBuilder {
     responsiveGrid(columns?: number, gap?: number, responsive?: { sm?: number; md?: number; lg?: number }): FieldBuilder;
     translatable(isTranslatable?: boolean): FieldBuilder;
     default(value: any): FieldBuilder;
+    allowVariables(allow?: boolean): FieldBuilder;
     hidden(isHidden?: boolean): FieldBuilder;
 }
 

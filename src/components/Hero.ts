@@ -20,6 +20,8 @@ mainTab.schema = [
         .required()
         .type("email")
         .placeholder('Enter the contact email')
+        .allowVariables(false)
+
 ];
 
 const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
