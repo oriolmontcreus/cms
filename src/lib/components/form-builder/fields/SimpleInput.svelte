@@ -20,8 +20,8 @@
     const suffixIsString = typeof field.suffix === "string";
     const inputType = type === "text" ? "text" : type;
 
-    function handleInput(event) {
-        const target = event.target;
+    function handleInput(event: Event) {
+        const target = event.target as HTMLInputElement;
         value = target.value;
     }
 </script>
