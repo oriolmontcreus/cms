@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { FormField } from "../types";
-    import SimpleInput from "./SimpleInput.svelte";
+    import SimpleInput from "./textinput/SimpleInput.svelte";
 
     export let field: FormField;
     export let fieldId: string;
@@ -13,7 +13,7 @@
     // Only load variable-related imports if needed
     let VariableInput: any = null;
     if (supportsVariables) {
-        import("./VariableInput.svelte").then((module) => {
+        import("./textinput/VariableInput.svelte").then((module) => {
             VariableInput = module.default;
         });
     }

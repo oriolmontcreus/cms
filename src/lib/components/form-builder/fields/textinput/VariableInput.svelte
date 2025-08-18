@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { FormField } from "../types";
+    import type { FormField } from "../../types";
     import { tick } from "svelte";
     import { cn } from "$lib/utils";
-    import { useGlobalVariables } from "../composables/useGlobalVariables";
-    import { useVariablePopover } from "../composables/useVariablePopover";
-    import { useVariableTooltip } from "../composables/useVariableTooltip";
-    import { useContentEditable } from "../composables/useContentEditable";
-    import VariablePopover from "../components/VariablePopover.svelte";
-    import VariableTooltip from "../components/VariableTooltip.svelte";
+    import { useGlobalVariables } from "../../composables/useGlobalVariables";
+    import { useVariablePopover } from "../../composables/useVariablePopover";
+    import { useVariableTooltip } from "../../composables/useVariableTooltip";
+    import { useContentEditable } from "../../composables/useContentEditable";
+    import VariablePopover from "../../components/VariablePopover.svelte";
+    import VariableTooltip from "../../components/VariableTooltip.svelte";
 
     export let field: FormField;
     export let fieldId: string;

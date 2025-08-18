@@ -1,6 +1,6 @@
 <script lang="ts">
     import { cn } from "$lib/utils";
-    import type { FormField } from "../types";
+    import type { FormField } from "../../types";
 
     export let field: FormField;
     export let fieldId: string;
