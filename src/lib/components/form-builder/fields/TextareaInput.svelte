@@ -16,8 +16,11 @@
     export let validationError: string | null = null;
     export let rows: number = 4;
 
-    let textareaElement: HTMLDivElement;
+    let textareaElement: HTMLDivElement | HTMLTextAreaElement;
     let isUpdating = false;
+
+    // Determine if variables should be supported (default: true)
+    const supportsVariables = field.allowVariables !== false;
 
     // Auto-resize functionality (only when enabled)
     function autoResize() {
@@ -35,23 +38,37 @@
         textareaElement.style.height = `${newHeight}px`;
     }
 
-    // Use the same composables as TextInput
-    const globalVariables = useGlobalVariables();
-    const { data: globalVariablesData, variableNames } = globalVariables;
-    const tooltip = useVariableTooltip(
-        globalVariables.getCurrentGlobalVariablesData,
-    );
-    const contentEditable = useContentEditable();
+    // Use the same composables as TextInput (only if variables are supported)
+    const globalVariables = supportsVariables ? useGlobalVariables() : null;
+    const { data: globalVariablesData, variableNames } = globalVariables || {
+        data: { subscribe: () => ({}) },
+        variableNames: { subscribe: () => [] },
+    };
+    const tooltip =
+        supportsVariables && globalVariables
+            ? useVariableTooltip(globalVariables.getCurrentGlobalVariablesData)
+            : null;
+    const contentEditable = supportsVariables ? useContentEditable() : null;
 
-    const popover = useVariablePopover(
-        () => $variableNames,
-        (variableName: string) => {
-            insertVariable(variableName);
-        },
-    );
+    const popover =
+        supportsVariables && globalVariables
+            ? useVariablePopover(
+                  () => $variableNames as string[],
+                  (variableName: string) => {
+                      insertVariable(variableName);
+                  },
+              )
+            : null;
 
     function updateElementContent(newValue: string, preserveCursor = true) {
-        if (!textareaElement || isUpdating) return;
+        if (
+            !textareaElement ||
+            isUpdating ||
+            !supportsVariables ||
+            !contentEditable ||
+            !globalVariables
+        )
+            return;
 
         isUpdating = true;
         contentEditable.updateElementContent(
@@ -68,6 +85,13 @@
 
         const target = event.target as HTMLDivElement;
         const inputValue = target.textContent || "";
+
+        if (!supportsVariables || !contentEditable || !globalVariables) {
+            value = inputValue;
+            autoResize();
+            return;
+        }
+
         const cursorPos =
             contentEditable.getCurrentCursorPosition(textareaElement);
 
@@ -113,16 +137,23 @@
             const searchStart = matchIndex + 2;
             const potentialQuery = textBeforeCursor.substring(searchStart);
 
-            if (!potentialQuery.includes("}}")) {
+            if (!potentialQuery.includes("}}") && popover) {
                 popover.openPopover(potentialQuery);
                 return;
             }
         }
 
-        popover.closePopover();
+        if (popover) {
+            popover.closePopover();
+        }
     }
 
     function handleKeydown(event: KeyboardEvent) {
+        if (!supportsVariables || !contentEditable) {
+            // Simple keydown handling without variables
+            return;
+        }
+
         const currentCursorPosition =
             contentEditable.getCurrentCursorPosition(textareaElement);
 
@@ -165,9 +196,11 @@
         }
 
         // Let the popover handle its own keydown events
-        const handled = popover.handleKeydown(event);
-        if (handled) {
-            return;
+        if (popover) {
+            const handled = popover.handleKeydown(event);
+            if (handled) {
+                return;
+            }
         }
     }
 
@@ -175,12 +208,19 @@
         value = newValue;
         tick().then(() => {
             updateElementContent(newValue, false);
-            contentEditable.setCursorPosition(textareaElement, newCursorPos);
+            if (contentEditable) {
+                contentEditable.setCursorPosition(
+                    textareaElement,
+                    newCursorPos,
+                );
+            }
             autoResize();
         });
     }
 
     function insertVariable(variableName: string) {
+        if (!supportsVariables || !contentEditable || !popover) return;
+
         contentEditable.insertTextAtCursor(
             textareaElement,
             value,
@@ -191,10 +231,12 @@
 
                 tick().then(() => {
                     updateElementContent(newValue, false);
-                    contentEditable.setCursorPosition(
-                        textareaElement,
-                        newCursorPos,
-                    );
+                    if (contentEditable) {
+                        contentEditable.setCursorPosition(
+                            textareaElement,
+                            newCursorPos,
+                        );
+                    }
                     autoResize();
                 });
             },
@@ -202,51 +244,87 @@
     }
 
     function handleBlur() {
-        tooltip.hideTooltip();
+        if (tooltip) {
+            tooltip.hideTooltip();
+        }
     }
 </script>
 
 <div class="relative">
-    <div
-        bind:this={textareaElement}
-        id={fieldId}
-        contenteditable="true"
-        spellcheck="false"
-        role="textbox"
-        tabindex="0"
-        data-auto-resize={field.autoResize ? "true" : undefined}
-        class={cn(
-            "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-            "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-            "min-h-[80px]",
-            field.autoResize
-                ? "resize-none overflow-hidden transition-all duration-300 ease-in-out"
-                : "resize-y overflow-auto",
-            validationError &&
-                "border-destructive focus-visible:border-destructive",
-        )}
-        style={field.autoResize
-            ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"
-            : `height: ${rows * 1.5}rem; word-wrap: break-word; white-space: pre-wrap;`}
-        data-placeholder={placeholder}
-        oninput={handleInput}
-        onkeydown={handleKeydown}
-        onmouseover={tooltip.handleMouseOver}
-        onmouseout={tooltip.handleMouseOut}
-        onfocus={() => {}}
-        onblur={handleBlur}
-    >
-        {@html globalVariables.renderTextWithVariables(value)}
-    </div>
+    {#if supportsVariables}
+        <div
+            bind:this={textareaElement}
+            id={fieldId}
+            contenteditable="true"
+            spellcheck="false"
+            role="textbox"
+            tabindex="0"
+            data-auto-resize={field.autoResize ? "true" : undefined}
+            class={cn(
+                "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                "min-h-[80px]",
+                field.autoResize
+                    ? "resize-none overflow-hidden transition-all duration-300 ease-in-out"
+                    : "resize-y overflow-auto",
+                validationError &&
+                    "border-destructive focus-visible:border-destructive",
+            )}
+            style={field.autoResize
+                ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"
+                : `height: ${rows * 1.5}rem; word-wrap: break-word; white-space: pre-wrap;`}
+            data-placeholder={placeholder}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
+            onmouseover={tooltip ? tooltip.handleMouseOver : undefined}
+            onmouseout={tooltip ? tooltip.handleMouseOut : undefined}
+            onfocus={() => {}}
+            onblur={handleBlur}
+        >
+            {@html globalVariables
+                ? globalVariables.renderTextWithVariables(value)
+                : value}
+        </div>
+    {:else}
+        <textarea
+            bind:this={textareaElement}
+            id={fieldId}
+            bind:value
+            {placeholder}
+            {rows}
+            disabled={field.disabled}
+            readonly={field.readonly}
+            required={field.required}
+            oninput={autoResize}
+            class={cn(
+                "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+                "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                "min-h-[80px]",
+                field.autoResize
+                    ? "resize-none overflow-hidden transition-all duration-300 ease-in-out"
+                    : "resize-y overflow-auto",
+                validationError &&
+                    "border-destructive focus-visible:border-destructive",
+            )}
+            style={field.autoResize
+                ? "height: auto; word-wrap: break-word; white-space: pre-wrap;"
+                : `height: ${rows * 1.5}rem; word-wrap: break-word; white-space: pre-wrap;`}
+        ></textarea>
+    {/if}
 
-    <VariablePopover
-        popoverState={popover.state}
-        globalVariablesData={$globalVariablesData}
-        onVariableSelect={popover.selectVariable}
-    />
+    {#if supportsVariables && popover}
+        <VariablePopover
+            popoverState={popover.state}
+            globalVariablesData={$globalVariablesData as Record<string, any>}
+            onVariableSelect={popover.selectVariable}
+        />
+    {/if}
 
-    <VariableTooltip tooltipState={tooltip.state} />
+    {#if supportsVariables && tooltip}
+        <VariableTooltip tooltipState={tooltip.state} />
+    {/if}
 </div>
 
 <style>

@@ -20,8 +20,11 @@ mainTab.schema = [
         .required()
         .type("email")
         .placeholder('Enter the contact email')
-        .allowVariables(false)
-
+        .allowVariables(false), // Example: disable variables for this email field
+    Textarea('description')
+        .label('Description (no variables)')
+        .placeholder('Enter description without variable support')
+        .allowVariables(false), // Example: disable variables for this textarea
 ];
 
 const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
