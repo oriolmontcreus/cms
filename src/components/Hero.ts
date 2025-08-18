@@ -14,6 +14,7 @@ mainTab.schema = [
         .label('Subtitle')
         .required()
         .placeholder('Enter the hero subtitle')
+        .allowVariables(false)
         .translatable(),
     TextInput('contactEmail')
         .label('Contact email')
