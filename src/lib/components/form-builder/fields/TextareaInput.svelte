@@ -12,7 +12,7 @@
     const supportsVariables = field.allowVariables !== false;
 
     // Only load variable-related imports if needed
-    let VariableTextarea: any = null;
+    let VariableTextarea: typeof import("./textarea/VariableTextarea.svelte").default = null;
     if (supportsVariables) {
         import("./textarea/VariableTextarea.svelte").then((module) => {
             VariableTextarea = module.default;
