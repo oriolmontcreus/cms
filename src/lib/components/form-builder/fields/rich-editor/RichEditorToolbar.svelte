@@ -17,7 +17,7 @@
     export let onCloseLinkPopover: () => void;
 </script>
 
-<div class="flex items-center gap-1 px-2 py-1 bg-transparent">
+<div class="flex items-center gap-1 py-1 bg-transparent">
     <!-- Format toggle group -->
     <FormatToggleGroup {activeFormats} {disabled} {onFormatToggle} />
 
