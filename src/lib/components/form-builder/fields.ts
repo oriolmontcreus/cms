@@ -235,6 +235,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    allowVariables(allow: boolean = true): this {
+        this.field.allowVariables = allow;
+        return this;
+    }
+
     toJSON(): FormField { return this.field; }
     get fieldType(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }

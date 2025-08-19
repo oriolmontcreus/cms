@@ -19,6 +19,8 @@
         initializeFormDataOptimized,
         initializeTranslationDataOptimized,
     } from "./utils/optimizedSchemaProcessor";
+    import { validateFormData, type ValidationError } from "./utils/validation";
+    import { errorToast } from "@/services/toast.service";
     import { CSS_CLASSES } from "./constants";
     import { writable } from "svelte/store";
     import { setContext, onMount } from "svelte";
@@ -38,6 +40,10 @@
     );
     let translationData: TranslationData = {};
     let translationDataInitialized = false;
+
+    // Validation state
+    let validationErrors: Record<string, string> = {};
+    let hasValidationErrors = false;
 
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
@@ -310,6 +316,41 @@
         return replaceFileReferences(data, fileMap);
     }
 
+    /**
+     * Validates all form data and updates validation state
+     */
+    async function validateForm(dataToValidate: any): Promise<boolean> {
+        // Clear previous validation errors
+        validationErrors = {};
+        hasValidationErrors = false;
+
+        // Validate each component's data
+        for (const componentInstance of config.components) {
+            const componentData = dataToValidate[componentInstance.id] || {};
+            const componentSchema = componentInstance.component.schema;
+
+            const validation = validateFormData(componentSchema, componentData);
+
+            if (!validation.isValid) {
+                validation.errors.forEach((error) => {
+                    const fullFieldKey = `${componentInstance.id}.${error.field}`;
+                    validationErrors[fullFieldKey] = error.message;
+                });
+            }
+        }
+
+        hasValidationErrors = Object.keys(validationErrors).length > 0;
+
+        if (hasValidationErrors) {
+            const errorCount = Object.keys(validationErrors).length;
+            errorToast(
+                `Found ${errorCount} validation error${errorCount > 1 ? "s" : ""}. Please fix them before saving.`,
+            );
+        }
+
+        return !hasValidationErrors;
+    }
+
     export async function handleSubmit(forced = false) {
         // Only prevent auto-submit in translation mode, but allow manual saves
         if (mode === RenderMode.TRANSLATION && !forced) {
@@ -324,6 +365,15 @@
 
             // Give a small delay to ensure the update completes
             await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
+        // Validate form data before saving
+        const dataToValidate =
+            mode === RenderMode.TRANSLATION ? translationData : formData;
+        const isValid = await validateForm(dataToValidate);
+
+        if (!isValid) {
+            return; // Don't save if validation fails
         }
 
         await saveFormData();
@@ -430,6 +480,7 @@
             {hideComponentTitles}
             onToggleCollapse={() =>
                 toggleComponentCollapse(componentInstance.id)}
+            {validationErrors}
         />
     {/each}
 </div>

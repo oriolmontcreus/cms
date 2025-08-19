@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { Button } from '@components/ui/button';
-    import * as Popover from '$lib/components/ui/popover/index.js';
-    import { Input } from '$lib/components/ui/input/index.js';
-    import { Label } from '$lib/components/ui/label/index.js';
-    import LinkIcon from '@lucide/svelte/icons/link';
+    import { Button } from "@components/ui/button";
+    import * as Popover from "$lib/components/ui/popover/index.js";
+    import { Input } from "$lib/components/ui/input/index.js";
+    import { Label } from "$lib/components/ui/label/index.js";
+    import LinkIcon from "@lucide/svelte/icons/link";
 
     export let open = false;
     export let disabled = false;
-    export let linkUrl = '';
-    export let linkText = '';
+    export let linkUrl = "";
+    export let linkText = "";
     export let onOpenChange: (isOpen: boolean) => void;
     export let onInsertLink: () => void;
     export let onClose: () => void;
@@ -18,13 +18,13 @@
     <Popover.Trigger>
         <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            class="h-9 px-3"
+            class="h-8 w-8 p-0"
             {disabled}
             title="Insert link (Ctrl+K)"
         >
-            <LinkIcon class="h-4 w-4" />
+            <LinkIcon class="h-3 w-3" />
         </Button>
     </Popover.Trigger>
     <Popover.Content class="w-80">
@@ -38,7 +38,7 @@
             <div class="grid gap-2">
                 <div class="grid gap-2">
                     <Label for="link-url">URL</Label>
-                    <Input 
+                    <Input
                         id="link-url"
                         type="url"
                         bind:value={linkUrl}
@@ -48,7 +48,7 @@
                 </div>
                 <div class="grid gap-2 mt-2">
                     <Label for="link-text">Link text (optional)</Label>
-                    <Input 
+                    <Input
                         id="link-text"
                         type="text"
                         bind:value={linkText}
@@ -58,13 +58,23 @@
                 </div>
             </div>
             <div class="flex justify-end gap-2">
-                <Button type="button" variant="outline" size="sm" onclick={onClose}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onclick={onClose}
+                >
                     Cancel
                 </Button>
-                <Button type="button" size="sm" onclick={onInsertLink} disabled={!linkUrl}>
+                <Button
+                    type="button"
+                    size="sm"
+                    onclick={onInsertLink}
+                    disabled={!linkUrl}
+                >
                     Insert link
                 </Button>
             </div>
         </div>
     </Popover.Content>
-</Popover.Root> 
+</Popover.Root>

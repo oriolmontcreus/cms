@@ -7,6 +7,7 @@
     export let fieldId: string;
     export let value: number | null;
     export let decimalSeparator: "," | "." = ".";
+    export let validationError: string | null = null;
 
     const allowDecimals = field.allowDecimals ?? true;
     const minValue = field.min;
@@ -35,7 +36,12 @@
 
     $: hasPrefix = field.prefix !== undefined;
     $: hasSuffix = field.suffix !== undefined;
-    $: inputClasses = cn(hasPrefix && "ps-9", hasSuffix && "pe-9");
+    $: inputClasses = cn(
+        hasPrefix && "ps-9",
+        hasSuffix && "pe-9",
+        validationError &&
+            "border-destructive focus-visible:border-destructive",
+    );
 
     // Helper function to check if a value is a string
     function isString(value: any): value is string {

@@ -1,4 +1,4 @@
-import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea } from '@/lib/components/form-builder/fields';
+import { TextInput, TagsInput, defineGrid, Tabs, TabField, Textarea, RichEditor } from '@/lib/components/form-builder/fields';
 import type { Component } from '@/lib/components/form-builder/types';
 import { IconBrandGithub, IconLink } from '@tabler/icons-svelte';
 
@@ -14,7 +14,17 @@ mainTab.schema = [
         .label('Subtitle')
         .required()
         .placeholder('Enter the hero subtitle')
+        .allowVariables(false)
         .translatable(),
+    TextInput('contactEmail')
+        .label('Contact email')
+        .required()
+        .type("email")
+        .placeholder('Enter the contact email')
+        .allowVariables(false),
+    RichEditor('description')
+        .label('Description (no variables)')
+        .placeholder('Enter description without variable support')
 ];
 
 const buttonsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
