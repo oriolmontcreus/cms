@@ -11,7 +11,7 @@
     const supportsVariables = field.allowVariables !== false;
 
     // Only load variable-related imports if needed
-    let VariableInput: any = null;
+    let VariableInput: typeof import("./textinput/VariableInput.svelte").default | null = null;
     if (supportsVariables) {
         import("./textinput/VariableInput.svelte").then((module) => {
             VariableInput = module.default;
