@@ -9,7 +9,7 @@
     const supportsVariables = field.allowVariables !== false;
 
     // Only load variable-related imports if needed
-    let VariableRichEditor: any = null;
+    let VariableRichEditor: typeof import("./rich-editor/VariableRichEditor.svelte").default | null = null;
     if (supportsVariables) {
         import("./rich-editor/VariableRichEditor.svelte").then((module) => {
             VariableRichEditor = module.default;
