@@ -17,11 +17,8 @@
   import UsersIcon from "@tabler/icons-svelte/icons/users";
   import FileTextIcon from "@tabler/icons-svelte/icons/file-text";
   import BuildingIcon from "@tabler/icons-svelte/icons/hammer";
-  import ActivityIcon from "@tabler/icons-svelte/icons/activity";
   import PlusIcon from "@tabler/icons-svelte/icons/plus";
-  import EyeIcon from "@tabler/icons-svelte/icons/eye";
   import EditIcon from "@tabler/icons-svelte/icons/edit";
-  import SettingsIcon from "@tabler/icons-svelte/icons/settings";
   import TrendingUpIcon from "@tabler/icons-svelte/icons/trending-up";
   import ClockIcon from "@tabler/icons-svelte/icons/clock";
   import CheckCircleIcon from "@tabler/icons-svelte/icons/check";
