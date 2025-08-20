@@ -154,7 +154,7 @@
     const formatFileSize = (bytes: number): string => {
         if (!bytes) return "0B";
         const k = 1024;
-        const units = ["B", "KB", "MB", "GB"]; // enough
+        const units = ["B", "KB", "MB", "GB"]; // Covers typical file sizes for web uploads
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${units[i]}`;
     };
