@@ -138,7 +138,9 @@
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Total pages</Card.Title>
-          <FileTextIcon class="h-4 w-4 text-muted-foreground" />
+          <div class="p-2 rounded-lg bg-muted">
+            <FileTextIcon class="h-5 w-5 text-muted-foreground" />
+          </div>
         </Card.Header>
         <Card.Content>
           {#if isLoading}
@@ -147,7 +149,7 @@
               <div class="h-3 bg-muted rounded w-24"></div>
             </div>
           {:else}
-            <div class="text-2xl font-bold">{totalPages}</div>
+            <div class="text-4xl font-bold mb-2">{totalPages}</div>
             <p class="text-xs text-muted-foreground">
               {recentPages.length > 0
                 ? `${recentPages.length} recently updated`
@@ -162,7 +164,9 @@
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Users</Card.Title>
-          <UsersIcon class="h-4 w-4 text-muted-foreground" />
+          <div class="p-2 rounded-lg bg-muted">
+            <UsersIcon class="h-5 w-5 text-muted-foreground" />
+          </div>
         </Card.Header>
         <Card.Content>
           {#if isLoading}
@@ -171,7 +175,7 @@
               <div class="h-3 bg-muted rounded w-32"></div>
             </div>
           {:else}
-            <div class="text-2xl font-bold">{totalUsers}</div>
+            <div class="text-4xl font-bold mb-2">{totalUsers}</div>
             <p class="text-xs text-muted-foreground">
               {uninitializedUsers > 0
                 ? `${uninitializedUsers} pending setup`
@@ -186,7 +190,9 @@
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Locales</Card.Title>
-          <WorldIcon class="h-4 w-4 text-muted-foreground" />
+          <div class="p-2 rounded-lg bg-muted">
+            <WorldIcon class="size-5 text-muted-foreground" />
+          </div>
         </Card.Header>
         <Card.Content>
           {#if isLoading}
@@ -195,10 +201,14 @@
               <div class="h-3 bg-muted rounded w-20"></div>
             </div>
           {:else}
-            <div class="text-2xl font-bold">{SITE_LOCALES.length}</div>
-            <p class="text-xs text-muted-foreground">
-              {SITE_LOCALES.map((locale) => locale.name).join(", ")}
-            </p>
+            <div class="text-3xl font-bold mb-2">{SITE_LOCALES.length}</div>
+            <div class="flex flex-wrap gap-1">
+              {#each SITE_LOCALES as locale}
+                <Badge variant="secondary" class="text-xs">
+                  {locale.name}
+                </Badge>
+              {/each}
+            </div>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -208,7 +218,9 @@
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Quick actions</Card.Title>
-          <TrendingUpIcon class="h-4 w-4 text-muted-foreground" />
+          <div class="p-2 rounded-lg bg-muted">
+            <TrendingUpIcon class="h-5 w-5 text-muted-foreground" />
+          </div>
         </Card.Header>
         <Card.Content class="space-y-2">
           {#if isLoading}
@@ -226,6 +238,10 @@
               <BuildingIcon size={14} />
               {isBuildingWelcomeMessage ? "Building..." : "Build Site"}
             </Button>
+            <div class="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Last build: {#if lastBuildResult}✓{/if}</span>
+              <span>Ready</span>
+            </div>
           {/if}
         </Card.Content>
       </Card.Root>
@@ -233,10 +249,11 @@
 
     <div class="grid gap-4 lg:grid-cols-2 mt-4">
       <!-- Recent Pages -->
-      <Card.Root>
+      <Card.Root class="group hover:shadow-lg transition-all duration-300">
         <Card.Header>
           <div class="flex items-center justify-between">
             <Card.Title class="flex items-center gap-2 font-normal">
+              <FileTextIcon class="size-5 text-muted-foreground" />
               Recent pages
             </Card.Title>
             <Button
@@ -277,7 +294,7 @@
           {:else}
             <div class="space-y-4">
               {#each recentPages as page}
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors duration-200">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                       <h4 class="font-medium truncate">{page.title}</h4>
@@ -320,10 +337,11 @@
       </Card.Root>
 
       <!-- Team Overview -->
-      <Card.Root>
+      <Card.Root class="group hover:shadow-lg transition-all duration-300">
         <Card.Header>
           <div class="flex items-center justify-between">
             <Card.Title class="flex items-center gap-2 font-normal">
+              <UsersIcon class="size-5 text-muted-foreground" />
               Team overview
             </Card.Title>
             {#if $loggedUser?.permissions === 7}
@@ -352,13 +370,13 @@
             </div>
           {:else if users.length === 0}
             <div class="text-center py-6 text-muted-foreground">
-              <UsersIcon class="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <UsersIcon class="size-12 mx-auto mb-3 opacity-50" />
               <p>No team members found</p>
             </div>
           {:else}
             <div class="space-y-4">
               {#each users.slice(0, 5) as user}
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors duration-200">
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                       <h4 class="font-medium truncate">
@@ -367,7 +385,7 @@
                       {#if !user.isInitialized}
                         <Badge
                           variant="outline"
-                          class="text-xs bg-yellow-50 text-yellow-700 border-yellow-200"
+                          class="text-xs bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700"
                         >
                           Pending setup
                         </Badge>
