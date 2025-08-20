@@ -7,6 +7,7 @@
     import { Card, CardContent } from "$lib/components/ui/card";
     import { Input } from "$lib/components/ui/input";
     import PasswordInput from "$lib/components/PasswordInput.svelte";
+    import ConfirmPasswordInput from "$lib/components/ConfirmPasswordInput.svelte";
     import {
         Stepper,
         StepperIndicator,
@@ -202,33 +203,18 @@
                             required
                         />
 
-                        <Input
+                        <ConfirmPasswordInput
                             id="confirmPassword"
-                            type="password"
                             placeholder="Confirm your password"
                             bind:value={confirmPassword}
-                            class="text-center"
+                            className="text-center"
                             required
-                            autocomplete="off"
                         />
 
-                        {#if password && confirmPassword && password !== confirmPassword}
-                            <p class="text-red-500 text-sm text-center">
-                                Passwords do not match
-                            </p>
-                        {/if}
-
-                        {#if password && passwordStrength.strengthScore < 4}
-                            <p class="text-red-500 text-sm text-center">
-                                Password too weak
-                            </p>
-                        {/if}
-
-                        <div class="flex gap-3">
+                        <div class="flex gap-3 justify-end">
                             <Button
                                 onclick={prevStep}
                                 variant="ghost"
-                                class="flex-1"
                                 effect="expandIcon"
                                 iconPlacement="left"
                                 icon={ArrowLeftIcon}
@@ -238,7 +224,6 @@
                             <Button
                                 onclick={handleSubmit}
                                 disabled={isLoading || !isPasswordValid}
-                                class="flex-1"
                             >
                                 {#if isLoading}
                                     <div
@@ -246,7 +231,7 @@
                                     ></div>
                                     Creating account...
                                 {:else}
-                                    Complete Setup
+                                    Complete setup
                                 {/if}
                             </Button>
                         </div>
