@@ -32,7 +32,8 @@
         const dragImage = new Image();
         dragImage.src =
             "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
-        event.dataTransfer?.setDragImage(dragImage, 0, 0);
+        // Use the module-level transparent drag image
+        event.dataTransfer?.setDragImage(transparentDragImage, 0, 0);
         event.dataTransfer?.setData("text/plain", String(index));
     }
 
