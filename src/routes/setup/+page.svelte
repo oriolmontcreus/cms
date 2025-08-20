@@ -89,7 +89,7 @@
 <div class="min-h-screen w-full relative bg-black dark">
     <div
         class="absolute inset-0 z-0"
-        style="background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34, 197, 94, 0.25), transparent 90%), #000000;"
+        style="background: radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 90%), #000000;"
     ></div>
 
     <div
@@ -144,6 +144,7 @@
                             placeholder="I'm ..."
                             bind:value={name}
                             class="text-center"
+                            autocomplete="off"
                         />
 
                         <Input
@@ -152,6 +153,12 @@
                             placeholder="My email is ..."
                             bind:value={email}
                             class="text-center"
+                            autocomplete="off"
+                            onkeydown={(e) => {
+                                if (e.key === 'Enter' && name.trim() && isValidEmail) {
+                                    handleNext();
+                                }
+                            }}
                         />
 
                         <div class="flex justify-end">
@@ -202,6 +209,7 @@
                             bind:value={confirmPassword}
                             class="text-center"
                             required
+                            autocomplete="off"
                         />
 
                         {#if password && confirmPassword && password !== confirmPassword}
