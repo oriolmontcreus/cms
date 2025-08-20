@@ -215,11 +215,7 @@
                                 !field.preview?.height
                                 ? "max-w-60 mx-auto"
                                 : "",
-                            pending
-                                ? "border-yellow-400 border-dashed"
-                                : marked
-                                  ? "border-red-500 border-dashed"
-                                  : "border-transparent",
+                            // Removed distracting border color changes for pending/marked states
                             field.preview?.class,
                         )}
                         style={field.preview &&
@@ -259,7 +255,7 @@
                         <!-- Overlay states -->
                         {#if pending}
                             <div
-                                class="absolute inset-0 bg-yellow-500/25 backdrop-blur-[1px] flex items-start p-1"
+                                class="absolute inset-0 flex items-start p-1"
                             >
                                 <span
                                     class="text-[10px] font-medium text-yellow-950 dark:text-yellow-100 bg-yellow-400/80 px-1 rounded"
@@ -268,7 +264,7 @@
                             </div>
                         {:else if marked}
                             <div
-                                class="absolute inset-0 bg-red-500/30 backdrop-blur-[1px] flex items-start p-1"
+                                class="absolute inset-0 flex items-start p-1"
                             >
                                 <span
                                     class="text-[10px] font-medium text-red-50 bg-red-600/80 px-1 rounded"
