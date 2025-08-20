@@ -240,8 +240,20 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
-    preview(options: { width?: number; height?: number; class?: string; aspect?: 'square' | 'video' | 'wide' | 'portrait' | string }): this {
-        this.field.preview = { ...this.field.preview, ...options };
+    previewWidth(width: number): this {
+        this.field.preview = { ...this.field.preview, width };
+        return this;
+    }
+    previewHeight(height: number): this {
+        this.field.preview = { ...this.field.preview, height };
+        return this;
+    }
+    previewClass(className: string): this {
+        this.field.preview = { ...this.field.preview, class: className };
+        return this;
+    }
+    previewAspect(aspect: 'square' | 'video' | 'wide' | 'portrait' | string): this {
+        this.field.preview = { ...this.field.preview, aspect };
         return this;
     }
 

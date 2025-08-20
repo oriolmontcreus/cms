@@ -25,6 +25,8 @@ slidesTab.schema = [
                 .translatable(),
             FileInput('image')
                 .label('Slide image')
+                .previewWidth(50)
+                .previewAspect('square')
                 .required(),
             TextInput('url')
                 .label('Link URL (optional)')

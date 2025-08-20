@@ -338,7 +338,10 @@ export interface FieldBuilder {
     autoResize(isAutoResize?: boolean): FieldBuilder;
     allowedMimeTypes(types: string[]): FieldBuilder;
     maxFileSize(size: number): FieldBuilder;
-    preview(options: { width?: number; height?: number; class?: string; aspect?: 'square' | 'video' | 'wide' | 'portrait' | string }): FieldBuilder;
+    previewWidth(width: number): FieldBuilder;
+    previewHeight(height: number): FieldBuilder;
+    previewClass(className: string): FieldBuilder;
+    previewAspect(aspect: 'square' | 'video' | 'wide' | 'portrait' | string): FieldBuilder;
     maxTags(count: number): FieldBuilder;
     validateTag(validator: (tag: string, existingTags: string[]) => string | undefined): FieldBuilder;
     allowDuplicates(allow?: boolean): FieldBuilder;

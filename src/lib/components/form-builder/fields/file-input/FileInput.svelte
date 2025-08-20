@@ -187,23 +187,16 @@
                     <div
                         class={cn(
                             "relative rounded-md overflow-hidden group bg-accent/40 border flex items-center justify-center",
-                            // aspect / size logic
-                            field.preview?.aspect === "video"
-                                ? "aspect-video"
-                                : field.preview?.aspect === "wide"
-                                  ? "aspect-[16/9]"
-                                  : field.preview?.aspect === "portrait"
-                                    ? "aspect-[3/4]"
-                                    : field.preview?.aspect === "square" ||
-                                        !field.preview?.aspect
-                                      ? "aspect-square"
-                                      : field.preview?.aspect, // raw tailwind aspect if custom
-                            field.preview?.width
-                                ? `w-[${field.preview.width}px]`
-                                : "",
-                            field.preview?.height
-                                ? `h-[${field.preview.height}px]`
-                                : "",
+                            (field.preview?.aspect === "video" &&
+                                "aspect-video") ||
+                                (field.preview?.aspect === "wide" &&
+                                    "aspect-[16/9]") ||
+                                (field.preview?.aspect === "portrait" &&
+                                    "aspect-[3/4]") ||
+                                (field.preview?.aspect === "square" &&
+                                    "aspect-square") ||
+                                (!field.preview?.aspect && "aspect-square") ||
+                                field.preview?.aspect,
                             !field.multiple &&
                                 currentFiles.length === 1 &&
                                 !field.preview?.width &&
@@ -217,6 +210,10 @@
                                   : "border-transparent",
                             field.preview?.class,
                         )}
+                        style={field.preview &&
+                        (field.preview.width || field.preview.height)
+                            ? `${field.preview.width ? `width:${field.preview.width}px;` : ""}${field.preview.height ? `height:${field.preview.height}px;` : ""}`
+                            : undefined}
                     >
                         {#if isImage(data.mimeType)}
                             <img
