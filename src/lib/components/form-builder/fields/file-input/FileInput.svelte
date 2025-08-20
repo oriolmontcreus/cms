@@ -16,6 +16,8 @@
     let fileInput: HTMLInputElement;
     let isDragOver = false;
     let isProcessing = false;
+    // Track files (only local new Files) being removed to animate out before actual deletion
+    let removingLocalFiles = new Set<File>();
 
     const isImage = (mimeType: string) => mimeType?.startsWith("image/");
     const isVideo = (mimeType: string) => mimeType?.startsWith("video/");
@@ -67,10 +69,17 @@
     const toggleRemove = (target: File | UploadedFileWithDeletionFlag) => {
         if (isProcessing) return;
         if (isFile(target)) {
-            // Newly added local file: remove immediately
-            value = field.multiple
-                ? currentFiles.filter((f) => f !== target)
-                : null;
+            // Newly added local file: animate removal before actually deleting
+            removingLocalFiles.add(target);
+            removingLocalFiles = removingLocalFiles; // trigger reactivity
+            const ANIMATION_MS = 300;
+            setTimeout(() => {
+                value = field.multiple
+                    ? currentFiles.filter((f) => f !== target)
+                    : null;
+                removingLocalFiles.delete(target);
+                removingLocalFiles = removingLocalFiles;
+            }, ANIMATION_MS);
         } else {
             // Existing uploaded file: toggle _markedForDeletion
             if (field.multiple) {
@@ -198,7 +207,8 @@
                     {@const marked = !pending && f._markedForDeletion}
                     <div
                         class={cn(
-                            "relative rounded-md group bg-accent/40 border border-transparent flex items-center justify-center overflow-visible",
+                            // Base styles
+                            "relative rounded-md group bg-accent/40 border border-transparent flex items-center justify-center overflow-visible transition-all duration-300 ease-in-out",
                             (field.preview?.aspect === "video" &&
                                 "aspect-video") ||
                                 (field.preview?.aspect === "wide" &&
@@ -214,6 +224,9 @@
                                 !field.preview?.width &&
                                 !field.preview?.height
                                 ? "max-w-60 mx-auto"
+                                : "",
+                            removingLocalFiles.has(f)
+                                ? "scale-95 opacity-0"
                                 : "",
                             // Removed distracting border color changes for pending/marked states
                             field.preview?.class,
