@@ -120,7 +120,7 @@
     <!-- Drop Area -->
     <div
         class={cn(
-            "border-input bg-background dark:bg-input/30 data-[dragging=true]:bg-accent has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 relative flex min-h-48 flex-col overflow-hidden rounded-xl border border-dashed p-4 transition-colors has-[input:focus]:ring-[3px]",
+            "border-input bg-background dark:bg-input/30 data-[dragging=true]:bg-accent has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 relative flex min-h-48 flex-col overflow-hidden rounded-md border border-dashed p-4 transition-colors has-[input:focus]:ring-[3px]",
             currentFiles.length === 0
                 ? "items-center justify-center text-center"
                 : "gap-3",
