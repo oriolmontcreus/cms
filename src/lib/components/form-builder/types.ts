@@ -266,6 +266,13 @@ export interface FormField {
     // File upload specific options
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
+    // File preview options
+    preview?: {
+        width?: number; // target width in px (wrapper)
+        height?: number; // target height in px (wrapper)
+        class?: string; // additional utility classes to apply to preview wrapper
+        aspect?: 'square' | 'video' | 'wide' | 'portrait' | string; // templated aspect (falls back to raw string)
+    };
     // Tags input specific options
     maxTags?: number; // For tags fields - maximum number of tags allowed
     validateTag?: (tag: string, existingTags: string[]) => string | undefined; // For tags fields - custom tag validation function
@@ -293,6 +300,8 @@ export interface FormField {
     allowVariables?: boolean; // Whether this field supports global variables (default: true for text-based fields)
     // Visibility properties
     hidden?: boolean; // Whether this field should be hidden from rendering
+    // File (multiple) specific behavior
+    allowReorder?: boolean; // Whether multiple file items can be reordered via drag & drop
 }
 
 // Type for FieldBuilder instances (for better type checking)
@@ -331,6 +340,10 @@ export interface FieldBuilder {
     autoResize(isAutoResize?: boolean): FieldBuilder;
     allowedMimeTypes(types: string[]): FieldBuilder;
     maxFileSize(size: number): FieldBuilder;
+    previewWidth(width: number): FieldBuilder;
+    previewHeight(height: number): FieldBuilder;
+    previewClass(className: string): FieldBuilder;
+    previewAspect(aspect: 'square' | 'video' | 'wide' | 'portrait' | string): FieldBuilder;
     maxTags(count: number): FieldBuilder;
     validateTag(validator: (tag: string, existingTags: string[]) => string | undefined): FieldBuilder;
     allowDuplicates(allow?: boolean): FieldBuilder;
@@ -341,6 +354,8 @@ export interface FieldBuilder {
     default(value: any): FieldBuilder;
     allowVariables(allow?: boolean): FieldBuilder;
     hidden(isHidden?: boolean): FieldBuilder;
+    // File (multiple) specific behavior
+    allowReorder?(allow?: boolean): FieldBuilder;
 }
 
 // Schema item can be either a field, field builder, tabs container, tabs builder, or grid layout

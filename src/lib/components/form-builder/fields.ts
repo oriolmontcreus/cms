@@ -240,6 +240,28 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    allowReorder(allow: boolean = true): this {
+        this.field.allowReorder = allow;
+        return this;
+    }
+
+    previewWidth(width: number): this {
+        this.field.preview = { ...this.field.preview, width };
+        return this;
+    }
+    previewHeight(height: number): this {
+        this.field.preview = { ...this.field.preview, height };
+        return this;
+    }
+    previewClass(className: string): this {
+        this.field.preview = { ...this.field.preview, class: className };
+        return this;
+    }
+    previewAspect(aspect: 'square' | 'video' | 'wide' | 'portrait' | string): this {
+        this.field.preview = { ...this.field.preview, aspect };
+        return this;
+    }
+
     toJSON(): FormField { return this.field; }
     get fieldType(): FieldType { return this.field.type; }
     get name(): string { return this.field.name; }

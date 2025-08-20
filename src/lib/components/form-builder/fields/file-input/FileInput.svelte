@@ -4,22 +4,73 @@
     import UploadIcon from "@tabler/icons-svelte/icons/upload";
     import type { UploadedFileWithDeletionFlag } from "@/lib/shared/types/file.type";
     import { onMount } from "svelte";
+    import { flip } from "svelte/animate";
+    import { cubicOut } from "svelte/easing";
     import FileIcon from "../FileIcon.svelte";
     import VideoPreview from "./VideoPreview.svelte";
-    import FileActionBar from "./FileActionBar.svelte";
-    import { TooltipProvider } from "@components/ui/tooltip";
     import { getFileUrl } from "@/services/file.service";
     import { errorToast } from "@/services/toast.service";
+    import Button from "$lib/components/ui/button/button.svelte";
 
     export let field: FormField;
-    export let value: any = null;
+    export let value: any = null; // single File / UploadedFile or array
 
     let fileInput: HTMLInputElement;
     let isDragOver = false;
     let isProcessing = false;
+    // Track files (only local new Files) being removed to animate out before actual deletion
+    let removingLocalFiles = new Set<File>();
+    let dragIndex: number | null = null;
+    let overIndex: number | null = null;
 
-    const isImage = (mimeType: string) => mimeType.startsWith("image/");
-    const isVideo = (mimeType: string) => mimeType.startsWith("video/");
+    function handleDragStart(event: DragEvent, index: number) {
+        if (!field.allowReorder || !field.multiple) return;
+        dragIndex = index;
+        overIndex = index;
+
+        // Create a custom drag image that's transparent
+        const dragImage = new Image();
+        dragImage.src =
+        dragImage.src = TRANSPARENT_GIF_BASE64;
+        // Use the module-level transparent drag image
+        event.dataTransfer?.setDragImage(transparentDragImage, 0, 0);
+        event.dataTransfer?.setData("text/plain", String(index));
+    }
+
+    function handleDragEnter(event: DragEvent, index: number) {
+        if (dragIndex === null || !field.allowReorder) return;
+        event.preventDefault();
+        overIndex = index;
+    }
+
+    function handleDragOver(event: DragEvent) {
+        if (dragIndex === null || !field.allowReorder) return;
+        event.preventDefault();
+    }
+
+    function handleDropReorder(event: DragEvent, index: number) {
+        if (dragIndex === null || overIndex === null || !field.allowReorder)
+            return;
+        event.preventDefault();
+
+        if (dragIndex !== overIndex) {
+            const newOrder = [...currentFiles];
+            const [moved] = newOrder.splice(dragIndex, 1);
+            newOrder.splice(overIndex, 0, moved);
+            value = newOrder;
+        }
+
+        dragIndex = null;
+        overIndex = null;
+    }
+
+    function handleDragEnd() {
+        dragIndex = null;
+        overIndex = null;
+    }
+
+    const isImage = (mimeType: string) => mimeType?.startsWith("image/");
+    const isVideo = (mimeType: string) => mimeType?.startsWith("video/");
     const isFile = (item: any): item is File => item instanceof File;
 
     $: currentFiles = Array.isArray(value) ? value : value ? [value] : [];
@@ -29,41 +80,28 @@
             field.allowedMimeTypes?.length &&
             !field.allowedMimeTypes.includes(file.type)
         ) {
-            return `File type "${file.type}" is not allowed. Allowed types: ${field.allowedMimeTypes.join(", ")}`;
+            return `File type "${file.type}" is not allowed. Allowed: ${field.allowedMimeTypes.join(", ")}`;
         }
-
         if (field.maxFileSize && file.size > field.maxFileSize) {
             const maxSizeMB = (field.maxFileSize / (1024 * 1024)).toFixed(1);
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-            return `File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`;
+            return `File size ${fileSizeMB}MB exceeds ${maxSizeMB}MB`;
         }
-
         return null;
     };
 
     const processFiles = (files: File[]) => {
         if (isProcessing) return;
-
-        const validFiles = files.filter((file) => {
-            const error = validateFile(file);
-            if (error) {
-                errorToast(error);
-                return false;
-            }
-            return true;
+        const valid = files.filter((f) => {
+            const error = validateFile(f);
+            if (error) errorToast(error);
+            return !error;
         });
-
-        if (validFiles.length === 0) return;
-
+        if (!valid.length) return;
         isProcessing = true;
-
-        try {
-            value = field.multiple
-                ? [...currentFiles, ...validFiles]
-                : validFiles[0];
-        } finally {
-            isProcessing = false;
-        }
+        // operations are sync, so we can safely reset after
+        value = field.multiple ? [...currentFiles, ...valid] : valid[0];
+        isProcessing = false;
     };
 
     const handleFileSelect = (event: Event) => {
@@ -74,52 +112,51 @@
     const handleDrop = (event: DragEvent) => {
         event.preventDefault();
         isDragOver = false;
-
         const files = event.dataTransfer?.files;
         if (files?.length) processFiles(Array.from(files));
     };
 
-    const removeFile = (fileToRemove: File | UploadedFileWithDeletionFlag) => {
+    const toggleRemove = (target: File | UploadedFileWithDeletionFlag) => {
         if (isProcessing) return;
-
-        isProcessing = true;
-
-        try {
-            if (isFile(fileToRemove)) {
+        if (isFile(target)) {
+            // Newly added local file: animate removal before actually deleting
+            removingLocalFiles.add(target);
+            removingLocalFiles = removingLocalFiles; // trigger reactivity
+            const ANIMATION_MS = 300;
+            setTimeout(() => {
                 value = field.multiple
-                    ? currentFiles.filter((f) => f !== fileToRemove) || null
+                    ? currentFiles.filter((f) => f !== target)
                     : null;
+                removingLocalFiles.delete(target);
+                removingLocalFiles = removingLocalFiles;
+            }, ANIMATION_MS);
+        } else {
+            // Existing uploaded file: toggle _markedForDeletion
+            if (field.multiple) {
+                value = currentFiles.map((f) =>
+                    f === target
+                        ? {
+                              ...f,
+                              _markedForDeletion: f._markedForDeletion
+                                  ? undefined
+                                  : true,
+                          }
+                        : f,
+                );
             } else {
-                const isMarkedForDeletion = fileToRemove._markedForDeletion;
-
-                if (field.multiple) {
-                    const updatedFiles = currentFiles.map((f) =>
-                        f === fileToRemove
-                            ? isMarkedForDeletion
-                                ? { ...f, _markedForDeletion: undefined }
-                                : { ...f, _markedForDeletion: true }
-                            : f,
-                    );
-                    value = updatedFiles;
-                } else {
-                    value = isMarkedForDeletion
-                        ? (({ _markedForDeletion, ...rest }) => rest)(
-                              fileToRemove,
-                          )
-                        : { ...fileToRemove, _markedForDeletion: true };
-                }
+                value = target._markedForDeletion
+                    ? (({ _markedForDeletion, ...rest }) => rest)(target)
+                    : { ...target, _markedForDeletion: true };
             }
-        } finally {
-            isProcessing = false;
         }
     };
 
     const formatFileSize = (bytes: number): string => {
-        if (bytes === 0) return "0 Bytes";
+        if (!bytes) return "0B";
         const k = 1024;
-        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const units = ["B", "KB", "MB", "GB"]; // Covers typical file sizes for web uploads
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${units[i]}`;
     };
 
     const getFileData = (file: File | UploadedFileWithDeletionFlag) => ({
@@ -131,162 +168,262 @@
 
     onMount(() => {
         return () => {
-            currentFiles.forEach((file) => {
-                if (isFile(file)) {
-                    URL.revokeObjectURL(getFileData(file).url);
-                }
+            currentFiles.forEach((f) => {
+                if (isFile(f)) URL.revokeObjectURL(getFileData(f).url);
             });
         };
     });
 </script>
 
-<TooltipProvider>
-    <div class="space-y-4">
+<div class="flex flex-col gap-2">
+    <!-- Drop Area -->
+    <div
+        class={cn(
+            "border-input bg-background dark:bg-input/30 data-[dragging=true]:bg-accent has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 relative flex min-h-48 flex-col overflow-hidden rounded-md border border-dashed p-4 transition-colors has-[input:focus]:ring-[3px]",
+            currentFiles.length === 0
+                ? "items-center justify-center text-center"
+                : "gap-3",
+            field.disabled || isProcessing
+                ? "opacity-60 pointer-events-none"
+                : "",
+        )}
+        data-dragging={isDragOver || undefined}
+        data-files={currentFiles.length > 0 || undefined}
+        on:dragenter={(e) => {
+            e.preventDefault();
+            isDragOver = true;
+        }}
+        on:dragover={(e) => {
+            e.preventDefault();
+            isDragOver = true;
+        }}
+        on:dragleave={() => (isDragOver = false)}
+        on:drop={handleDrop}
+        role="group"
+    >
         <input
             bind:this={fileInput}
             type="file"
-            class="hidden"
+            class="sr-only"
             multiple={field.multiple}
             accept={field.allowedMimeTypes?.join(",")}
             on:change={handleFileSelect}
             disabled={field.disabled || isProcessing}
             required={field.required}
+            aria-label="Upload files"
         />
 
-        <div
-            class={cn(
-                "border-2 border-dashed bg-background dark:bg-input/30 rounded-lg p-6 text-center transition-colors",
-                isDragOver
-                    ? "border-primary bg-primary/10 dark:bg-primary/20"
-                    : "border-muted-foreground/25",
-                field.disabled || isProcessing
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer hover:border-primary/50",
-            )}
-            on:drop={handleDrop}
-            on:dragover={(e) => {
-                e.preventDefault();
-                isDragOver = true;
-            }}
-            on:dragleave={() => (isDragOver = false)}
-            on:click={() => !isProcessing && fileInput?.click()}
-            role="button"
-            tabindex="0"
-            on:keydown={(e) =>
-                e.key === "Enter" && !isProcessing && fileInput?.click()}
-        >
-            <UploadIcon class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <div class="space-y-2">
-                <p class="text-sm font-medium">
-                    {isProcessing
-                        ? "Processing..."
-                        : field.multiple
-                          ? "Drop files here or click to browse"
-                          : "Drop a file here or click to browse"}
+        {#if currentFiles.length > 0}
+            <!-- Header + Add more -->
+            <div class="flex items-center justify-between gap-2">
+                <!-- Accessibility region -->
+                <p
+                    aria-live="polite"
+                    role="status"
+                    class="text-muted-foreground text-center text-xs mt-1"
+                >
+                    {currentFiles.length === 0
+                        ? "No files selected"
+                        : `${currentFiles.length} file${currentFiles.length === 1 ? "" : "s"} selected`}
                 </p>
-                {#if field.allowedMimeTypes?.length}
-                    <p class="text-xs text-muted-foreground">
-                        Allowed types: {field.allowedMimeTypes.join(", ")}
-                    </p>
-                {/if}
-                {#if field.maxFileSize}
-                    <p class="text-xs text-muted-foreground">
-                        Maximum file size: {formatFileSize(field.maxFileSize)}
-                    </p>
+                {#if field.multiple}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="inline-flex items-center gap-1"
+                        disabled={field.disabled || isProcessing}
+                        onclick={() => fileInput?.click()}
+                    >
+                        <UploadIcon class="-ms-0.5 h-3.5 w-3.5 opacity-60" />
+                        Add more
+                    </Button>
                 {/if}
             </div>
-        </div>
-
-        {#if currentFiles.length > 0}
-            <div class="space-y-2">
-                {#each currentFiles as fileData}
-                    {@const { url, name, size, mimeType } =
-                        getFileData(fileData)}
-                    {@const isPending = isFile(fileData)}
-                    {@const isMarkedForDeletion =
-                        !isPending && fileData._markedForDeletion}
-
+            <!-- Grid -->
+            <div
+                class={cn(
+                    field.multiple
+                        ? field.preview &&
+                          (field.preview.width || field.preview.height)
+                            ? // When explicit sizing is provided, flex-wrap avoids grid min-content issues causing overlap
+                              "flex flex-wrap gap-3 mt-2"
+                            : "grid gap-3 mt-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        : "grid gap-3 mt-2 grid-cols-1",
+                )}
+            >
+                {#each currentFiles as f, i (f.id || f.name || f.fileName)}
+                    {@const data = getFileData(f)}
+                    {@const pending = isFile(f)}
+                    {@const marked = !pending && f._markedForDeletion}
                     <div
-                        class="flex flex-col gap-3 p-4 bg-background dark:bg-input/30 rounded-lg lg:p-6 {isPending
-                            ? 'border border-dashed border-yellow-500'
-                            : isMarkedForDeletion
-                              ? 'border border-dashed border-red-500'
-                              : ''}"
+                        class={cn(
+                            // Base styles
+                            "relative rounded-md group bg-accent/40 border border-transparent flex items-center justify-center overflow-visible transition-all duration-150 ease-out",
+                            (field.preview?.aspect === "video" &&
+                                "aspect-video") ||
+                                (field.preview?.aspect === "wide" &&
+                                    "aspect-[16/9]") ||
+                                (field.preview?.aspect === "portrait" &&
+                                    "aspect-[3/4]") ||
+                                (field.preview?.aspect === "square" &&
+                                    "aspect-square") ||
+                                (!field.preview?.aspect && "aspect-square") ||
+                                field.preview?.aspect,
+                            !field.multiple &&
+                                currentFiles.length === 1 &&
+                                !field.preview?.width &&
+                                !field.preview?.height
+                                ? "max-w-60 mx-auto"
+                                : "",
+                            removingLocalFiles.has(f)
+                                ? "scale-95 opacity-0"
+                                : "",
+                            dragIndex === i
+                                ? "scale-105 shadow-2xl z-20 opacity-90 rotate-1"
+                                : "",
+                            overIndex === i &&
+                                dragIndex !== null &&
+                                dragIndex !== i
+                                ? "ring-2 ring-primary/50 scale-95"
+                                : "",
+                            field.allowReorder && field.multiple
+                                ? "cursor-grab active:cursor-grabbing hover:shadow-md"
+                                : "",
+                            field.preview?.class,
+                        )}
+                        style={field.preview &&
+                        (field.preview.width || field.preview.height)
+                            ? `${field.preview.width ? `width:${field.preview.width}px;flex:0 0 ${field.preview.width}px;` : ""}${field.preview.height ? `height:${field.preview.height}px;` : ""}`
+                            : undefined}
+                        draggable={(field.allowReorder && field.multiple) ||
+                            undefined}
+                        on:dragstart={(e) => handleDragStart(e, i)}
+                        on:dragenter={(e) => handleDragEnter(e, i)}
+                        on:dragover={handleDragOver}
+                        on:drop={(e) => handleDropReorder(e, i)}
+                        on:dragend={handleDragEnd}
+                        role={field.allowReorder && field.multiple
+                            ? "listitem"
+                            : undefined}
+                        aria-grabbed={(field.allowReorder &&
+                            field.multiple &&
+                            dragIndex === i) ||
+                            undefined}
+                        animate:flip={{ duration: 150, easing: cubicOut }}
                     >
-                        {#if isPending}
+                        {#if isImage(data.mimeType)}
+                            <img
+                                src={data.url}
+                                alt={data.name}
+                                class="size-full object-cover select-none pointer-events-none"
+                                loading="lazy"
+                                draggable={false}
+                            />
+                        {:else if isVideo(data.mimeType)}
+                            <VideoPreview
+                                src={data.url}
+                                title={data.name}
+                                thumbnailClass="size-full object-cover"
+                            />
+                        {:else}
                             <div
-                                class="flex items-center gap-2 text-xs text-yellow-600 dark:text-yellow-400"
+                                class="flex flex-col items-center justify-center size-full gap-2 text-xs text-muted-foreground"
                             >
-                                <div
-                                    class="w-2 h-2 bg-yellow-500 rounded-full"
-                                ></div>
-                                Pending upload
-                            </div>
-                        {:else if isMarkedForDeletion}
-                            <div
-                                class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400"
-                            >
-                                <div
-                                    class="w-2 h-2 bg-red-500 rounded-full"
-                                ></div>
-                                Marked for deletion
+                                <FileIcon
+                                    mimeType={data.mimeType}
+                                    fileName={data.name}
+                                    size={36}
+                                />
+                                <span class="px-1 truncate max-w-[90%]"
+                                    >{data.name}</span
+                                >
                             </div>
                         {/if}
 
-                        <div class="flex-shrink-0 w-full sm:w-auto">
-                            {#if isImage(mimeType)}
-                                <img
-                                    src={url}
-                                    loading="lazy"
-                                    draggable={false}
-                                    alt={name}
-                                    class="w-full h-48 object-cover rounded-lg select-none sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28"
-                                />
-                            {:else if isVideo(mimeType)}
-                                <VideoPreview
-                                    src={url}
-                                    title={name}
-                                    thumbnailClass="w-full object-cover rounded-lg select-none"
-                                />
-                            {:else}
-                                <div
-                                    class="flex justify-center sm:justify-start"
+                        <!-- Overlay states -->
+                        {#if pending}
+                            <div class="absolute inset-0 flex items-start p-1">
+                                <span
+                                    class="text-[10px] font-medium text-yellow-950 dark:text-yellow-100 bg-yellow-400/80 px-1 rounded"
+                                    >Pending</span
                                 >
-                                    <FileIcon
-                                        {mimeType}
-                                        fileName={name}
-                                        size={32}
-                                        class="text-muted-foreground"
-                                    />
-                                </div>
+                            </div>
+                        {:else if marked}
+                            <div class="absolute inset-0 flex items-start p-1">
+                                <span
+                                    class="text-[10px] font-medium text-red-50 bg-red-600/80 px-1 rounded"
+                                    >Marked</span
+                                >
+                            </div>
+                        {/if}
+
+                        <!-- Remove / Toggle button -->
+                        <button
+                            type="button"
+                            class="absolute -top-2 -right-2 size-6 cursor-pointer rounded-full border-2 border-background bg-destructive shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center justify-center text-[10px] font-semibold hover:scale-105 transition text-white z-10"
+                            on:click|stopPropagation={() => toggleRemove(f)}
+                            aria-label={pending
+                                ? "Remove file"
+                                : marked
+                                  ? "Undo deletion"
+                                  : "Mark for deletion"}
+                        >
+                            {#if pending}
+                                ✕
+                            {:else if marked}
+                                ↺
+                            {:else}
+                                ✕
                             {/if}
-                        </div>
+                        </button>
 
-                        <div class="min-w-0 flex-1 space-y-1">
-                            <p class="text-sm font-medium truncate">{name}</p>
-                            <p class="text-xs text-muted-foreground">
-                                {formatFileSize(size)}
-                            </p>
+                        <!-- Meta footer -->
+                        <div
+                            class="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-black/60 to-black/0 text-[10px] text-white px-1.5 py-1 flex items-center justify-between gap-1 pointer-events-none"
+                        >
+                            <span class="truncate" title={data.name}
+                                >{data.name}</span
+                            >
+                            <span>{formatFileSize(data.size)}</span>
                         </div>
-
-                        <FileActionBar
-                            fileData={isPending
-                                ? {
-                                      id: "",
-                                      originalName: name,
-                                      fileName: name,
-                                      mimeType,
-                                      size,
-                                      path: url,
-                                      uploadedAt: new Date(),
-                                  }
-                                : fileData}
-                            disabled={field.disabled || isProcessing}
-                            onDelete={() => removeFile(fileData)}
-                        />
                     </div>
                 {/each}
             </div>
+        {:else}
+            <div
+                class="flex flex-col items-center justify-center px-4 py-3 text-center select-none"
+            >
+                <div
+                    class="mb-2 flex h-11 w-11 items-center justify-center rounded-full border bg-background dark:bg-input/30"
+                    aria-hidden="true"
+                >
+                    <UploadIcon class="h-4 w-4 opacity-60" />
+                </div>
+                <p class="mb-1.5 text-sm font-medium">
+                    {field.multiple
+                        ? "Drop your files here"
+                        : "Drop your file here"}
+                </p>
+                <p class="text-muted-foreground text-xs">
+                    {#if field.allowedMimeTypes?.length}
+                        {field.allowedMimeTypes.join(", ")}
+                    {/if}
+                    {#if field.maxFileSize}
+                        {#if field.allowedMimeTypes?.length}&nbsp;•&nbsp;{/if}
+                        Max {formatFileSize(field.maxFileSize)}
+                    {/if}
+                </p>
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="mt-4 inline-flex items-center gap-2"
+                    disabled={field.disabled || isProcessing}
+                    onclick={() => fileInput?.click()}
+                >
+                    <UploadIcon class="-ms-1 h-4 w-4 opacity-60" />
+                    Select {field.multiple ? "files" : "file"}
+                </Button>
+            </div>
         {/if}
     </div>
-</TooltipProvider>
+</div>
