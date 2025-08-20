@@ -23,8 +23,14 @@
     export let currentLocale: string = "";
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
+    export let validationErrors: Record<string, string> = {};
 
     $: filteredSchema = filterSchemaByModeOptimized(schema, mode);
+
+    function getValidationError(fieldName: string): string | null {
+        const fullFieldKey = `${componentId}.${fieldName}`;
+        return validationErrors[fullFieldKey] || null;
+    }
 
     function isFormField(item: any): boolean {
         const field = convertToFormField(item);
@@ -155,6 +161,7 @@
                     translationData={props.translationData}
                     componentId={props.componentId}
                     compact={props.compact}
+                    validationError={getValidationError(field.name)}
                 />
             {/if}
         {:else if isGrid(item)}
@@ -166,6 +173,7 @@
                 {currentLocale}
                 {isDefaultLocale}
                 {translationData}
+                {validationErrors}
             />
         {:else if isTabsContainer(item)}
             {@const tabsContainer = item as TabsContainer}
@@ -211,6 +219,7 @@
                                 {currentLocale}
                                 {isDefaultLocale}
                                 {translationData}
+                                {validationErrors}
                             />
                         </TabsContent>
                     {/each}

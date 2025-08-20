@@ -16,6 +16,7 @@
     export let currentLocale: string = "";
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
+    export let validationErrors: Record<string, string> = {};
 
     const columns = layout.columns || 2;
     const gap = layout.gap || 4;
@@ -47,6 +48,11 @@
         if (!field.columnSpan) return "";
         return `md:col-span-${field.columnSpan}`;
     }
+
+    function getValidationError(fieldName: string): string | null {
+        const fullFieldKey = `${componentId}.${fieldName}`;
+        return validationErrors[fullFieldKey] || null;
+    }
 </script>
 
 <!-- Only render grid if there are fields to show -->
@@ -64,6 +70,7 @@
                     {translationData}
                     {componentId}
                     compact={mode === RenderMode.TRANSLATION}
+                    validationError={getValidationError(field.name)}
                 />
             </div>
         {/each}

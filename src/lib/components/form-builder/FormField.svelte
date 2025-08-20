@@ -26,6 +26,7 @@
     export let isDefaultLocale: boolean = true;
     export let translationData: TranslationData = {};
     export let componentId: string = "";
+    export let validationError: string | null = null;
 
     const FIELD_COMPONENTS: Record<string, any> = {
         text: TextInput,
@@ -73,6 +74,7 @@
                 {isDefaultLocale}
                 {translationData}
                 {componentId}
+                {validationError}
             />
         {:else}
             <svelte:component
@@ -81,11 +83,16 @@
                 {fieldId}
                 bind:value
                 type={field.type}
+                {validationError}
             />
         {/if}
     {:else}
         <div class="text-red-500 text-sm">
             Unknown field type: {field.type}
         </div>
+    {/if}
+
+    {#if validationError}
+        <p class="text-sm text-destructive mt-1">{validationError}</p>
     {/if}
 </div>

@@ -15,6 +15,7 @@
     export let disableCollapsible: boolean = false;
     export let hideComponentTitles: boolean = false;
     export let onToggleCollapse: () => void;
+    export let validationErrors: Record<string, string> = {};
 </script>
 
 <div
@@ -72,6 +73,7 @@
                     {formData}
                     {translationData}
                     {locales}
+                    {validationErrors}
                 />
             {:else}
                 <!-- Use unified renderer for all schema types -->
@@ -86,6 +88,7 @@
                     componentId={componentInstance.id}
                     formData={formData[componentInstance.id]}
                     {mode}
+                    {validationErrors}
                 />
             {/if}
         </div>
