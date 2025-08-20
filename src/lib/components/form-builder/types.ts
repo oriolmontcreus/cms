@@ -266,6 +266,13 @@ export interface FormField {
     // File upload specific options
     allowedMimeTypes?: string[]; // For file fields - allowed MIME types (default: all)
     maxFileSize?: number; // For file fields - maximum file size in bytes
+    // File preview options
+    preview?: {
+        width?: number; // target width in px (wrapper)
+        height?: number; // target height in px (wrapper)
+        class?: string; // additional utility classes to apply to preview wrapper
+        aspect?: 'square' | 'video' | 'wide' | 'portrait' | string; // templated aspect (falls back to raw string)
+    };
     // Tags input specific options
     maxTags?: number; // For tags fields - maximum number of tags allowed
     validateTag?: (tag: string, existingTags: string[]) => string | undefined; // For tags fields - custom tag validation function
@@ -331,6 +338,7 @@ export interface FieldBuilder {
     autoResize(isAutoResize?: boolean): FieldBuilder;
     allowedMimeTypes(types: string[]): FieldBuilder;
     maxFileSize(size: number): FieldBuilder;
+    preview(options: { width?: number; height?: number; class?: string; aspect?: 'square' | 'video' | 'wide' | 'portrait' | string }): FieldBuilder;
     maxTags(count: number): FieldBuilder;
     validateTag(validator: (tag: string, existingTags: string[]) => string | undefined): FieldBuilder;
     allowDuplicates(allow?: boolean): FieldBuilder;
