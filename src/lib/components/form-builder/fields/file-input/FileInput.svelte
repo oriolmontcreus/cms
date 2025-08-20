@@ -8,6 +8,7 @@
     import VideoPreview from "./VideoPreview.svelte";
     import { getFileUrl } from "@/services/file.service";
     import { errorToast } from "@/services/toast.service";
+    import Button from "$lib/components/ui/button/button.svelte";
 
     export let field: FormField;
     export let value: any = null; // single File / UploadedFile or array
@@ -119,7 +120,7 @@
     <!-- Drop Area -->
     <div
         class={cn(
-            "border-input data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 relative flex min-h-48 flex-col overflow-hidden rounded-xl border border-dashed p-4 transition-colors has-[input:focus]:ring-[3px]",
+            "border-input bg-background dark:bg-input/30 data-[dragging=true]:bg-accent has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 relative flex min-h-48 flex-col overflow-hidden rounded-xl border border-dashed p-4 transition-colors has-[input:focus]:ring-[3px]",
             currentFiles.length === 0
                 ? "items-center justify-center text-center"
                 : "gap-3",
@@ -301,7 +302,7 @@
                 class="flex flex-col items-center justify-center px-4 py-3 text-center select-none"
             >
                 <div
-                    class="mb-2 flex h-11 w-11 items-center justify-center rounded-full border bg-background"
+                    class="mb-2 flex h-11 w-11 items-center justify-center rounded-full border bg-background dark:bg-input/30"
                     aria-hidden="true"
                 >
                     <UploadIcon class="h-4 w-4 opacity-60" />
@@ -320,15 +321,16 @@
                         Max {formatFileSize(field.maxFileSize)}
                     {/if}
                 </p>
-                <button
+                <Button
                     type="button"
-                    class="mt-4 inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium hover:bg-accent transition disabled:opacity-50"
+                    variant="outline"
+                    class="mt-4 inline-flex items-center gap-2"
                     disabled={field.disabled || isProcessing}
-                    on:click={() => fileInput?.click()}
+                    onclick={() => fileInput?.click()}
                 >
                     <UploadIcon class="-ms-1 h-4 w-4 opacity-60" />
                     Select {field.multiple ? "files" : "file"}
-                </button>
+                </Button>
             </div>
         {/if}
     </div>
