@@ -4,6 +4,8 @@
     import UploadIcon from "@tabler/icons-svelte/icons/upload";
     import type { UploadedFileWithDeletionFlag } from "@/lib/shared/types/file.type";
     import { onMount } from "svelte";
+    import { flip } from "svelte/animate";
+    import { cubicOut } from "svelte/easing";
     import FileIcon from "../FileIcon.svelte";
     import VideoPreview from "./VideoPreview.svelte";
     import { getFileUrl } from "@/services/file.service";
@@ -25,12 +27,18 @@
         if (!field.allowReorder || !field.multiple) return;
         dragIndex = index;
         overIndex = index;
+
+        // Create a custom drag image that's transparent
+        const dragImage = new Image();
+        dragImage.src =
+            "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
+        event.dataTransfer?.setDragImage(dragImage, 0, 0);
         event.dataTransfer?.setData("text/plain", String(index));
-        event.dataTransfer?.setDragImage(new Image(), 0, 0);
     }
 
     function handleDragEnter(event: DragEvent, index: number) {
         if (dragIndex === null || !field.allowReorder) return;
+        event.preventDefault();
         overIndex = index;
     }
 
@@ -43,12 +51,14 @@
         if (dragIndex === null || overIndex === null || !field.allowReorder)
             return;
         event.preventDefault();
+
         if (dragIndex !== overIndex) {
             const newOrder = [...currentFiles];
             const [moved] = newOrder.splice(dragIndex, 1);
             newOrder.splice(overIndex, 0, moved);
             value = newOrder;
         }
+
         dragIndex = null;
         overIndex = null;
     }
@@ -247,7 +257,7 @@
                     <div
                         class={cn(
                             // Base styles
-                            "relative rounded-md group bg-accent/40 border border-transparent flex items-center justify-center overflow-visible transition-all duration-300 ease-in-out",
+                            "relative rounded-md group bg-accent/40 border border-transparent flex items-center justify-center overflow-visible transition-all duration-150 ease-out",
                             (field.preview?.aspect === "video" &&
                                 "aspect-video") ||
                                 (field.preview?.aspect === "wide" &&
@@ -267,7 +277,17 @@
                             removingLocalFiles.has(f)
                                 ? "scale-95 opacity-0"
                                 : "",
-                            // Removed distracting border color changes for pending/marked states
+                            dragIndex === i
+                                ? "scale-105 shadow-2xl z-20 opacity-90 rotate-1"
+                                : "",
+                            overIndex === i &&
+                                dragIndex !== null &&
+                                dragIndex !== i
+                                ? "ring-2 ring-primary/50 scale-95"
+                                : "",
+                            field.allowReorder && field.multiple
+                                ? "cursor-grab active:cursor-grabbing hover:shadow-md"
+                                : "",
                             field.preview?.class,
                         )}
                         style={field.preview &&
@@ -281,11 +301,6 @@
                         on:dragover={handleDragOver}
                         on:drop={(e) => handleDropReorder(e, i)}
                         on:dragend={handleDragEnd}
-                        data-dragging={dragIndex === i || undefined}
-                        data-dragover={(overIndex === i &&
-                            dragIndex !== null &&
-                            dragIndex !== i) ||
-                            undefined}
                         role={field.allowReorder && field.multiple
                             ? "listitem"
                             : undefined}
@@ -293,19 +308,13 @@
                             field.multiple &&
                             dragIndex === i) ||
                             undefined}
+                        animate:flip={{ duration: 150, easing: cubicOut }}
                     >
-                        {#if field.allowReorder && field.multiple}
-                            <div
-                                class="absolute top-1 left-1 z-10 cursor-move text-[10px] px-1 rounded bg-black/40 text-white select-none opacity-70 group-hover:opacity-100"
-                            >
-                                ☰
-                            </div>
-                        {/if}
                         {#if isImage(data.mimeType)}
                             <img
                                 src={data.url}
                                 alt={data.name}
-                                class="size-full object-cover select-none"
+                                class="size-full object-cover select-none pointer-events-none"
                                 loading="lazy"
                                 draggable={false}
                             />
@@ -350,8 +359,8 @@
                         <!-- Remove / Toggle button -->
                         <button
                             type="button"
-                            class="absolute -top-2 -right-2 size-6 cursor-pointer rounded-full border-2 border-background bg-destructive shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center justify-center text-[10px] font-semibold hover:scale-105 transition text-white"
-                            on:click={() => toggleRemove(f)}
+                            class="absolute -top-2 -right-2 size-6 cursor-pointer rounded-full border-2 border-background bg-destructive shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center justify-center text-[10px] font-semibold hover:scale-105 transition text-white z-10"
+                            on:click|stopPropagation={() => toggleRemove(f)}
                             aria-label={pending
                                 ? "Remove file"
                                 : marked
@@ -369,7 +378,7 @@
 
                         <!-- Meta footer -->
                         <div
-                            class="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-black/60 to-black/0 text-[10px] text-white px-1.5 py-1 flex items-center justify-between gap-1"
+                            class="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-black/60 to-black/0 text-[10px] text-white px-1.5 py-1 flex items-center justify-between gap-1 pointer-events-none"
                         >
                             <span class="truncate" title={data.name}
                                 >{data.name}</span
