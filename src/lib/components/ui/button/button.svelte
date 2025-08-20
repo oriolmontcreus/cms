@@ -104,7 +104,7 @@
 		{#if icon && iconPlacement === "left"}
 			{#if effect === "expandIcon"}
 				<div
-					class="w-0 translate-x-[0%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-100 group-hover:pr-2 group-hover:opacity-100"
+					class="w-0 translate-x-[-100%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-0 group-hover:pr-2 group-hover:opacity-100"
 				>
 					<IconComponent />
 				</div>
@@ -137,7 +137,7 @@
 		{#if icon && iconPlacement === "left"}
 			{#if effect === "expandIcon"}
 				<div
-					class="w-0 translate-x-[0%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-100 group-hover:pr-2 group-hover:opacity-100"
+					class="w-0 translate-x-[-100%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-0 group-hover:pr-2 group-hover:opacity-100"
 				>
 					<IconComponent />
 				</div>
