@@ -187,7 +187,7 @@
                     {@const marked = !pending && f._markedForDeletion}
                     <div
                         class={cn(
-                            "relative rounded-md overflow-hidden group bg-accent/40 border flex items-center justify-center",
+                            "relative rounded-md group bg-accent/40 border border-transparent flex items-center justify-center overflow-visible",
                             (field.preview?.aspect === "video" &&
                                 "aspect-video") ||
                                 (field.preview?.aspect === "wide" &&
@@ -220,7 +220,8 @@
                             <img
                                 src={data.url}
                                 alt={data.name}
-                                class="size-full object-cover"
+                                class="size-full object-cover select-none"
+                                loading="lazy"
                                 draggable={false}
                             />
                         {:else if isVideo(data.mimeType)}
@@ -268,7 +269,7 @@
                         <!-- Remove / Toggle button -->
                         <button
                             type="button"
-                            class="absolute -top-2 -right-2 h-6 w-6 rounded-full border-2 border-background bg-background/90 shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center justify-center text-[10px] font-semibold hover:scale-105 transition"
+                            class="absolute -top-2 -right-2 size-6 cursor-pointer rounded-full border-2 border-background bg-destructive shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center justify-center text-[10px] font-semibold hover:scale-105 transition text-white"
                             on:click={() => toggleRemove(f)}
                             aria-label={pending
                                 ? "Remove file"
