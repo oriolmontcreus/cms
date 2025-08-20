@@ -31,7 +31,7 @@
         // Create a custom drag image that's transparent
         const dragImage = new Image();
         dragImage.src =
-            "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
+        dragImage.src = TRANSPARENT_GIF_BASE64;
         // Use the module-level transparent drag image
         event.dataTransfer?.setDragImage(transparentDragImage, 0, 0);
         event.dataTransfer?.setData("text/plain", String(index));
