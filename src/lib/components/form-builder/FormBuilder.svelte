@@ -280,21 +280,25 @@
     function replaceFileReferences(data: any, fileMap: Map<File, any>): any {
         if (!data || typeof data !== "object") return data;
 
+        // If this is an uploaded file object that was marked for deletion, remove reference
+        if ((data as UploadedFileWithDeletionFlag)?._markedForDeletion) {
+            return null; // signal removal for single file fields; filtered out for arrays
+        }
+
         if (data instanceof File) {
             return fileMap.get(data) || null;
         }
 
         if (Array.isArray(data)) {
-            return data.map((item) => replaceFileReferences(item, fileMap));
+            // Map then filter out any nulls produced by marked-for-deletion items
+            return data
+                .map((item) => replaceFileReferences(item, fileMap))
+                .filter((item) => item !== null && item !== undefined);
         }
 
         const result: any = {};
         for (const [key, value] of Object.entries(data)) {
-            if ((value as UploadedFileWithDeletionFlag)?._markedForDeletion) {
-                result[key] = null;
-            } else {
-                result[key] = replaceFileReferences(value, fileMap);
-            }
+            result[key] = replaceFileReferences(value, fileMap);
         }
         return result;
     }
