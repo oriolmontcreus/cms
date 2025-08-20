@@ -121,42 +121,48 @@
     >
         <div class="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div class="px-4 lg:px-6">
-                {#if pages.length > 0}
-                    <div class="mb-4">
-                        <div class="text-sm text-muted-foreground">
-                            {pages.length} page{pages.length === 1 ? "" : "s"}
+                <div class="max-w-4xl mx-auto">
+                    {#if pages.length > 0}
+                        <div class="mb-4">
+                            <div class="text-sm text-muted-foreground">
+                                {pages.length} page{pages.length === 1
+                                    ? ""
+                                    : "s"}
+                            </div>
                         </div>
-                    </div>
-                {/if}
+                    {/if}
 
-                {#if loading}
-                    <div class="text-center py-8 flex justify-center">
-                        <Spinner />
-                    </div>
-                {:else if error}
-                    <div class="text-red-500">{error}</div>
-                {:else if pages.length === 0}
-                    <div class="flex items-center justify-center min-h-[400px]">
-                        <div class="text-center max-w-md">
-                            <h3
-                                class="text-lg font-extralight uppercase tracking-wider mb-2"
-                            >
-                                NO PAGES FOUND
-                            </h3>
-                            <p
-                                class="text-muted-foreground font-extralight mb-6"
-                            >
-                                Get started by creating your first page
-                            </p>
+                    {#if loading}
+                        <div class="text-center py-8 flex justify-center">
+                            <Spinner />
                         </div>
-                    </div>
-                {:else}
-                    <div class="space-y-2">
-                        {#each pageTree as node}
-                            {@render PageTreeNode(node, 0)}
-                        {/each}
-                    </div>
-                {/if}
+                    {:else if error}
+                        <div class="text-red-500">{error}</div>
+                    {:else if pages.length === 0}
+                        <div
+                            class="flex items-center justify-center min-h-[400px]"
+                        >
+                            <div class="text-center max-w-md">
+                                <h3
+                                    class="text-lg font-extralight uppercase tracking-wider mb-2"
+                                >
+                                    NO PAGES FOUND
+                                </h3>
+                                <p
+                                    class="text-muted-foreground font-extralight mb-6"
+                                >
+                                    Get started by creating your first page
+                                </p>
+                            </div>
+                        </div>
+                    {:else}
+                        <div class="space-y-2">
+                            {#each pageTree as node}
+                                {@render PageTreeNode(node, 0)}
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
     </ScrollArea>

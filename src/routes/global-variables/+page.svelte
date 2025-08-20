@@ -28,7 +28,6 @@
     // Create the config for global variables
     const globalVariablesConfig: PageConfig = {
         title: "Global Variables",
-        slug: "global-variables",
         components: [
             {
                 component: GlobalVariables,
