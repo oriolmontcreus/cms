@@ -133,12 +133,12 @@
 
     <!-- Quick Stats Cards -->
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card.Root>
+      <Card.Root class="dark:bg-primary/10 dark:border-primary/20">
         <Card.Header
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Total pages</Card.Title>
-          <div class="p-2 rounded-lg bg-muted">
+          <div class="p-2 rounded-lg bg-muted dark:bg-primary/10 dark:border dark:border-primary/30">
             <FileTextIcon class="h-5 w-5 text-muted-foreground" />
           </div>
         </Card.Header>
@@ -159,12 +159,12 @@
         </Card.Content>
       </Card.Root>
 
-      <Card.Root>
+      <Card.Root class="dark:bg-primary/10 dark:border-primary/15">
         <Card.Header
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Users</Card.Title>
-          <div class="p-2 rounded-lg bg-muted">
+          <div class="p-2 rounded-lg bg-muted dark:bg-primary/8 dark:border dark:border-primary/25">
             <UsersIcon class="h-5 w-5 text-muted-foreground" />
           </div>
         </Card.Header>
@@ -185,12 +185,12 @@
         </Card.Content>
       </Card.Root>
 
-      <Card.Root>
+      <Card.Root class="dark:bg-primary/10 dark:border-primary/12">
         <Card.Header
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Locales</Card.Title>
-          <div class="p-2 rounded-lg bg-muted">
+          <div class="p-2 rounded-lg bg-muted dark:bg-primary/6 dark:border dark:border-primary/20">
             <WorldIcon class="size-5 text-muted-foreground" />
           </div>
         </Card.Header>
@@ -213,12 +213,12 @@
         </Card.Content>
       </Card.Root>
 
-      <Card.Root>
+      <Card.Root class="dark:bg-primary/10 dark:border-primary/10">
         <Card.Header
           class="flex flex-row items-center justify-between space-y-0 pb-2"
         >
           <Card.Title class="text-sm font-medium">Quick actions</Card.Title>
-          <div class="p-2 rounded-lg bg-muted">
+          <div class="p-2 rounded-lg bg-muted dark:bg-primary/5 dark:border dark:border-primary/18">
             <TrendingUpIcon class="h-5 w-5 text-muted-foreground" />
           </div>
         </Card.Header>
@@ -249,7 +249,7 @@
 
     <div class="grid gap-4 lg:grid-cols-2 mt-4">
       <!-- Recent Pages -->
-      <Card.Root class="group hover:shadow-lg transition-all duration-300">
+      <Card.Root class="group hover:shadow-lg transition-all duration-300 dark:bg-primary/5 dark:border-primary/18">
         <Card.Header>
           <div class="flex items-center justify-between">
             <Card.Title class="flex items-center gap-2 font-normal">
@@ -280,7 +280,7 @@
             </div>
           {:else if recentPages.length === 0}
             <div class="text-center py-6 text-muted-foreground">
-              <FileTextIcon class="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <FileTextIcon class="size-12 mx-auto mb-3 opacity-50" />
               <p>No pages created yet</p>
               <Button
                 variant="outlineBackground"
@@ -337,7 +337,7 @@
       </Card.Root>
 
       <!-- Team Overview -->
-      <Card.Root class="group hover:shadow-lg transition-all duration-300">
+      <Card.Root class="group hover:shadow-lg transition-all duration-300 dark:bg-primary/5 dark:border-primary/15">
         <Card.Header>
           <div class="flex items-center justify-between">
             <Card.Title class="flex items-center gap-2 font-normal">
