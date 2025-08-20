@@ -18,6 +18,45 @@
     let isProcessing = false;
     // Track files (only local new Files) being removed to animate out before actual deletion
     let removingLocalFiles = new Set<File>();
+    let dragIndex: number | null = null;
+    let overIndex: number | null = null;
+
+    function handleDragStart(event: DragEvent, index: number) {
+        if (!field.allowReorder || !field.multiple) return;
+        dragIndex = index;
+        overIndex = index;
+        event.dataTransfer?.setData("text/plain", String(index));
+        event.dataTransfer?.setDragImage(new Image(), 0, 0);
+    }
+
+    function handleDragEnter(event: DragEvent, index: number) {
+        if (dragIndex === null || !field.allowReorder) return;
+        overIndex = index;
+    }
+
+    function handleDragOver(event: DragEvent) {
+        if (dragIndex === null || !field.allowReorder) return;
+        event.preventDefault();
+    }
+
+    function handleDropReorder(event: DragEvent, index: number) {
+        if (dragIndex === null || overIndex === null || !field.allowReorder)
+            return;
+        event.preventDefault();
+        if (dragIndex !== overIndex) {
+            const newOrder = [...currentFiles];
+            const [moved] = newOrder.splice(dragIndex, 1);
+            newOrder.splice(overIndex, 0, moved);
+            value = newOrder;
+        }
+        dragIndex = null;
+        overIndex = null;
+    }
+
+    function handleDragEnd() {
+        dragIndex = null;
+        overIndex = null;
+    }
 
     const isImage = (mimeType: string) => mimeType?.startsWith("image/");
     const isVideo = (mimeType: string) => mimeType?.startsWith("video/");
@@ -201,7 +240,7 @@
                         : "grid gap-3 mt-2 grid-cols-1",
                 )}
             >
-                {#each currentFiles as f (f.id || f.name || f.fileName)}
+                {#each currentFiles as f, i (f.id || f.name || f.fileName)}
                     {@const data = getFileData(f)}
                     {@const pending = isFile(f)}
                     {@const marked = !pending && f._markedForDeletion}
@@ -235,7 +274,33 @@
                         (field.preview.width || field.preview.height)
                             ? `${field.preview.width ? `width:${field.preview.width}px;flex:0 0 ${field.preview.width}px;` : ""}${field.preview.height ? `height:${field.preview.height}px;` : ""}`
                             : undefined}
+                        draggable={(field.allowReorder && field.multiple) ||
+                            undefined}
+                        on:dragstart={(e) => handleDragStart(e, i)}
+                        on:dragenter={(e) => handleDragEnter(e, i)}
+                        on:dragover={handleDragOver}
+                        on:drop={(e) => handleDropReorder(e, i)}
+                        on:dragend={handleDragEnd}
+                        data-dragging={dragIndex === i || undefined}
+                        data-dragover={(overIndex === i &&
+                            dragIndex !== null &&
+                            dragIndex !== i) ||
+                            undefined}
+                        role={field.allowReorder && field.multiple
+                            ? "listitem"
+                            : undefined}
+                        aria-grabbed={(field.allowReorder &&
+                            field.multiple &&
+                            dragIndex === i) ||
+                            undefined}
                     >
+                        {#if field.allowReorder && field.multiple}
+                            <div
+                                class="absolute top-1 left-1 z-10 cursor-move text-[10px] px-1 rounded bg-black/40 text-white select-none opacity-70 group-hover:opacity-100"
+                            >
+                                ☰
+                            </div>
+                        {/if}
                         {#if isImage(data.mimeType)}
                             <img
                                 src={data.url}
@@ -267,18 +332,14 @@
 
                         <!-- Overlay states -->
                         {#if pending}
-                            <div
-                                class="absolute inset-0 flex items-start p-1"
-                            >
+                            <div class="absolute inset-0 flex items-start p-1">
                                 <span
                                     class="text-[10px] font-medium text-yellow-950 dark:text-yellow-100 bg-yellow-400/80 px-1 rounded"
                                     >Pending</span
                                 >
                             </div>
                         {:else if marked}
-                            <div
-                                class="absolute inset-0 flex items-start p-1"
-                            >
+                            <div class="absolute inset-0 flex items-start p-1">
                                 <span
                                     class="text-[10px] font-medium text-red-50 bg-red-600/80 px-1 rounded"
                                     >Marked</span

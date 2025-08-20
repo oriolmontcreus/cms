@@ -300,6 +300,8 @@ export interface FormField {
     allowVariables?: boolean; // Whether this field supports global variables (default: true for text-based fields)
     // Visibility properties
     hidden?: boolean; // Whether this field should be hidden from rendering
+    // File (multiple) specific behavior
+    allowReorder?: boolean; // Whether multiple file items can be reordered via drag & drop
 }
 
 // Type for FieldBuilder instances (for better type checking)
@@ -352,6 +354,8 @@ export interface FieldBuilder {
     default(value: any): FieldBuilder;
     allowVariables(allow?: boolean): FieldBuilder;
     hidden(isHidden?: boolean): FieldBuilder;
+    // File (multiple) specific behavior
+    allowReorder?(allow?: boolean): FieldBuilder;
 }
 
 // Schema item can be either a field, field builder, tabs container, tabs builder, or grid layout

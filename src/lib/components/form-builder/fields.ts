@@ -240,6 +240,11 @@ class FieldBuilder implements IFieldBuilder {
         return this;
     }
 
+    allowReorder(allow: boolean = true): this {
+        this.field.allowReorder = allow;
+        return this;
+    }
+
     previewWidth(width: number): this {
         this.field.preview = { ...this.field.preview, width };
         return this;
