@@ -107,7 +107,7 @@
   }
 
   onMount(() => {
-    loadDashboardData();
+    if ($loggedUser) loadDashboardData();
   });
 </script>
 

@@ -57,8 +57,8 @@ export async function deleteUserAccount(): Promise<boolean> {
 //region Handlers
 export async function handleGetAllUsers(): Promise<User[] | null> {
     const [data, err] = await safeFetch(getAllUsers());
-    if (err || !data) errorToast("Failed to load users. Please try again.");
-    return data || null;
+    if (err) errorToast("Failed to load users. Please try again.");
+    return data || [];
 }
 
 export async function handleGetUserById(id: string): Promise<User | null> {
