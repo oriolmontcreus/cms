@@ -26,6 +26,7 @@ slidesTab.schema = [
             FileInput('image')
                 .label('Slide image')
                 .previewWidth(200)
+                .multiple()
                 .required(),
             TextInput('url')
                 .label('Link URL (optional)')

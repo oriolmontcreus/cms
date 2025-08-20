@@ -157,28 +157,39 @@
         {#if currentFiles.length > 0}
             <!-- Header + Add more -->
             <div class="flex items-center justify-between gap-2">
-                <h3 class="truncate text-sm font-medium">
-                    {field.label || "Files"} ({currentFiles.length})
-                </h3>
+                <!-- Accessibility region -->
+                <p
+                    aria-live="polite"
+                    role="status"
+                    class="text-muted-foreground text-center text-xs mt-1"
+                >
+                    {currentFiles.length === 0
+                        ? "No files selected"
+                        : `${currentFiles.length} file${currentFiles.length === 1 ? "" : "s"} selected`}
+                </p>
                 {#if field.multiple}
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-1 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-accent transition disabled:opacity-50"
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="inline-flex items-center gap-1"
                         disabled={field.disabled || isProcessing}
-                        on:click={() => fileInput?.click()}
+                        onclick={() => fileInput?.click()}
                     >
                         <UploadIcon class="-ms-0.5 h-3.5 w-3.5 opacity-60" />
                         Add more
-                    </button>
+                    </Button>
                 {/if}
             </div>
             <!-- Grid -->
             <div
                 class={cn(
-                    "grid gap-3 mt-2",
                     field.multiple
-                        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                        : "grid-cols-1",
+                        ? field.preview &&
+                          (field.preview.width || field.preview.height)
+                            ? // When explicit sizing is provided, flex-wrap avoids grid min-content issues causing overlap
+                              "flex flex-wrap gap-3 mt-2"
+                            : "grid gap-3 mt-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        : "grid gap-3 mt-2 grid-cols-1",
                 )}
             >
                 {#each currentFiles as f (f.id || f.name || f.fileName)}
@@ -213,7 +224,7 @@
                         )}
                         style={field.preview &&
                         (field.preview.width || field.preview.height)
-                            ? `${field.preview.width ? `width:${field.preview.width}px;` : ""}${field.preview.height ? `height:${field.preview.height}px;` : ""}`
+                            ? `${field.preview.width ? `width:${field.preview.width}px;flex:0 0 ${field.preview.width}px;` : ""}${field.preview.height ? `height:${field.preview.height}px;` : ""}`
                             : undefined}
                     >
                         {#if isImage(data.mimeType)}
@@ -335,15 +346,4 @@
             </div>
         {/if}
     </div>
-
-    <!-- Accessibility region -->
-    <p
-        aria-live="polite"
-        role="status"
-        class="text-muted-foreground text-center text-xs mt-1"
-    >
-        {currentFiles.length === 0
-            ? "No files selected"
-            : `${currentFiles.length} file${currentFiles.length === 1 ? "" : "s"} selected`}
-    </p>
 </div>
