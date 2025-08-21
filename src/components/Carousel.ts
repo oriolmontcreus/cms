@@ -25,13 +25,8 @@ slidesTab.schema = [
                 .translatable(),
             FileInput('image')
                 .label('Slide image')
-                .previewWidth(200)
-                .allowReorder()
-                .multiple()
+                .previewAspect("wide")
                 .required(),
-            TextInput('url')
-                .label('Link URL (optional)')
-                .placeholder('https://example.com')
         ])
 ]; const settingsTab = defineGrid(2, 4, { sm: 1, md: 2, lg: 2 });
 settingsTab.schema = [
