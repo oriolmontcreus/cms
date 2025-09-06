@@ -17,16 +17,6 @@ const colors = {
     bold: '\x1b[1m'
 };
 
-const logo = `
-${colors.blue}${colors.bold}
-╔═══════════════════════════════════════╗
-║                                       ║
-║     EXCALIBUR CMS CLI TOOL            ║
-║                                       ║
-╚═══════════════════════════════════════╝
-${colors.reset}
-`;
-
 const commands = {
     'create:page': {
         description: 'Create a new page',
@@ -67,7 +57,6 @@ const commands = {
 };
 
 function showHelp() {
-    console.log(logo);
     console.log(`${colors.bold}Usage:${colors.reset}`);
     console.log(`  excalibur <command>\n`);
 
@@ -75,15 +64,15 @@ function showHelp() {
 
     // Group commands by category
     const categories = {
-        'Creation Commands': ['create:page', 'create:component', 'create:user'],
-        'Deletion Commands': ['delete:component'],
-        'Development Commands': ['dev'],
-        'Build Commands': ['build', 'preview'],
-        'Quality Commands': ['check', 'check:watch']
+        'Creation': ['create:page', 'create:component', 'create:user'],
+        'Deletion': ['delete:component'],
+        'Development': ['dev'],
+        'Build': ['build', 'preview'],
+        'Quality': ['check', 'check:watch']
     };
 
     Object.entries(categories).forEach(([category, cmds]) => {
-        console.log(`${colors.yellow}${colors.bold}${category}:${colors.reset}`);
+        console.log(`${colors.yellow}${colors.bold}${category}${colors.reset}`);
         cmds.forEach(cmd => {
             if (commands[cmd]) {
                 console.log(`  ${colors.green}excalibur ${cmd.padEnd(20)}${colors.reset} ${commands[cmd].description}`);
