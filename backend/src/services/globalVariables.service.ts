@@ -36,6 +36,10 @@ export class GlobalVariablesService {
     }
 
     static async updateGlobalVariables(data: Record<string, any>): Promise<Record<string, any>> {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid global variables data');
+        }
+
         const globalVariables = {
             ...data,
             updatedAt: new Date().toISOString()

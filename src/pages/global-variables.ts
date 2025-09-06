@@ -3,7 +3,6 @@ import { GlobalVariables } from '../components/GlobalVariables';
 
 export const config: PageConfig = {
     title: "Global Variables",
-    slug: "global-variables",
     components: [
         {
             component: GlobalVariables,
