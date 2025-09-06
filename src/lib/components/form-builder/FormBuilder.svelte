@@ -371,13 +371,13 @@
             await new Promise((resolve) => setTimeout(resolve, 50));
         }
 
-        // Validate form data before saving
-        const dataToValidate =
-            mode === RenderMode.TRANSLATION ? translationData : formData;
-        const isValid = await validateForm(dataToValidate);
-
-        if (!isValid) {
-            return; // Don't save if validation fails
+        // Skip validation in translation mode since we're only saving translations
+        // The content validation should have already passed when the original content was saved
+        if (mode === RenderMode.CONTENT) {
+            const isValid = await validateForm(formData);
+            if (!isValid) {
+                return; // Don't save if validation fails
+            }
         }
 
         await saveFormData();

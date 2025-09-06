@@ -16,6 +16,7 @@ Welcome to the Excalibur CMS documentation. This directory contains all the docu
 - [`devtool-integration.md`](./devtool-integration.md) - Excalibur CMS DevTool integration setup and usage guide
 
 ### Components Documentation
+- [`form-builder-validation.md`](./form-builder-validation.md) - Form Builder validation behavior, architectural decisions, and known limitations
 - [`components/form-builder.md`](./components/form-builder.md) - Form Builder component documentation with schema types and usage examples
 
 ## 🏗️ Project Structure
