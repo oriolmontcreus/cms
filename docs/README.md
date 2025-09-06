@@ -4,6 +4,9 @@ Welcome to the Excalibur CMS documentation. This directory contains all the docu
 
 ## 📚 Documentation Index
 
+### CLI Tool
+- [`cli-tool.md`](./cli-tool.md) - Excalibur CLI tool documentation with commands, usage, and examples
+
 ### Core API Documentation
 - [`global-variables-api.md`](./global-variables-api.md) - Comprehensive Global Variables API documentation with features, usage examples, and integration guides
 - [`global-variables-usage.md`](./global-variables-usage.md) - Simple usage guide for Global Variables in Astro components
