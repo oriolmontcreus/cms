@@ -121,4 +121,5 @@ if (command === 'version' || command === '--version' || command === '-v') {
     const packageJson = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
     console.log(`${colors.blue}⚔️  Excalibur CMS v${packageJson.version}${colors.reset}`);
     process.exit(0);
-} runCommand(command);
+}
+runCommand(command);
