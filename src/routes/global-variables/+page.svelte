@@ -95,7 +95,7 @@
             <Button
                 type="button"
                 size="sm"
-                onclick={() => formBuilderRef?.handleSubmit(false)}
+                onclick={() => formBuilderRef?.handleSubmit(true)}
                 disabled={formBuilderRef?.isSubmitting}
             >
                 <IconDeviceFloppy class="size-4" />
