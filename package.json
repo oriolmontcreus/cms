@@ -3,10 +3,11 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"bin": {
+		"excalibur": "./cli.js"
+	},
 	"scripts": {
 		"dev": "bash ./dev.sh",
-		"dev:frontend": "vite dev",
-		"dev:backend": "cd backend && npm run dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
@@ -15,7 +16,9 @@
 		"create-user": "cd backend && npm run create-user",
 		"create-page": "tsx backend/scripts/create-page.ts",
 		"create-component": "tsx backend/scripts/create-component.ts",
-		"delete-component": "tsx backend/scripts/delete-component.ts"
+		"delete-component": "tsx backend/scripts/delete-component.ts",
+		"install-cli": "npm link",
+		"uninstall-cli": "npm unlink -g excaliburcms"
 	},
 	"dependencies": {
 		"@sveltejs/adapter-auto": "^6.0.1",
