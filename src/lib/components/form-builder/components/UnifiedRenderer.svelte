@@ -210,6 +210,7 @@
                         <TabsContent
                             value={tab.name}
                             class="border rounded-b-lg rounded-tr-lg -mt-[21px] p-8"
+                            data-tab-name={tab.name}
                         >
                             <svelte:self
                                 schema={tab.schema}
@@ -220,6 +221,7 @@
                                 {isDefaultLocale}
                                 {translationData}
                                 {validationErrors}
+                                currentTabName={tab.name}
                             />
                         </TabsContent>
                     {/each}

@@ -22,6 +22,8 @@
     class="{CSS_CLASSES.COMPONENT_CONTAINER} {isCollapsed && !disableCollapsible
         ? 'cursor-pointer border hover:bg-accent dark:hover:bg-accent transition-all duration-200'
         : ''}"
+    data-component-id={componentInstance.id}
+    data-collapsed={isCollapsed}
     onclick={isCollapsed && !disableCollapsible ? onToggleCollapse : undefined}
     role={isCollapsed && !disableCollapsible ? "button" : undefined}
     onkeydown={isCollapsed && !disableCollapsible
@@ -41,6 +43,7 @@
                 {#if !isCollapsed}
                     <button
                         class="flex items-center justify-center h-6 w-6 transition-all cursor-pointer duration-200 ease-in-out hover:bg-accent rounded rotate-180"
+                        data-expand-button
                         onclick={(e) => {
                             e.stopPropagation();
                             onToggleCollapse();

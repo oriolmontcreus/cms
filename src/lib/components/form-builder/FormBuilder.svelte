@@ -10,6 +10,7 @@
     import type { Component } from "@/lib/shared/types/pages.type";
     import type { UploadedFileWithDeletionFlag } from "@/lib/shared/types/file.type";
     import ComponentRenderer from "./components/ComponentRenderer.svelte";
+    import ValidationSummary from "./components/ValidationSummary.svelte";
     import {
         collectFilesForDeletion,
         convertTranslationDataForSaving,
@@ -19,7 +20,15 @@
         initializeFormDataOptimized,
         initializeTranslationDataOptimized,
     } from "./utils/optimizedSchemaProcessor";
-    import { validateFormData, type ValidationError } from "./utils/validation";
+    import {
+        validateFormData,
+        type ValidationError,
+        type ValidationContext,
+    } from "./utils/validation";
+    import {
+        navigateToError,
+        setupNavigationListeners,
+    } from "./utils/navigation";
     import { errorToast } from "@/services/toast.service";
     import { CSS_CLASSES } from "./constants";
     import { writable } from "svelte/store";
@@ -43,7 +52,11 @@
 
     // Validation state
     let validationErrors: Record<string, string> = {};
+    let validationErrorsList: ValidationError[] = [];
     let hasValidationErrors = false;
+    let showValidationSummary = false;
+    let totalValidationErrors = 0;
+    let fixedValidationErrors = 0;
 
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
@@ -74,6 +87,9 @@
                     : !defaultExpanded;
             });
         }
+
+        // Setup navigation listeners for smart error navigation
+        setupNavigationListeners();
     });
 
     function saveCollapseState() {
@@ -326,30 +342,65 @@
     async function validateForm(dataToValidate: any): Promise<boolean> {
         // Clear previous validation errors
         validationErrors = {};
+        validationErrorsList = [];
         hasValidationErrors = false;
 
-        // Validate each component's data
+        // Validate each component's data using standard validation first (for debugging)
         for (const componentInstance of config.components) {
             const componentData = dataToValidate[componentInstance.id] || {};
             const componentSchema = componentInstance.component.schema;
 
-            const validation = validateFormData(componentSchema, componentData);
+            // Create validation context
+            const context: ValidationContext = {
+                componentId: componentInstance.id,
+                componentLabel:
+                    componentInstance.displayName ||
+                    componentInstance.component.name ||
+                    "Component",
+            };
 
-            if (!validation.isValid) {
-                validation.errors.forEach((error) => {
-                    const fullFieldKey = `${componentInstance.id}.${error.field}`;
-                    validationErrors[fullFieldKey] = error.message;
-                });
-            }
+            console.log(
+                "Validating component:",
+                componentInstance.id,
+                "with data:",
+                componentData,
+            );
+
+            // Use standard validation that was working before
+            const validationResult = validateFormData(
+                componentSchema,
+                componentData,
+                context,
+            );
+
+            console.log("Component errors found:", validationResult.errors);
+
+            validationResult.errors.forEach((error) => {
+                const fullFieldKey = `${componentInstance.id}.${error.field}`;
+                validationErrors[fullFieldKey] = error.message;
+                validationErrorsList.push(error);
+            });
         }
 
         hasValidationErrors = Object.keys(validationErrors).length > 0;
+        totalValidationErrors = validationErrorsList.length;
+        fixedValidationErrors = Math.max(
+            0,
+            totalValidationErrors - validationErrorsList.length,
+        );
 
         if (hasValidationErrors) {
             const errorCount = Object.keys(validationErrors).length;
+            showValidationSummary = true;
+
             errorToast(
-                `Found ${errorCount} validation error${errorCount > 1 ? "s" : ""}. Please fix them before saving.`,
+                `Found ${errorCount} validation error${errorCount > 1 ? "s" : ""}. Check the validation panel for details.`,
             );
+        } else {
+            // All errors fixed
+            if (showValidationSummary && totalValidationErrors > 0) {
+                fixedValidationErrors = totalValidationErrors;
+            }
         }
 
         return !hasValidationErrors;
@@ -436,12 +487,38 @@
                 await handleDeleteFiles(fileIdsToDelete);
                 filesToDelete.set([]);
             }
+
+            // Clear validation summary on successful save
+            showValidationSummary = false;
+            validationErrorsList = [];
+            totalValidationErrors = 0;
+            fixedValidationErrors = 0;
         } catch (error) {
             console.error("Error saving components:", error);
             formData = originalFormData;
         } finally {
             isSubmitting = false;
         }
+    }
+
+    // Validation summary event handlers
+    function handleNavigateToError(
+        event: CustomEvent<{ error: ValidationError }>,
+    ) {
+        const error = event.detail.error;
+        navigateToError(error);
+    }
+
+    function handleCloseValidationSummary() {
+        showValidationSummary = false;
+    }
+
+    function handleNextError() {
+        // Navigation is handled within the ValidationSummary component
+    }
+
+    function handlePreviousError() {
+        // Navigation is handled within the ValidationSummary component
     }
 </script>
 
@@ -488,3 +565,15 @@
         />
     {/each}
 </div>
+
+<!-- Validation Summary Panel -->
+<ValidationSummary
+    errors={validationErrorsList}
+    isVisible={showValidationSummary}
+    totalErrors={totalValidationErrors}
+    fixedErrors={fixedValidationErrors}
+    on:navigateToError={handleNavigateToError}
+    on:close={handleCloseValidationSummary}
+    on:nextError={handleNextError}
+    on:previousError={handlePreviousError}
+/>

@@ -50,10 +50,15 @@
     $: FieldComponent = FIELD_COMPONENTS[field.type];
 </script>
 
-<div class="space-y-2 px-1">
+<div
+    class="space-y-2 px-1"
+    id={fieldId}
+    data-field-name={field.name}
+    data-component-id={componentId}
+>
     {#if field.type !== "toggle"}
         <div>
-            <Label for={fieldId} class={CSS_CLASSES.LABEL}>
+            <Label for={`${fieldId}-input`} class={CSS_CLASSES.LABEL}>
                 {field.label}
             </Label>
             {#if field.helperText && !compact}
