@@ -29,6 +29,7 @@
         navigateToError,
         setupNavigationListeners,
     } from "./utils/navigation";
+    import { debounce } from "@/lib/utils/debounce";
     import { errorToast } from "@/services/toast.service";
     import { CSS_CLASSES } from "./constants";
     import { writable } from "svelte/store";
@@ -57,6 +58,25 @@
     let showValidationSummary = false;
     let totalValidationErrors = 0;
     let fixedValidationErrors = 0;
+    let initialValidationErrorsCount = 0; // Track initial error count for progress
+    let autoValidationEnabled = false; // Only enable auto-validation after first failed save
+
+    // Create debounced validation function for auto-validation
+    const debouncedValidation = debounce(async () => {
+        // Only run auto-validation if it's enabled (after first failed save)
+        if (!autoValidationEnabled || mode !== RenderMode.CONTENT) {
+            console.log(
+                "[FormBuilder] Auto-validation skipped - not enabled or not in content mode",
+            );
+            return;
+        }
+
+        console.log("[FormBuilder] Auto-validation triggered");
+        await validateForm(formData, false); // No toast for auto-validation
+        console.log(
+            `[FormBuilder] Progress: ${fixedValidationErrors}/${totalValidationErrors} errors fixed`,
+        );
+    }, 800); // Wait 800ms after user stops typing
 
     const STORAGE_KEY = `component-collapse-${slug}`;
     let componentCollapseState: Record<string, boolean> = {};
@@ -143,6 +163,7 @@
             });
         },
         saveTranslations: saveTranslations,
+        triggerValidation: debouncedValidation, // Add validation trigger to context
     };
     setContext("formBuilder", formBuilderContext);
 
@@ -161,18 +182,6 @@
     // Initialize translation data when switching to translation mode
     $: if (mode === RenderMode.TRANSLATION) {
         initializeTranslationDataIfNeeded();
-    }
-
-    // Optimized reactive statement with more selective updates
-    // Only sync when formData actually changes and in content mode
-    let lastFormDataString = "";
-    $: if (config.components && formData && mode === RenderMode.CONTENT) {
-        const currentFormDataString = JSON.stringify(formData);
-        if (currentFormDataString !== lastFormDataString) {
-            console.log("[FormBuilder] Form data sync executed");
-            lastFormDataString = currentFormDataString;
-            syncTranslationData();
-        }
     }
 
     function syncTranslationData() {
@@ -339,7 +348,10 @@
     /**
      * Validates all form data and updates validation state
      */
-    async function validateForm(dataToValidate: any): Promise<boolean> {
+    async function validateForm(
+        dataToValidate: any,
+        showToast: boolean = false,
+    ): Promise<boolean> {
         // Clear previous validation errors
         validationErrors = {};
         validationErrorsList = [];
@@ -383,23 +395,57 @@
         }
 
         hasValidationErrors = Object.keys(validationErrors).length > 0;
-        totalValidationErrors = validationErrorsList.length;
-        fixedValidationErrors = Math.max(
-            0,
-            totalValidationErrors - validationErrorsList.length,
-        );
+        const currentErrorCount = validationErrorsList.length;
+
+        // Update progress tracking
+        if (initialValidationErrorsCount === 0 && currentErrorCount > 0) {
+            // First time we found errors - set the baseline
+            initialValidationErrorsCount = currentErrorCount;
+            totalValidationErrors = currentErrorCount;
+            fixedValidationErrors = 0;
+        } else if (initialValidationErrorsCount > 0) {
+            // We've had errors before, calculate progress
+            totalValidationErrors = initialValidationErrorsCount;
+            fixedValidationErrors = Math.max(
+                0,
+                initialValidationErrorsCount - currentErrorCount,
+            );
+        } else {
+            // No errors found and none before
+            totalValidationErrors = 0;
+            fixedValidationErrors = 0;
+        }
 
         if (hasValidationErrors) {
             const errorCount = Object.keys(validationErrors).length;
             showValidationSummary = true;
 
-            errorToast(
-                `Found ${errorCount} validation error${errorCount > 1 ? "s" : ""}. Check the validation panel for details.`,
-            );
+            // Enable auto-validation when manual validation (showToast=true) finds errors
+            if (showToast) {
+                autoValidationEnabled = true;
+                console.log(
+                    "[FormBuilder] Auto-validation enabled after failed save",
+                );
+                errorToast(
+                    `Found ${errorCount} validation error${errorCount > 1 ? "s" : ""}. Check the validation panel for details.`,
+                );
+            }
         } else {
             // All errors fixed
-            if (showValidationSummary && totalValidationErrors > 0) {
-                fixedValidationErrors = totalValidationErrors;
+            if (showValidationSummary && initialValidationErrorsCount > 0) {
+                fixedValidationErrors = initialValidationErrorsCount;
+                // Reset for next validation session
+                setTimeout(() => {
+                    initialValidationErrorsCount = 0;
+                }, 2000); // Reset after 2 seconds to show progress completion
+            }
+
+            // If this was a manual validation (save attempt) and no errors, disable auto-validation
+            if (showToast && autoValidationEnabled) {
+                autoValidationEnabled = false;
+                console.log(
+                    "[FormBuilder] Auto-validation disabled after successful save",
+                );
             }
         }
 
@@ -425,7 +471,7 @@
         // Skip validation in translation mode since we're only saving translations
         // The content validation should have already passed when the original content was saved
         if (mode === RenderMode.CONTENT) {
-            const isValid = await validateForm(formData);
+            const isValid = await validateForm(formData, true);
             if (!isValid) {
                 return; // Don't save if validation fails
             }
@@ -488,11 +534,15 @@
                 filesToDelete.set([]);
             }
 
-            // Clear validation summary on successful save
+            // Clear validation summary on successful save and disable auto-validation
             showValidationSummary = false;
             validationErrorsList = [];
             totalValidationErrors = 0;
             fixedValidationErrors = 0;
+            autoValidationEnabled = false;
+            console.log(
+                "[FormBuilder] Form saved successfully - auto-validation disabled",
+            );
         } catch (error) {
             console.error("Error saving components:", error);
             formData = originalFormData;

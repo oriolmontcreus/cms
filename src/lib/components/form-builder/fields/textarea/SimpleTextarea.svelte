@@ -1,6 +1,8 @@
 <script lang="ts">
     import { cn } from "$lib/utils";
+    import { getContext } from "svelte";
     import type { FormField } from "../../types";
+    import type { FormBuilderContext } from "../../utils/formHelpers";
 
     export let field: FormField;
     export let fieldId: string;
@@ -9,6 +11,7 @@
     export let validationError: string | null = null;
     export let rows: number = 4;
 
+    const formBuilderContext = getContext<FormBuilderContext>("formBuilder");
     let textareaElement: HTMLTextAreaElement;
 
     // Auto-resize functionality (only when enabled)
@@ -24,6 +27,15 @@
 
         textareaElement.style.height = `${newHeight}px`;
     }
+
+    function handleInput() {
+        autoResize();
+
+        // Trigger debounced validation when user types
+        if (formBuilderContext?.triggerValidation) {
+            formBuilderContext.triggerValidation();
+        }
+    }
 </script>
 
 <div class="relative">
@@ -36,7 +48,7 @@
         disabled={field.disabled}
         readonly={field.readonly}
         required={field.required}
-        oninput={autoResize}
+        oninput={handleInput}
         class={cn(
             "border-input bg-background selection:bg-primary dark:bg-input/30 selection:text-primary-foreground ring-offset-background placeholder:text-neutral-500 w-full min-w-0 rounded-md border px-3 py-2 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",

@@ -89,7 +89,7 @@
                 <UnifiedRenderer
                     {schema}
                     componentId={componentInstance.id}
-                    formData={formData[componentInstance.id]}
+                    bind:formData={formData[componentInstance.id]}
                     {mode}
                     {validationErrors}
                 />
