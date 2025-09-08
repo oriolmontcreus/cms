@@ -25,13 +25,27 @@
 
     const dispatch = createEventDispatcher<{
         navigateToError: { error: ValidationError };
-        close: void;
         nextError: void;
         previousError: void;
     }>();
 
     let isCollapsed = false;
     let currentErrorIndex = 0;
+
+    // Auto-collapse when all errors are fixed
+    $: if (
+        hasErrors &&
+        errors.length === 0 &&
+        totalErrors > 0 &&
+        fixedErrors === totalErrors
+    ) {
+        isCollapsed = true;
+    }
+
+    // Auto-expand when there are errors and it's collapsed
+    $: if (hasErrors && errors.length > 0 && isCollapsed) {
+        // Don't auto-expand, let user control this
+    }
 
     // Group errors by component
     $: groupedErrors = errors.reduce(
@@ -61,13 +75,11 @@
     $: progress = totalErrors > 0 ? (fixedErrors / totalErrors) * 100 : 0;
     $: hasErrors = errors.length > 0;
     $: currentError = errors[currentErrorIndex];
+    $: allErrorsFixed =
+        totalErrors > 0 && fixedErrors === totalErrors && errors.length === 0;
 
     function navigateToError(error: ValidationError) {
         dispatch("navigateToError", { error });
-    }
-
-    function close() {
-        dispatch("close");
     }
 
     function nextError() {
@@ -91,6 +103,10 @@
 
     function toggleCollapsed() {
         isCollapsed = !isCollapsed;
+    }
+
+    function togglePanel() {
+        toggleCollapsed();
     }
 
     function getErrorDescription(error: ValidationError): string {
@@ -119,9 +135,7 @@
     function handleKeydown(event: KeyboardEvent) {
         if (!isVisible) return;
 
-        if (event.key === "Escape") {
-            close();
-        } else if (
+        if (
             event.key === "ArrowDown" ||
             (event.ctrlKey && event.key === "j")
         ) {
@@ -142,66 +156,85 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-{#if isVisible && hasErrors}
+{#if isVisible}
     <div
-        class="fixed top-4 right-4 z-50 w-96 max-w-[calc(100vw-2rem)] bg-background border rounded-lg shadow-lg"
-        transition:slide={{ duration: 200, axis: "x" }}
+        class="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)]"
+        transition:slide={{ duration: 200, axis: "y" }}
     >
-        <!-- Header -->
-        <div class="flex items-center justify-between p-4 pb-2">
-            <div class="flex items-center gap-2">
-                <IconAlertCircle size={20} class="text-destructive" />
-                <h3 class="font-semibold text-sm">Validation Errors</h3>
-                <Badge variant="destructive" class="text-xs">
-                    {errors.length}
-                </Badge>
-            </div>
-            <div class="flex items-center gap-1">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    class="h-7 w-7 p-0"
-                    onclick={toggleCollapsed}
-                    title={isCollapsed ? "Expand" : "Collapse"}
-                >
-                    {#if isCollapsed}
-                        <IconChevronDown size={16} />
-                    {:else}
-                        <IconChevronUp size={16} />
-                    {/if}
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    class="h-7 w-7 p-0"
-                    onclick={close}
-                    title="Close (Esc)"
-                >
-                    <IconX size={16} />
-                </Button>
-            </div>
-        </div>
-
-        <!-- Progress Bar -->
-        {#if totalErrors > 0}
-            <div class="px-4 pb-2">
-                <div
-                    class="flex items-center justify-between text-xs text-muted-foreground mb-1"
-                >
-                    <span>Progress</span>
-                    <span>{fixedErrors}/{totalErrors} fixed</span>
+        {#if allErrorsFixed}
+            <!-- Success state - minimalistic green button -->
+            <Button
+                variant="default"
+                class="h-12 w-12 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                onclick={togglePanel}
+                title="All validation errors fixed!"
+            >
+                <IconCheck size={24} />
+            </Button>
+        {:else if isCollapsed}
+            <!-- Collapsed state - red button with error count -->
+            <Button
+                variant="destructive"
+                class="h-12 px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 relative"
+                onclick={togglePanel}
+                title="Show validation errors"
+            >
+                <div class="flex items-center gap-2">
+                    <IconAlertCircle size={20} />
+                    <Badge
+                        variant="secondary"
+                        class="bg-white text-destructive-foreground text-sm font-medium"
+                    >
+                        {errors.length}
+                    </Badge>
                 </div>
-                <div class="w-full bg-muted rounded-full h-2">
-                    <div
-                        class="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style="width: {progress}%"
-                    ></div>
+            </Button>
+        {:else}
+            <!-- Expanded state - full panel -->
+            <div
+                class="w-96 bg-background border rounded-lg shadow-lg"
+                transition:slide={{ duration: 200 }}
+            >
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 pb-2">
+                    <div class="flex items-center gap-2">
+                        <IconAlertCircle size={20} class="text-destructive" />
+                        <h3 class="font-semibold text-sm">Validation Errors</h3>
+                        <Badge variant="destructive" class="text-xs">
+                            {errors.length}
+                        </Badge>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            class="h-7 w-7 p-0"
+                            onclick={toggleCollapsed}
+                            title="Minimize"
+                        >
+                            <IconChevronDown size={16} />
+                        </Button>
+                    </div>
                 </div>
-            </div>
-        {/if}
 
-        {#if !isCollapsed}
-            <div transition:slide={{ duration: 200 }}>
+                <!-- Progress Bar -->
+                {#if totalErrors > 0}
+                    <div class="px-4 pb-2">
+                        <div
+                            class="flex items-center justify-between text-xs text-muted-foreground mb-1"
+                        >
+                            <span>Progress</span>
+                            <span>{fixedErrors}/{totalErrors} fixed</span>
+                        </div>
+                        <div class="w-full bg-muted rounded-full h-2">
+                            <div
+                                class="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                style="width: {progress}%"
+                            ></div>
+                        </div>
+                    </div>
+                {/if}
+
                 <!-- Navigation Controls -->
                 {#if errors.length > 1}
                     <div class="px-4 pb-2">
@@ -334,37 +367,10 @@
                         <span>
                             Click errors to navigate • Use ↑↓ or Ctrl+J/K
                         </span>
-                        <span> Press Esc to close </span>
                     </div>
                 </div>
             </div>
         {/if}
-    </div>
-{:else if isVisible && !hasErrors}
-    <!-- Success state -->
-    <div
-        class="fixed top-4 right-4 z-50 w-80 bg-background border rounded-lg shadow-lg"
-        transition:fade={{ duration: 200 }}
-    >
-        <div class="p-4">
-            <div class="flex items-center gap-2">
-                <IconCheck size={20} class="text-green-500" />
-                <h3 class="font-semibold text-sm text-green-700">
-                    All errors fixed!
-                </h3>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    class="h-7 w-7 p-0 ml-auto"
-                    onclick={close}
-                >
-                    <IconX size={16} />
-                </Button>
-            </div>
-            <p class="text-sm text-muted-foreground mt-1">
-                Your form is ready to save.
-            </p>
-        </div>
     </div>
 {/if}
 
