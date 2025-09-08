@@ -27,8 +27,6 @@
     function handleInput(event: Event) {
         const target = event.target as HTMLInputElement;
         value = target.value;
-
-        // Trigger debounced validation when user types
         if (formBuilderContext?.triggerValidation) {
             formBuilderContext.triggerValidation();
         }

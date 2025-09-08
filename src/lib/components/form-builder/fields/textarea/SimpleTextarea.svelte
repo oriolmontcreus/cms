@@ -30,8 +30,6 @@
 
     function handleInput() {
         autoResize();
-
-        // Trigger debounced validation when user types
         if (formBuilderContext?.triggerValidation) {
             formBuilderContext.triggerValidation();
         }
