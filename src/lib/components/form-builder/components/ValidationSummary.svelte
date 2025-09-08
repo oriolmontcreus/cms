@@ -32,21 +32,6 @@
     let isCollapsed = false;
     let currentErrorIndex = 0;
 
-    // Auto-collapse when all errors are fixed
-    $: if (
-        hasErrors &&
-        errors.length === 0 &&
-        totalErrors > 0 &&
-        fixedErrors === totalErrors
-    ) {
-        isCollapsed = true;
-    }
-
-    // Auto-expand when there are errors and it's collapsed
-    $: if (hasErrors && errors.length > 0 && isCollapsed) {
-        // Don't auto-expand, let user control this
-    }
-
     // Group errors by component
     $: groupedErrors = errors.reduce(
         (groups, error) => {
