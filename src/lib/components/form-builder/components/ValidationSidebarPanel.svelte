@@ -134,7 +134,7 @@
                     {#if allErrorsFixed}
                         <!-- Success state -->
                         <div
-                            class="p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800"
+                            class="p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 mt-2"
                         >
                             <div class="flex items-center gap-2">
                                 <IconCheck size={16} class="text-green-500" />
