@@ -1,12 +1,16 @@
 <script lang="ts">
     import { cn } from "$lib/utils";
+    import { getContext } from "svelte";
     import type { FormField } from "../../types";
+    import type { FormBuilderContext } from "../../utils/formHelpers";
 
     export let field: FormField;
     export let fieldId: string;
     export let value: string = "";
     export let type: string = "text";
     export let validationError: string | null = null;
+
+    const formBuilderContext = getContext<FormBuilderContext>("formBuilder");
 
     const hasPrefix = field.prefix !== undefined;
     const hasSuffix = field.suffix !== undefined;
@@ -23,6 +27,9 @@
     function handleInput(event: Event) {
         const target = event.target as HTMLInputElement;
         value = target.value;
+        if (formBuilderContext?.triggerValidation) {
+            formBuilderContext.triggerValidation();
+        }
     }
 </script>
 

@@ -1,14 +1,30 @@
 import type { FormField, SchemaItem, FieldBuilder } from '../types';
+import { SCHEMA_TYPES } from '../constants';
 
 export interface ValidationError {
     field: string;
     label: string;
     message: string;
+    componentId?: string;
+    componentLabel?: string;
+    tabName?: string;
+    fieldPath?: string; // For nested fields like repeaters
+    isInRepeater?: boolean;
+    repeaterIndex?: number;
 }
 
 export interface ValidationResult {
     isValid: boolean;
     errors: ValidationError[];
+}
+
+export interface ValidationContext {
+    componentId?: string;
+    componentLabel?: string;
+    tabName?: string;
+    fieldPath?: string;
+    isInRepeater?: boolean;
+    repeaterIndex?: number;
 }
 
 /**
@@ -35,6 +51,66 @@ function schemaItemToFormField(item: SchemaItem): FormField | null {
 
     // It's a tabs container, grid layout, etc. - skip validation
     return null;
+}
+
+/**
+ * Extracts FormFields from a schema, handling nested structures and preserving context
+ * Returns fields with their contextual information (tab names, etc.)
+ */
+function extractFormFieldsWithContext(schema: SchemaItem[], baseContext: ValidationContext = {}): Array<{ field: FormField, context: ValidationContext }> {
+    const fieldsWithContext: Array<{ field: FormField, context: ValidationContext }> = [];
+
+    for (const item of schema) {
+        // Check for tabs container first
+        if ('tabsContainer' in item && item.tabsContainer && typeof item.tabsContainer === 'object' && 'tabs' in item.tabsContainer) {
+            const tabsContainer = item.tabsContainer as any;
+            if (Array.isArray(tabsContainer.tabs)) {
+                for (const tab of tabsContainer.tabs) {
+                    if ('schema' in tab && Array.isArray(tab.schema)) {
+                        const tabContext = { ...baseContext, tabName: tab.name };
+                        fieldsWithContext.push(...extractFormFieldsWithContext(tab.schema, tabContext));
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Check for direct tabs property (newer format)
+        if (item && typeof item === 'object' && 'type' in item && item.type === SCHEMA_TYPES.TABS_CONTAINER && 'tabs' in item) {
+            const tabsContainer = item as any;
+            if (Array.isArray(tabsContainer.tabs)) {
+                for (const tab of tabsContainer.tabs) {
+                    if ('schema' in tab && Array.isArray(tab.schema) && !tab.hidden) {
+                        const tabContext = { ...baseContext, tabName: tab.name };
+                        fieldsWithContext.push(...extractFormFieldsWithContext(tab.schema, tabContext));
+                    }
+                }
+            }
+            continue;
+        }
+
+        const field = schemaItemToFormField(item);
+        if (field) {
+            // Only include fields that need validation
+            if (shouldValidateField(field)) {
+                fieldsWithContext.push({ field, context: { ...baseContext } });
+            }
+        } else if ('schema' in item && Array.isArray(item.schema)) {
+            // Handle nested schemas (like grids)
+            fieldsWithContext.push(...extractFormFieldsWithContext(item.schema, baseContext));
+        } else if ('tabs' in item && Array.isArray((item as any).tabs)) {
+            // Handle tab containers (direct tabs property)
+            const tabsArray = (item as any).tabs;
+            for (const tab of tabsArray) {
+                if ('schema' in tab && Array.isArray(tab.schema)) {
+                    const tabContext = { ...baseContext, tabName: tab.name };
+                    fieldsWithContext.push(...extractFormFieldsWithContext(tab.schema, tabContext));
+                }
+            }
+        }
+    }
+
+    return fieldsWithContext;
 }
 
 /**
@@ -139,23 +215,38 @@ export function validateField(field: FormField, value: any): string | null {
 }
 
 /**
- * Validates all fields in a form data object
+ * Validates all fields in a form data object with enhanced context tracking
  */
-export function validateFormData(schema: SchemaItem[], formData: Record<string, any>): ValidationResult {
+export function validateFormData(
+    schema: SchemaItem[],
+    formData: Record<string, any>,
+    context?: ValidationContext
+): ValidationResult {
     const errors: ValidationError[] = [];
-    const fields = extractFormFields(schema);
+    const fieldsWithContext = extractFormFieldsWithContext(schema, context);
 
-    function validateNestedFields(fields: FormField[], data: Record<string, any>, prefix = '') {
-        fields.forEach(field => {
+    function validateNestedFields(
+        fieldsWithContext: Array<{ field: FormField, context: ValidationContext }>,
+        data: Record<string, any>,
+        prefix = '',
+        currentContext?: ValidationContext
+    ) {
+        fieldsWithContext.forEach(({ field, context: fieldContext }) => {
             const fieldKey = prefix ? `${prefix}.${field.name}` : field.name;
             const value = data[field.name];
 
-            // Handle repeater fields
+            // Handle grid layouts
             if (field.type === 'repeater' && Array.isArray(value)) {
                 value.forEach((item, index) => {
                     if (field.schema && Array.isArray(field.schema)) {
-                        const nestedFields = extractFormFields(field.schema);
-                        validateNestedFields(nestedFields, item, `${fieldKey}[${index}]`);
+                        const nestedFieldsWithContext = extractFormFieldsWithContext(field.schema, fieldContext);
+                        const repeaterContext: ValidationContext = {
+                            ...fieldContext,
+                            fieldPath: fieldKey,
+                            isInRepeater: true,
+                            repeaterIndex: index
+                        };
+                        validateNestedFields(nestedFieldsWithContext, item, `${fieldKey}[${index}]`, repeaterContext);
                     }
                 });
                 return;
@@ -163,16 +254,23 @@ export function validateFormData(schema: SchemaItem[], formData: Record<string, 
 
             const error = validateField(field, value);
             if (error) {
-                errors.push({
+                const validationError: ValidationError = {
                     field: fieldKey,
                     label: field.label,
-                    message: error
-                });
+                    message: error,
+                    componentId: fieldContext?.componentId || currentContext?.componentId,
+                    componentLabel: fieldContext?.componentLabel || currentContext?.componentLabel,
+                    tabName: fieldContext?.tabName || currentContext?.tabName,
+                    fieldPath: fieldContext?.fieldPath || currentContext?.fieldPath,
+                    isInRepeater: fieldContext?.isInRepeater || currentContext?.isInRepeater,
+                    repeaterIndex: fieldContext?.repeaterIndex || currentContext?.repeaterIndex
+                };
+                errors.push(validationError);
             }
         });
     }
 
-    validateNestedFields(fields, formData);
+    validateNestedFields(fieldsWithContext, formData, '', context);
 
     return {
         isValid: errors.length === 0,
@@ -205,10 +303,26 @@ function validateUrl(field: FormField, value: string): string | null {
         return `${field.label} must be text`;
     }
 
-    // URL-specific validation
-    const urlRegex = /^https?:\/\/.+/;
+    // URL-specific validation using both regex and URL constructor for comprehensive validation
+    const urlRegex = /^https?:\/\/[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*(\:[0-9]{1,5})?(\/.*)?$/;
+
     if (!urlRegex.test(value)) {
-        return `${field.label} must be a valid URL (starting with http:// or https://)`;
+        return `${field.label} must be a valid URL (e.g., https://example.com)`;
+    }
+
+    // Additional validation using URL constructor to catch edge cases
+    try {
+        const url = new URL(value);
+        // Ensure the URL has a valid hostname (not just protocol)
+        if (!url.hostname || url.hostname.length === 0) {
+            return `${field.label} must be a valid URL with a hostname (e.g., https://example.com)`;
+        }
+        // Check that hostname contains at least one dot (for TLD) or is localhost
+        if (!url.hostname.includes('.') && url.hostname !== 'localhost') {
+            return `${field.label} must be a valid URL with a proper domain (e.g., https://example.com)`;
+        }
+    } catch (error) {
+        return `${field.label} must be a valid URL (e.g., https://example.com)`;
     }
 
     return null;
