@@ -303,10 +303,26 @@ function validateUrl(field: FormField, value: string): string | null {
         return `${field.label} must be text`;
     }
 
-    // URL-specific validation
-    const urlRegex = /^https?:\/\/.+/;
+    // URL-specific validation using both regex and URL constructor for comprehensive validation
+    const urlRegex = /^https?:\/\/[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*(\:[0-9]{1,5})?(\/.*)?$/;
+
     if (!urlRegex.test(value)) {
-        return `${field.label} must be a valid URL (starting with http:// or https://)`;
+        return `${field.label} must be a valid URL (e.g., https://example.com)`;
+    }
+
+    // Additional validation using URL constructor to catch edge cases
+    try {
+        const url = new URL(value);
+        // Ensure the URL has a valid hostname (not just protocol)
+        if (!url.hostname || url.hostname.length === 0) {
+            return `${field.label} must be a valid URL with a hostname (e.g., https://example.com)`;
+        }
+        // Check that hostname contains at least one dot (for TLD) or is localhost
+        if (!url.hostname.includes('.') && url.hostname !== 'localhost') {
+            return `${field.label} must be a valid URL with a proper domain (e.g., https://example.com)`;
+        }
+    } catch (error) {
+        return `${field.label} must be a valid URL (e.g., https://example.com)`;
     }
 
     return null;
