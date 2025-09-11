@@ -1,9 +1,6 @@
 <script lang="ts">
     import type { ValidationError } from "../utils/validation";
-    import { Button } from "@components/ui/button";
-    import { Badge } from "@components/ui/badge";
     import { ScrollArea } from "@components/ui/scroll-area";
-    import { Separator } from "@components/ui/separator";
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
     import {
         IconAlertCircle,
