@@ -13,12 +13,10 @@
 	const sidebar = Sidebar.useSidebar();
 	const validationState = $derived($globalValidationState);
 
-	// Show badge when sidebar is collapsed and there are validation errors
 	const showValidationBadge = $derived(
 		sidebar.state === "collapsed" && validationState.errors.length > 0,
 	);
 
-	// For smooth number transition
 	let currentErrorCount = $state(0);
 	let isTransitioning = $state(false);
 
