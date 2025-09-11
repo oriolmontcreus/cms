@@ -10,7 +10,7 @@
     import type { Component } from "@/lib/shared/types/pages.type";
     import type { UploadedFileWithDeletionFlag } from "@/lib/shared/types/file.type";
     import ComponentRenderer from "./components/ComponentRenderer.svelte";
-    import ValidationSummary from "./components/ValidationSummary.svelte";
+    import ValidationManager from "./ValidationManager.svelte";
     import {
         collectFilesForDeletion,
         convertTranslationDataForSaving,
@@ -617,13 +617,12 @@
 </div>
 
 <!-- Validation Summary Panel -->
-<ValidationSummary
+<ValidationManager
     errors={validationErrorsList}
     isVisible={showValidationSummary}
     totalErrors={totalValidationErrors}
     fixedErrors={fixedValidationErrors}
     on:navigateToError={handleNavigateToError}
-    on:close={handleCloseValidationSummary}
     on:nextError={handleNextError}
     on:previousError={handlePreviousError}
 />

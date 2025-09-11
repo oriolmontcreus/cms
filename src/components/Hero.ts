@@ -22,8 +22,14 @@ mainTab.schema = [
         .type("email")
         .placeholder('Enter the contact email')
         .allowVariables(false),
+    TextInput('urltest')
+        .label('random url')
+        .required()
+        .type("url")
+        .placeholder('Enter a random url')
+        .allowVariables(false),
     RichEditor('description')
-        .label('Description (no variables)')
+        .label('Description')
         .placeholder('Enter description without variable support')
 ];
 

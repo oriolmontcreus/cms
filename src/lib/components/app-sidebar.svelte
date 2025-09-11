@@ -10,6 +10,10 @@
 	import { loggedUser } from "@/stores/loggedUser";
 	import { CMS_NAME } from "@shared/env";
 	import CmsLogo from "./CmsLogo.svelte";
+	import { globalValidationState } from "$lib/stores/validationState";
+
+	type Props = ComponentProps<typeof Sidebar.Root>;
+	let { ...restProps }: Props = $props();
 
 	const data = {
 		navMain: [
@@ -35,8 +39,7 @@
 			},
 		],
 	};
-
-	let { ...restProps }: ComponentProps<typeof Sidebar.Root> = $props();
+	const validationState = $derived($globalValidationState);
 </script>
 
 <Sidebar.Root collapsible="offcanvas" {...restProps}>
@@ -52,6 +55,22 @@
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<NavMain items={data.navMain} />
+
+		<!-- Validation Panel (show when there are validation errors) -->
+		{#if validationState.isVisible && (validationState.errors.length > 0 || validationState.totalErrors > 0)}
+			{#await import("$lib/components/form-builder/components/ValidationSidebarPanel.svelte") then { default: ValidationSidebarPanel }}
+				<ValidationSidebarPanel
+					errors={validationState.errors}
+					isVisible={validationState.isVisible}
+					totalErrors={validationState.totalErrors}
+					fixedErrors={validationState.fixedErrors}
+					on:navigateToError={(e) =>
+						validationState.onNavigateToError?.(e.detail.error)}
+					on:nextError={() => validationState.onNextError?.()}
+					on:previousError={() => validationState.onPreviousError?.()}
+				/>
+			{/await}
+		{/if}
 	</Sidebar.Content>
 	<Sidebar.Footer>
 		{#if $loggedUser}
