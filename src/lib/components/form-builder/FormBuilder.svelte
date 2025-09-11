@@ -405,11 +405,20 @@
             fixedValidationErrors = 0;
         } else if (initialValidationErrorsCount > 0) {
             // We've had errors before, calculate progress
-            totalValidationErrors = initialValidationErrorsCount;
+            // Update totalValidationErrors to be the maximum of initial count and current count
+            totalValidationErrors = Math.max(
+                initialValidationErrorsCount,
+                currentErrorCount,
+            );
             fixedValidationErrors = Math.max(
                 0,
-                initialValidationErrorsCount - currentErrorCount,
+                totalValidationErrors - currentErrorCount,
             );
+
+            // Update initialValidationErrorsCount if we've encountered more errors
+            if (currentErrorCount > initialValidationErrorsCount) {
+                initialValidationErrorsCount = currentErrorCount;
+            }
         } else {
             // No errors found and none before
             totalValidationErrors = 0;
