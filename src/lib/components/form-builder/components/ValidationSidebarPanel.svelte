@@ -10,8 +10,6 @@
         IconChevronDown,
         IconChevronUp,
         IconCheck,
-        IconArrowDown,
-        IconArrowUp,
         IconExternalLink,
     } from "@tabler/icons-svelte";
     import { cn } from "$lib/utils";
@@ -25,12 +23,9 @@
 
     const dispatch = createEventDispatcher<{
         navigateToError: { error: ValidationError };
-        nextError: void;
-        previousError: void;
     }>();
 
     let isCollapsed = false;
-    let currentErrorIndex = 0;
 
     // Group errors by component
     $: groupedErrors = errors.reduce(
@@ -59,31 +54,11 @@
     $: groupedErrorsList = Object.values(groupedErrors);
     $: progress = totalErrors > 0 ? (fixedErrors / totalErrors) * 100 : 0;
     $: hasErrors = errors.length > 0;
-    $: currentError = errors[currentErrorIndex];
     $: allErrorsFixed =
         totalErrors > 0 && fixedErrors === totalErrors && errors.length === 0;
 
     function navigateToError(error: ValidationError) {
         dispatch("navigateToError", { error });
-    }
-
-    function nextError() {
-        if (errors.length > 0) {
-            currentErrorIndex = (currentErrorIndex + 1) % errors.length;
-            dispatch("nextError");
-            navigateToError(currentError);
-        }
-    }
-
-    function previousError() {
-        if (errors.length > 0) {
-            currentErrorIndex =
-                currentErrorIndex > 0
-                    ? currentErrorIndex - 1
-                    : errors.length - 1;
-            dispatch("previousError");
-            navigateToError(currentError);
-        }
     }
 
     function toggleCollapsed() {
@@ -103,14 +78,6 @@
 
         return description;
     }
-
-    function getErrorBadgeVariant(
-        error: ValidationError,
-    ): "default" | "secondary" | "destructive" | "outline" {
-        if (error.isInRepeater) return "secondary";
-        if (error.tabName) return "outline";
-        return "default";
-    }
 </script>
 
 {#if isVisible}
@@ -124,14 +91,9 @@
                     <IconAlertCircle size={16} class="text-destructive" />
                     <span>Validation</span>
                 {/if}
-                {#if hasErrors}
-                    <Badge
-                        variant={allErrorsFixed ? "secondary" : "destructive"}
-                        class="text-xs"
-                    >
-                        {errors.length}
-                    </Badge>
-                {/if}
+                <span class="text-muted-foreground flex text-xs justify-end"
+                    >{fixedErrors}/{totalErrors} fixed</span
+                >
             </div>
             <Button
                 variant="ghost"
@@ -174,52 +136,11 @@
                         <!-- Progress Bar -->
                         {#if totalErrors > 0}
                             <div class="px-1 pb-3">
-                                <div
-                                    class="flex items-center justify-between text-xs text-muted-foreground mb-1"
-                                >
-                                    <span>Progress</span>
-                                    <span
-                                        >{fixedErrors}/{totalErrors} fixed</span
-                                    >
-                                </div>
                                 <div class="w-full bg-muted rounded-full h-2">
                                     <div
                                         class="bg-green-500 h-2 rounded-full transition-all duration-300"
                                         style="width: {progress}%"
                                     ></div>
-                                </div>
-                            </div>
-                        {/if}
-
-                        <!-- Navigation Controls -->
-                        {#if errors.length > 1}
-                            <div class="px-1 pb-2">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs text-muted-foreground">
-                                        Error {currentErrorIndex + 1} of {errors.length}
-                                    </span>
-                                    <div class="flex gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            class="h-6 px-2 text-xs"
-                                            onclick={previousError}
-                                            disabled={errors.length <= 1}
-                                            title="Previous Error"
-                                        >
-                                            <IconArrowUp size={12} />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            class="h-6 px-2 text-xs"
-                                            onclick={nextError}
-                                            disabled={errors.length <= 1}
-                                            title="Next Error"
-                                        >
-                                            <IconArrowDown size={12} />
-                                        </Button>
-                                    </div>
                                 </div>
                             </div>
                         {/if}
@@ -240,23 +161,19 @@
                                             >
                                                 {group.componentLabel}
                                             </h4>
-                                            <Badge
-                                                variant="secondary"
-                                                class="text-xs"
+                                            <span class="text-xs"
+                                                >{group.errors.length}</span
                                             >
-                                                {group.errors.length}
-                                            </Badge>
                                         </div>
 
                                         <!-- Component Errors -->
-                                        <div class="space-y-2 ml-2">
+                                        <div
+                                            class="flex flex-col gap-2 mx-2 my-1"
+                                        >
                                             {#each group.errors as error (error.field)}
                                                 <div
                                                     class={cn(
                                                         "p-2 rounded-md border bg-card hover:bg-accent transition-colors cursor-pointer text-xs",
-                                                        currentError ===
-                                                            error &&
-                                                            "ring-1 ring-ring",
                                                     )}
                                                     onclick={() =>
                                                         navigateToError(error)}
@@ -282,15 +199,6 @@
                                                                         error,
                                                                     )}
                                                                 </span>
-                                                                <Badge
-                                                                    variant={getErrorBadgeVariant(
-                                                                        error,
-                                                                    )}
-                                                                    class="text-xs shrink-0"
-                                                                >
-                                                                    {error.tabName ||
-                                                                        "Field"}
-                                                                </Badge>
                                                             </div>
                                                             <p
                                                                 class="text-xs text-destructive"
