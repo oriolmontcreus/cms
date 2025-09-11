@@ -95,7 +95,7 @@
                 <div class="w-full">
                     <!-- Header row with icon, title, count, and chevron -->
                     <div class="flex items-center justify-between w-full">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 select-none">
                             {#if allErrorsFixed}
                                 <IconCheck size={16} class="text-green-500" />
                                 <span class="text-green-600">Validation</span>
