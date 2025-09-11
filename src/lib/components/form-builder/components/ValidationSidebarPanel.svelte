@@ -82,32 +82,53 @@
 
 {#if isVisible}
     <Sidebar.Group>
-        <Sidebar.GroupLabel class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                {#if allErrorsFixed}
-                    <IconCheck size={16} class="text-green-500" />
-                    <span class="text-green-600">Validation</span>
-                {:else}
-                    <IconAlertCircle size={16} class="text-destructive" />
-                    <span>Validation</span>
+        <Sidebar.GroupLabel
+            class="cursor-pointer hover:bg-accent/50 transition-colors rounded-md p-2 py-6"
+            onclick={toggleCollapsed}
+            onkeydown={(e) => e.key === "Enter" && toggleCollapsed()}
+            role="button"
+            tabindex={0}
+            title={isCollapsed ? "Expand" : "Collapse"}
+        >
+            <div class="w-full">
+                <!-- Header row with icon, title, count, and chevron -->
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center gap-2">
+                        {#if allErrorsFixed}
+                            <IconCheck size={16} class="text-green-500" />
+                            <span class="text-green-600">Validation</span>
+                        {:else}
+                            <IconAlertCircle
+                                size={16}
+                                class="text-destructive"
+                            />
+                            <span>Validation</span>
+                        {/if}
+                        <span class="text-muted-foreground text-xs"
+                            >{fixedErrors}/{totalErrors} fixed</span
+                        >
+                    </div>
+                    <div class="shrink-0">
+                        {#if isCollapsed}
+                            <IconChevronDown size={14} />
+                        {:else}
+                            <IconChevronUp size={14} />
+                        {/if}
+                    </div>
+                </div>
+
+                <!-- Progress Bar - Always visible -->
+                {#if totalErrors > 0}
+                    <div class="mt-2 w-full">
+                        <div class="w-full bg-primary/20 rounded-full h-1">
+                            <div
+                                class="bg-green-500 h-1 rounded-full transition-all duration-300"
+                                style="width: {progress}%"
+                            ></div>
+                        </div>
+                    </div>
                 {/if}
-                <span class="text-muted-foreground flex text-xs justify-end"
-                    >{fixedErrors}/{totalErrors} fixed</span
-                >
             </div>
-            <Button
-                variant="ghost"
-                size="sm"
-                class="h-6 w-6 p-0"
-                onclick={toggleCollapsed}
-                title={isCollapsed ? "Expand" : "Collapse"}
-            >
-                {#if isCollapsed}
-                    <IconChevronDown size={14} />
-                {:else}
-                    <IconChevronUp size={14} />
-                {/if}
-            </Button>
         </Sidebar.GroupLabel>
 
         {#if !isCollapsed}
@@ -133,22 +154,8 @@
                             </p>
                         </div>
                     {:else if hasErrors}
-                        <!-- Progress Bar -->
-                        {#if totalErrors > 0}
-                            <div class="px-1 pb-3">
-                                <div class="w-full bg-muted rounded-full h-2">
-                                    <div
-                                        class="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                        style="width: {progress}%"
-                                    ></div>
-                                </div>
-                            </div>
-                        {/if}
-
-                        <Separator class="mb-2" />
-
                         <!-- Error List -->
-                        <ScrollArea class="max-h-64">
+                        <ScrollArea class="max-h-64 mt-4">
                             <div class="space-y-3">
                                 {#each groupedErrorsList as group (group.componentId)}
                                     <div class="space-y-2">
@@ -168,12 +175,12 @@
 
                                         <!-- Component Errors -->
                                         <div
-                                            class="flex flex-col gap-2 mx-2 my-1"
+                                            class="flex flex-col gap-2 my-1 mx-1"
                                         >
                                             {#each group.errors as error (error.field)}
                                                 <div
                                                     class={cn(
-                                                        "p-2 rounded-md border bg-card hover:bg-accent transition-colors cursor-pointer text-xs",
+                                                        "p-2 rounded-md border bg-card hover:bg-accent cursor-pointer text-xs focus:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] transition-all ease-in-out duration-200",
                                                     )}
                                                     onclick={() =>
                                                         navigateToError(error)}
