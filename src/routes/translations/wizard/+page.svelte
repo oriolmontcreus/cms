@@ -24,7 +24,7 @@
         IconLanguage,
         IconFilePlus,
         IconEdit,
-        IconStackForward,
+        IconPlayerSkipForward
     } from "@tabler/icons-svelte";
     import { SITE_LOCALES, CMS_LOCALE } from "@shared/env";
     import { getPages } from "@/services/page.service";
@@ -289,6 +289,10 @@
             const updates: Record<string, any> = {};
 
             translatableItems.forEach((item) => {
+            const pageUpdates: Record<string, any> = {};
+            let globalVariablesUpdate: any = null;
+            
+            translatableItems.forEach(item => {
                 if (item.currentTranslation) {
                     const key =
                         item.type === "global"
@@ -306,6 +310,33 @@
                     updates[key][item.componentId][selectedLocale!][
                         item.fieldName
                     ] = item.currentTranslation;
+                    if (item.type === 'global') {
+                        // Handle global variables
+                        if (!globalVariablesUpdate) {
+                            globalVariablesUpdate = {
+                                translations: {}
+                            };
+                        }
+                        if (!globalVariablesUpdate.translations[selectedLocale!]) {
+                            globalVariablesUpdate.translations[selectedLocale!] = {};
+                        }
+                        globalVariablesUpdate.translations[selectedLocale!][item.fieldName] = item.currentTranslation;
+                    } else {
+                        // Handle page components
+                        const pageId = item.pageId;
+                        if (!pageUpdates[pageId]) {
+                            pageUpdates[pageId] = {};
+                        }
+                        if (!pageUpdates[pageId][item.componentId]) {
+                            pageUpdates[pageId][item.componentId] = {
+                                translations: {}
+                            };
+                        }
+                        if (!pageUpdates[pageId][item.componentId].translations[selectedLocale!]) {
+                            pageUpdates[pageId][item.componentId].translations[selectedLocale!] = {};
+                        }
+                        pageUpdates[pageId][item.componentId].translations[selectedLocale!][item.fieldName] = item.currentTranslation;
+                    }
                 }
             });
 
@@ -314,6 +345,51 @@
             await new Promise((resolve) => setTimeout(resolve, 1000));
 
             toast.success("Translations saved successfully!");
+            // Save global variables if needed
+            if (globalVariablesUpdate && globalVariables) {
+                const { updateGlobalVariables } = await import("@/services/globalVariables.service");
+                
+                // Merge with existing data
+                const updatedData = {
+                    ...globalVariables.formData,
+                    translations: {
+                        ...globalVariables.formData.translations,
+                        ...globalVariablesUpdate.translations
+                    }
+                };
+                
+                await updateGlobalVariables(updatedData);
+            }
+
+            // Save page updates
+            for (const [pageId, componentUpdates] of Object.entries(pageUpdates)) {
+                const page = pages.find(p => p._id === pageId);
+                if (page) {
+                    const { handleUpdateComponents } = await import("@/services/page.service");
+                    
+                    // Update the components with new translations
+                    const updatedComponents = page.components.map(component => {
+                        const update = componentUpdates[component.instanceId];
+                        if (update) {
+                            return {
+                                ...component,
+                                formData: {
+                                    ...component.formData,
+                                    translations: {
+                                        ...component.formData.translations,
+                                        ...update.translations
+                                    }
+                                }
+                            };
+                        }
+                        return component;
+                    });
+                    
+                    await handleUpdateComponents(page.slug, updatedComponents);
+                }
+            }
+            
+            toast.success('Translations saved successfully!');
             currentStep = WizardStep.COMPLETE;
         } catch (error) {
             console.error("Failed to save translations:", error);
@@ -360,6 +436,14 @@
                             class="flex items-center justify-center space-x-4 mb-8"
                         >
                             {#each [{ step: WizardStep.SELECT_MODE, label: "Mode", icon: IconFilePlus }, { step: WizardStep.SELECT_LANGUAGE, label: "Language", icon: IconLanguage }, { step: WizardStep.SELECT_CONTENT, label: "Content", icon: IconEdit }, { step: WizardStep.TRANSLATE, label: "Translate", icon: IconEdit }, { step: WizardStep.COMPLETE, label: "Complete", icon: IconCheck }] as stepInfo, index}
+                        <div class="flex items-center justify-center space-x-2 md:space-x-4 mb-8 overflow-x-auto pb-2">
+                            {#each [
+                                { step: WizardStep.SELECT_MODE, label: "Mode", icon: IconFilePlus },
+                                { step: WizardStep.SELECT_LANGUAGE, label: "Language", icon: IconLanguage },
+                                { step: WizardStep.SELECT_CONTENT, label: "Content", icon: IconEdit },
+                                { step: WizardStep.TRANSLATE, label: "Translate", icon: IconEdit },
+                                { step: WizardStep.COMPLETE, label: "Complete", icon: IconCheck }
+                            ] as stepInfo, index}
                                 <div class="flex items-center">
                                     <div
                                         class={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
@@ -376,10 +460,17 @@
                                         }`}
                                     >
                                         <stepInfo.icon class="h-4 w-4" />
+                                    <div class={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center border-2 ${
+                                        currentStep === stepInfo.step ? 'bg-primary border-primary text-primary-foreground' :
+                                        Object.values(WizardStep).indexOf(currentStep) > Object.values(WizardStep).indexOf(stepInfo.step) ? 'bg-green-500 border-green-500 text-white' :
+                                        'bg-background border-muted-foreground text-muted-foreground'
+                                    }`}>
+                                        <stepInfo.icon class="h-3 w-3 md:h-4 md:w-4" />
                                     </div>
                                     <span class="ml-2 text-sm font-medium"
                                         >{stepInfo.label}</span
                                     >
+                                    <span class="ml-1 md:ml-2 text-xs md:text-sm font-medium hidden sm:inline">{stepInfo.label}</span>
                                     {#if index < 4}
                                         <div
                                             class={`w-12 h-0.5 mx-4 ${
@@ -390,6 +481,9 @@
                                                     : "bg-muted"
                                             }`}
                                         ></div>
+                                        <div class={`w-8 md:w-12 h-0.5 mx-1 md:mx-4 ${
+                                            Object.values(WizardStep).indexOf(currentStep) > index ? 'bg-green-500' : 'bg-muted'
+                                        }`}></div>
                                     {/if}
                                 </div>
                             {/each}
@@ -407,7 +501,7 @@
                                         translations</CardDescription
                                     >
                                 </CardHeader>
-                                <CardContent class="grid gap-4 md:grid-cols-2">
+                                <CardContent class="grid gap-4 grid-cols-1 md:grid-cols-2">
                                     <button
                                         class={`p-6 rounded-lg border-2 text-left transition-colors ${
                                             selectedMode === "fill-missing"
@@ -466,7 +560,7 @@
                                         on?</CardDescription
                                     >
                                 </CardHeader>
-                                <CardContent class="grid gap-3 md:grid-cols-2">
+                                <CardContent class="grid gap-3 grid-cols-1 md:grid-cols-2">
                                     {#each availableLocales as locale}
                                         <button
                                             class={`p-4 rounded-lg border-2 text-left transition-colors ${
@@ -637,6 +731,9 @@
                                 <div class="flex items-center justify-between">
                                     <Button
                                         variant="outline"
+                                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <Button 
+                                        variant="outline" 
                                         onclick={previousItem}
                                         disabled={currentItemIndex === 0}
                                     >
@@ -644,14 +741,9 @@
                                         Previous
                                     </Button>
 
-                                    <div class="flex gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            onclick={skipItem}
-                                        >
-                                            <IconStackForward
-                                                class="h-4 w-4 mr-2"
-                                            />
+                                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                        <Button variant="ghost" onclick={skipItem}>
+                                            <IconPlayerSkipForward class="h-4 w-4 mr-2" />
                                             Skip
                                         </Button>
 
@@ -743,6 +835,9 @@
                             <div class="flex items-center justify-between">
                                 <Button
                                     variant="outline"
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <Button 
+                                    variant="outline" 
                                     onclick={previousStep}
                                     disabled={currentStep ===
                                         WizardStep.SELECT_MODE}

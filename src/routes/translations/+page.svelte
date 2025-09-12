@@ -190,7 +190,7 @@
                 {:else}
                     <div class="max-w-6xl mx-auto space-y-6">
                         <!-- Overview Cards -->
-                        <div class="grid gap-4 md:grid-cols-4">
+                        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                             <Card>
                                 <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle class="text-sm font-medium">Available Languages</CardTitle>
@@ -278,7 +278,7 @@
                                 {#each availableLocales as locale}
                                     {@const stats = translationStats.byLocale[locale.code]}
                                     <div class="space-y-3">
-                                        <div class="flex items-center justify-between">
+                                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                             <div class="flex items-center gap-3">
                                                 <h3 class="font-medium">{locale.name}</h3>
                                                 <Badge variant={stats.percentage === 100 ? "default" : stats.percentage > 50 ? "secondary" : "destructive"}>
@@ -318,7 +318,7 @@
                                     Common translation management tasks
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent class="grid gap-3 md:grid-cols-2">
+                            <CardContent class="grid gap-3 grid-cols-1 md:grid-cols-2">
                                 <Button 
                                     variant="outline" 
                                     class="justify-start h-auto p-4"
