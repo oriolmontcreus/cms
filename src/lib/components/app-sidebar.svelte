@@ -3,6 +3,7 @@
 	import FolderIcon from "@tabler/icons-svelte/icons/folder";
 	import UsersIcon from "@tabler/icons-svelte/icons/users";
 	import VariableIcon from "@tabler/icons-svelte/icons/variable";
+	import LanguageIcon from "@tabler/icons-svelte/icons/language";
 	import NavMain from "./nav-main.svelte";
 	import NavUser from "./nav-user.svelte";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
@@ -33,6 +34,11 @@
 				title: "Global Variables",
 				url: "/global-variables",
 				icon: VariableIcon,
+			},
+			{
+				title: "Translations",
+				url: "/translations",
+				icon: LanguageIcon,
 			},
 			{
 				title: "Users",
