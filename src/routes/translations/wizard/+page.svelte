@@ -29,15 +29,17 @@
     import { toast } from "svelte-sonner";
 
     // Wizard steps
-    enum WizardStep {
-        SELECT_MODE = 'select-mode',
-        SELECT_LANGUAGE = 'select-language', 
-        SELECT_CONTENT = 'select-content',
-        TRANSLATE = 'translate',
-        COMPLETE = 'complete'
-    }
+    const WizardStep = {
+        SELECT_MODE: 'select-mode',
+        SELECT_LANGUAGE: 'select-language', 
+        SELECT_CONTENT: 'select-content',
+        TRANSLATE: 'translate',
+        COMPLETE: 'complete'
+    } as const;
 
-    let currentStep = WizardStep.SELECT_MODE;
+    type WizardStepType = typeof WizardStep[keyof typeof WizardStep];
+
+    let currentStep: WizardStepType = WizardStep.SELECT_MODE;
     let selectedMode: 'fill-missing' | 'review-existing' | null = null;
     let selectedLocale: string | null = null;
     let selectedPages: string[] = [];
