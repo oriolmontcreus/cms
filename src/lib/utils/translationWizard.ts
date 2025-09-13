@@ -1,4 +1,38 @@
 import type { Page } from "@/lib/shared/types/pages.type";
+import type { FormField, SchemaItem, FieldType } from "@/lib/components/form-builder/types";
+import { getPageConfig } from "@/lib/page-registry";
+import { convertToFormField } from "@/lib/components/form-builder/utils/formHelpers";
+
+// Utility function to find field config in a schema recursively
+function findFieldInSchema(schema: SchemaItem[], fieldName: string): FormField | null {
+    for (const item of schema) {
+        // Check if this item is the field we're looking for
+        const field = convertToFormField(item);
+        if (field && field.name === fieldName) {
+            return field;
+        }
+
+        // Recursively search in nested structures
+        if (item && typeof item === 'object') {
+            // Check tabs container
+            if ('tabs' in item && Array.isArray(item.tabs)) {
+                for (const tab of item.tabs) {
+                    if (tab.schema) {
+                        const found = findFieldInSchema(tab.schema, fieldName);
+                        if (found) return found;
+                    }
+                }
+            }
+
+            // Check grid layouts
+            if ('schema' in item && Array.isArray(item.schema)) {
+                const found = findFieldInSchema(item.schema, fieldName);
+                if (found) return found;
+            }
+        }
+    }
+    return null;
+}
 
 export const WizardStep = {
     SELECT_MODE: "select-mode",
@@ -18,6 +52,8 @@ export interface TranslatableItemBase {
     originalValue: any;
     currentTranslation: string;
     componentId: string; // page component instanceId or 'global-variables'
+    fieldType?: FieldType; // The field type (input, textarea, richEditor, tagsInput, etc.)
+    fieldConfig?: Partial<FormField>; // Field configuration for rendering
 }
 
 export interface PageTranslatableItem extends TranslatableItemBase {
@@ -65,6 +101,10 @@ export function buildTranslatableItems(params: {
         selectedPage.components.forEach(component => {
             if (!component.formData) return;
 
+            // Get the page config to access component schema
+            const pageConfig = getPageConfig(selectedPage.slug);
+            const componentConfig = pageConfig?.components.find(c => c.id === component.instanceId);
+
             // Simple approach: check what fields actually have translation data
             // If a field has any translations, it's translatable
             const allLocales = component.formData.translations ? Object.keys(component.formData.translations) : [];
@@ -97,27 +137,42 @@ export function buildTranslatableItems(params: {
                 const currentValue = component.formData[fieldName];
                 const existingTranslation = component.formData.translations?.[selectedLocale]?.[fieldName];
 
+                // Find field configuration from schema
+                let fieldConfig: FormField | null = null;
+                if (componentConfig?.component?.schema) {
+                    fieldConfig = findFieldInSchema(componentConfig.component.schema, fieldName);
+                }
+
+                const baseItem = {
+                    type: "page" as const,
+                    pageTitle: selectedPage.config?.title || selectedPage.slug,
+                    componentName: component.componentName,
+                    fieldName,
+                    originalValue: currentValue,
+                    componentId: component.instanceId,
+                    pageId: selectedPage._id,
+                    fieldType: (fieldConfig?.type || "text") as FieldType,
+                    fieldConfig: fieldConfig ? {
+                        type: fieldConfig.type,
+                        label: fieldConfig.label,
+                        placeholder: fieldConfig.placeholder,
+                        required: fieldConfig.required,
+                        min: fieldConfig.min,
+                        max: fieldConfig.max,
+                        options: fieldConfig.options,
+                        schema: fieldConfig.schema
+                    } : undefined
+                };
+
                 if (selectedMode === "fill-missing" && !existingTranslation) {
                     items.push({
-                        type: "page",
-                        pageTitle: selectedPage.config?.title || selectedPage.slug,
-                        componentName: component.componentName,
-                        fieldName,
-                        originalValue: currentValue,
-                        currentTranslation: "",
-                        componentId: component.instanceId,
-                        pageId: selectedPage._id
+                        ...baseItem,
+                        currentTranslation: ""
                     });
                 } else if (selectedMode === "review-existing" && existingTranslation) {
                     items.push({
-                        type: "page",
-                        pageTitle: selectedPage.config?.title || selectedPage.slug,
-                        componentName: component.componentName,
-                        fieldName,
-                        originalValue: currentValue,
-                        currentTranslation: existingTranslation,
-                        componentId: component.instanceId,
-                        pageId: selectedPage._id
+                        ...baseItem,
+                        currentTranslation: existingTranslation
                     });
                 }
             });
@@ -130,21 +185,29 @@ export function buildTranslatableItems(params: {
             const currentValue = globalVariables.formData![fieldName];
             const existingTranslation = globalVariables.formData!.translations?.[selectedLocale]?.[fieldName];
 
+            // For global variables, we'll default to text type since we don't have schema access
+            const baseItem = {
+                type: "global" as const,
+                fieldName,
+                originalValue: currentValue,
+                componentId: "global-variables",
+                fieldType: "text" as FieldType, // Default to text for global variables
+                fieldConfig: {
+                    type: "text" as FieldType,
+                    label: fieldName,
+                    placeholder: `Enter ${fieldName}...`
+                }
+            };
+
             if (selectedMode === "fill-missing" && !existingTranslation) {
                 items.push({
-                    type: "global",
-                    fieldName,
-                    originalValue: currentValue,
-                    currentTranslation: "",
-                    componentId: "global-variables"
+                    ...baseItem,
+                    currentTranslation: ""
                 });
             } else if (selectedMode === "review-existing" && existingTranslation) {
                 items.push({
-                    type: "global",
-                    fieldName,
-                    originalValue: currentValue,
-                    currentTranslation: existingTranslation,
-                    componentId: "global-variables"
+                    ...baseItem,
+                    currentTranslation: existingTranslation
                 });
             }
         });
@@ -166,8 +229,27 @@ export async function persistTranslations(params: {
     let globalVariablesUpdate: any = null;
 
     translatableItems.forEach(item => {
-        // Check for both empty string and undefined/null
-        if (!item.currentTranslation || item.currentTranslation.trim() === '') {
+        // Handle different data types for validation
+        const isEmpty = () => {
+            if (item.currentTranslation === undefined || item.currentTranslation === null) {
+                return true;
+            }
+
+            // For strings, check if empty or just whitespace
+            if (typeof item.currentTranslation === 'string') {
+                return item.currentTranslation.trim() === '';
+            }
+
+            // For arrays (like TagsInput), check if empty
+            if (Array.isArray(item.currentTranslation)) {
+                return (item.currentTranslation as any[]).length === 0;
+            }
+
+            // For other types (numbers, booleans, objects), consider them valid if they exist
+            return false;
+        };
+
+        if (isEmpty()) {
             return;
         }
 

@@ -17,6 +17,7 @@
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
     import { Textarea } from "$lib/components/ui/textarea";
+    import TranslationFieldRenderer from "$lib/components/form-builder/components/TranslationFieldRenderer.svelte";
     import {
         IconArrowLeft,
         IconArrowRight,
@@ -495,33 +496,19 @@
                                             </div>
                                         </div>
 
-                                        <div class="space-y-2">
-                                            <Label for="translation"
-                                                >Translation ({selectedLocale}):</Label
-                                            >
-                                            {#if typeof currentItem.originalValue === "string" && currentItem.originalValue.length > 100}
-                                                <Textarea
-                                                    id="translation"
-                                                    bind:value={
-                                                        translations[
-                                                            `${currentItem.componentId}-${currentItem.fieldName}`
-                                                        ]
-                                                    }
-                                                    placeholder="Enter translation..."
-                                                    rows={4}
-                                                />
-                                            {:else}
-                                                <Input
-                                                    id="translation"
-                                                    bind:value={
-                                                        translations[
-                                                            `${currentItem.componentId}-${currentItem.fieldName}`
-                                                        ]
-                                                    }
-                                                    placeholder="Enter translation..."
-                                                />
-                                            {/if}
-                                        </div>
+                                        <TranslationFieldRenderer
+                                            fieldConfig={currentItem.fieldConfig ||
+                                                {}}
+                                            fieldType={currentItem.fieldType ||
+                                                "text"}
+                                            fieldName={currentItem.fieldName}
+                                            locale={selectedLocale || ""}
+                                            bind:value={
+                                                translations[
+                                                    `${currentItem.componentId}-${currentItem.fieldName}`
+                                                ]
+                                            }
+                                        />
                                     </CardContent>
                                 </Card>
 
