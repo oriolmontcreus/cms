@@ -215,6 +215,14 @@
         [WizardStep.TRANSLATE]: true,
         [WizardStep.COMPLETE]: true,
     };
+
+    // Initialize translation field when current item changes
+    $: if (currentItem && currentItem.currentTranslation) {
+        const fieldKey = `${currentItem.componentId}-${currentItem.fieldName}`;
+        if (!translations[fieldKey]) {
+            translations[fieldKey] = currentItem.currentTranslation;
+        }
+    }
 </script>
 
 <SiteHeader title="Translation Wizard">
@@ -513,12 +521,6 @@
                                                     placeholder="Enter translation..."
                                                 />
                                             {/if}
-                                            {#if currentItem.currentTranslation && !translations[`${currentItem.componentId}-${currentItem.fieldName}`]}
-                                                {(translations[
-                                                    `${currentItem.componentId}-${currentItem.fieldName}`
-                                                ] =
-                                                    currentItem.currentTranslation)}
-                                            {/if}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -585,14 +587,35 @@
                                             translations for {selectedLocale}.
                                         {:else}
                                             No existing translations found for
-                                            the selected content.
+                                            the selected content in {selectedLocale}.
+                                            <br />
+                                            <strong
+                                                >Try "Fill Missing Translations"
+                                                mode instead</strong
+                                            > to create new translations.
                                         {/if}
                                     </p>
-                                    <Button
-                                        onclick={() => goto("/translations")}
-                                    >
-                                        Return to Dashboard
-                                    </Button>
+                                    <div class="flex gap-3 justify-center">
+                                        <Button
+                                            onclick={() =>
+                                                goto("/translations")}
+                                        >
+                                            Return to Dashboard
+                                        </Button>
+                                        {#if selectedMode === "review-existing"}
+                                            <Button
+                                                variant="outline"
+                                                onclick={() => {
+                                                    selectedMode =
+                                                        "fill-missing";
+                                                    currentStep =
+                                                        WizardStep.SELECT_CONTENT;
+                                                }}
+                                            >
+                                                Switch to Fill Missing Mode
+                                            </Button>
+                                        {/if}
+                                    </div>
                                 </CardContent>
                             </Card>
                         {/if}

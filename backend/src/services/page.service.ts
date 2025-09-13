@@ -52,7 +52,27 @@ export class PageService {
       pageIndex = existingPages.length - 1;
       log('INFO', `Created new page with slug: ${slug}`);
     } else {
-      existingPages[pageIndex].components = components;
+      // Preserve existing translations when updating components
+      const existingComponents = existingPages[pageIndex].components;
+      const updatedComponents = components.map(newComponent => {
+        // Find the corresponding existing component by instanceId
+        const existingComponent = existingComponents.find(existing => existing.instanceId === newComponent.instanceId);
+
+        if (existingComponent && existingComponent.formData?.translations) {
+          // Merge translations with new form data
+          return {
+            ...newComponent,
+            formData: {
+              ...newComponent.formData,
+              translations: existingComponent.formData.translations
+            }
+          };
+        }
+
+        return newComponent;
+      });
+
+      existingPages[pageIndex].components = updatedComponents;
       existingPages[pageIndex].updatedAt = new Date().toISOString();
     }
 
@@ -73,7 +93,10 @@ export class PageService {
       throw new NotFound("Component not found");
     }
 
-    existingPages[pageIndex].components[componentIndex].formData = formData;
+    existingPages[pageIndex].components[componentIndex].formData = {
+      ...formData,
+      translations: existingPages[pageIndex].components[componentIndex].formData?.translations || formData.translations
+    };
     existingPages[pageIndex].updatedAt = new Date().toISOString();
 
     await savePageData(existingPages);

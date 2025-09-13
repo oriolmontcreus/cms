@@ -1,4 +1,6 @@
 import type { Page } from "@/lib/shared/types/pages.type";
+import { processComponentSchema } from "@/lib/components/form-builder/utils/optimizedSchemaProcessor";
+import { getComponentByName } from "@/lib/components/form-builder/utils/component-resolver";
 
 export const WizardStep = {
     SELECT_MODE: "select-mode",
@@ -64,8 +66,20 @@ export function buildTranslatableItems(params: {
 
         selectedPage.components.forEach(component => {
             if (!component.formData) return;
+
+            // Get actual component definition by name
+            const componentDef = getComponentByName(component.componentName);
+            if (!componentDef) return;
+
+            const { translatableFields } = processComponentSchema(componentDef);
+            const translatableFieldNames = new Set(translatableFields.map(f => f.name));
+
             Object.keys(component.formData).forEach(fieldName => {
                 if (fieldName === "translations") return;
+
+                // Only process fields that are marked as translatable in the schema
+                if (!translatableFieldNames.has(fieldName)) return;
+
                 const currentValue = component.formData[fieldName];
                 const existingTranslation = component.formData.translations?.[selectedLocale]?.[fieldName];
 
