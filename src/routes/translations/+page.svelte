@@ -28,8 +28,6 @@
     import type { Page } from "@/lib/shared/types/pages.type";
     import Spinner from "$lib/components/Spinner.svelte";
     import { goto } from "$app/navigation";
-    import { processComponentSchema } from "@/lib/components/form-builder/utils/optimizedSchemaProcessor";
-    import { getComponentByName } from "@/lib/components/form-builder/utils/component-resolver";
 
     let loading = true;
     let pages: Page[] = [];
@@ -167,41 +165,56 @@
             return { translatableFieldsCount, translatedCount };
         }
 
-        // For regular page components, get actual component definition
+        // For regular page components, use simple approach
         if (component.componentName) {
-            const componentDef = getComponentByName(component.componentName);
-            if (componentDef) {
-                const { translatableFields } =
-                    processComponentSchema(componentDef);
-                const translatableFieldNames = new Set(
-                    translatableFields.map((f) => f.name),
-                );
+            const allLocales = component.formData.translations
+                ? Object.keys(component.formData.translations)
+                : [];
+            const translatableFieldNames = new Set<string>();
 
+            // Find fields that have translations in any locale
+            allLocales.forEach((locale) => {
+                const localeTranslations =
+                    component.formData.translations?.[locale];
+                if (localeTranslations) {
+                    Object.keys(localeTranslations).forEach((fieldName) => {
+                        translatableFieldNames.add(fieldName);
+                    });
+                }
+            });
+
+            // If no existing translations, treat all non-translation fields as potentially translatable
+            if (translatableFieldNames.size === 0) {
                 Object.keys(component.formData).forEach((fieldName) => {
-                    if (fieldName === "translations") return;
-
-                    // Only count fields that are marked as translatable in the schema
-                    if (translatableFieldNames.has(fieldName)) {
-                        translatableFieldsCount += 1;
-
-                        // Check if translations exist for this field
-                        if (component.formData.translations) {
-                            availableLocales.forEach((locale) => {
-                                if (
-                                    component.formData.translations[
-                                        locale.code
-                                    ] &&
-                                    component.formData.translations[
-                                        locale.code
-                                    ][fieldName]
-                                ) {
-                                    translatedCount += 1;
-                                }
-                            });
-                        }
+                    if (fieldName !== "translations") {
+                        translatableFieldNames.add(fieldName);
                     }
                 });
             }
+
+            translatableFieldNames.forEach((fieldName) => {
+                if (
+                    fieldName === "translations" ||
+                    !component.formData[fieldName]
+                )
+                    return;
+
+                translatableFieldsCount += 1;
+
+                // Check if translations exist for this field
+                if (component.formData.translations) {
+                    availableLocales.forEach((locale) => {
+                        if (
+                            component.formData.translations[locale.code] &&
+                            component.formData.translations[locale.code][
+                                fieldName
+                            ]
+                        ) {
+                            translatedCount += 1;
+                        }
+                    });
+                }
+            });
         } else {
             // For global variables, treat all fields as potentially translatable (except translations)
             Object.keys(component.formData).forEach((fieldName) => {
@@ -242,28 +255,44 @@
             return translated;
         }
 
-        // For regular page components, check actual component definition for translatable fields
+        // For regular page components, use simple approach
         if (component.componentName) {
-            const componentDef = getComponentByName(component.componentName);
-            if (componentDef) {
-                const { translatableFields } =
-                    processComponentSchema(componentDef);
-                const translatableFieldNames = new Set(
-                    translatableFields.map((f) => f.name),
-                );
+            const allLocales = component.formData.translations
+                ? Object.keys(component.formData.translations)
+                : [];
+            const translatableFieldNames = new Set<string>();
 
-                Object.keys(
-                    component.formData.translations[localeCode],
-                ).forEach((fieldName) => {
-                    // Only count fields that are marked as translatable in the schema
+            // Find fields that have translations in any locale
+            allLocales.forEach((locale) => {
+                const localeTranslations =
+                    component.formData.translations?.[locale];
+                if (localeTranslations) {
+                    Object.keys(localeTranslations).forEach((fieldName) => {
+                        translatableFieldNames.add(fieldName);
+                    });
+                }
+            });
+
+            // If no existing translations, treat all non-translation fields as potentially translatable
+            if (translatableFieldNames.size === 0) {
+                Object.keys(component.formData).forEach((fieldName) => {
+                    if (fieldName !== "translations") {
+                        translatableFieldNames.add(fieldName);
+                    }
+                });
+            }
+
+            Object.keys(component.formData.translations[localeCode]).forEach(
+                (fieldName) => {
+                    // Only count fields that are marked as translatable
                     if (
                         translatableFieldNames.has(fieldName) &&
                         component.formData.translations[localeCode][fieldName]
                     ) {
                         translated += 1;
                     }
-                });
-            }
+                },
+            );
         } else {
             // For global variables, count all translated fields (except translations)
             translated = Object.keys(

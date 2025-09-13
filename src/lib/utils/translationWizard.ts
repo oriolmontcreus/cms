@@ -1,6 +1,4 @@
 import type { Page } from "@/lib/shared/types/pages.type";
-import { processComponentSchema } from "@/lib/components/form-builder/utils/optimizedSchemaProcessor";
-import { getComponentByName } from "@/lib/components/form-builder/utils/component-resolver";
 
 export const WizardStep = {
     SELECT_MODE: "select-mode",
@@ -67,18 +65,34 @@ export function buildTranslatableItems(params: {
         selectedPage.components.forEach(component => {
             if (!component.formData) return;
 
-            // Get actual component definition by name
-            const componentDef = getComponentByName(component.componentName);
-            if (!componentDef) return;
+            // Simple approach: check what fields actually have translation data
+            // If a field has any translations, it's translatable
+            const allLocales = component.formData.translations ? Object.keys(component.formData.translations) : [];
+            const translatableFieldNames = new Set<string>();
 
-            const { translatableFields } = processComponentSchema(componentDef);
-            const translatableFieldNames = new Set(translatableFields.map(f => f.name));
+            // Find fields that have translations in any locale
+            allLocales.forEach(locale => {
+                const localeTranslations = component.formData.translations?.[locale];
+                if (localeTranslations) {
+                    Object.keys(localeTranslations).forEach(fieldName => {
+                        translatableFieldNames.add(fieldName);
+                    });
+                }
+            });
 
-            Object.keys(component.formData).forEach(fieldName => {
+            // If no existing translations, treat all non-translation fields as potentially translatable
+            // (this handles the first-time translation case)
+            if (translatableFieldNames.size === 0) {
+                Object.keys(component.formData).forEach(fieldName => {
+                    if (fieldName !== "translations") {
+                        translatableFieldNames.add(fieldName);
+                    }
+                });
+            }
+
+            translatableFieldNames.forEach(fieldName => {
                 if (fieldName === "translations") return;
-
-                // Only process fields that are marked as translatable in the schema
-                if (!translatableFieldNames.has(fieldName)) return;
+                if (!component.formData[fieldName]) return; // Skip empty fields
 
                 const currentValue = component.formData[fieldName];
                 const existingTranslation = component.formData.translations?.[selectedLocale]?.[fieldName];
