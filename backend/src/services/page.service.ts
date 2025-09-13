@@ -59,12 +59,24 @@ export class PageService {
         const existingComponent = existingComponents.find(existing => existing.instanceId === newComponent.instanceId);
 
         if (existingComponent && existingComponent.formData?.translations) {
-          // Merge translations with new form data
+          // Merge existing translations with new translations (new translations take precedence)
+          const existingTranslations = existingComponent.formData.translations || {};
+          const newTranslations = newComponent.formData?.translations || {};
+
+          // Deep merge translations by locale
+          const mergedTranslations = { ...existingTranslations };
+          Object.keys(newTranslations).forEach(locale => {
+            mergedTranslations[locale] = {
+              ...existingTranslations[locale],
+              ...newTranslations[locale]
+            };
+          });
+
           return {
             ...newComponent,
             formData: {
               ...newComponent.formData,
-              translations: existingComponent.formData.translations
+              translations: mergedTranslations
             }
           };
         }
@@ -93,9 +105,23 @@ export class PageService {
       throw new NotFound("Component not found");
     }
 
+    const existingFormData = existingPages[pageIndex].components[componentIndex].formData || {};
+    const existingTranslations = existingFormData.translations || {};
+    const newTranslations = formData.translations || {};
+
+    // Deep merge translations by locale
+    const mergedTranslations = { ...existingTranslations };
+    Object.keys(newTranslations).forEach(locale => {
+      mergedTranslations[locale] = {
+        ...existingTranslations[locale],
+        ...newTranslations[locale]
+      };
+    });
+
     existingPages[pageIndex].components[componentIndex].formData = {
+      ...existingFormData,
       ...formData,
-      translations: existingPages[pageIndex].components[componentIndex].formData?.translations || formData.translations
+      translations: mergedTranslations
     };
     existingPages[pageIndex].updatedAt = new Date().toISOString();
 

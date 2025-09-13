@@ -162,19 +162,38 @@ export async function persistTranslations(params: {
 }): Promise<void> {
     const { translatableItems, selectedLocale, pages, globalVariables } = params;
 
+    console.log('🔧 Persisting translations:', {
+        itemCount: translatableItems.length,
+        selectedLocale,
+        items: translatableItems.map(item => ({
+            type: item.type,
+            fieldName: item.fieldName,
+            currentTranslation: item.currentTranslation,
+            hasTranslation: !!item.currentTranslation
+        }))
+    });
+
     const pageUpdates: Record<string, any> = {};
     let globalVariablesUpdate: any = null;
 
     translatableItems.forEach(item => {
-        if (!item.currentTranslation) return;
+        console.log(`Processing item: ${item.fieldName}, translation: "${item.currentTranslation}"`);
+
+        // Check for both empty string and undefined/null
+        if (!item.currentTranslation || item.currentTranslation.trim() === '') {
+            console.log(`Skipping item ${item.fieldName} - no translation provided`);
+            return;
+        }
 
         if (item.type === "global") {
+            console.log(`Saving global variable translation: ${item.fieldName} = "${item.currentTranslation}"`);
             if (!globalVariablesUpdate) globalVariablesUpdate = { translations: {} };
             if (!globalVariablesUpdate.translations[selectedLocale]) {
                 globalVariablesUpdate.translations[selectedLocale] = {};
             }
             globalVariablesUpdate.translations[selectedLocale][item.fieldName] = item.currentTranslation;
         } else {
+            console.log(`Saving page translation: ${item.fieldName} = "${item.currentTranslation}" for component ${item.componentId}`);
             const pageId = item.pageId;
             if (!pageUpdates[pageId]) pageUpdates[pageId] = {};
             if (!pageUpdates[pageId][item.componentId]) {
@@ -185,6 +204,11 @@ export async function persistTranslations(params: {
             }
             pageUpdates[pageId][item.componentId].translations[selectedLocale][item.fieldName] = item.currentTranslation;
         }
+    });
+
+    console.log('📊 Final updates to save:', {
+        pageUpdates: Object.keys(pageUpdates).length > 0 ? pageUpdates : 'No page updates',
+        globalVariablesUpdate: globalVariablesUpdate || 'No global variable updates'
     });
 
     // Save global variables
@@ -203,13 +227,33 @@ export async function persistTranslations(params: {
     // Save pages sequentially (could be parallel if API supports)
     for (const [pageId, componentUpdates] of Object.entries(pageUpdates)) {
         const page = pages.find(p => p._id === pageId);
-        if (!page) continue;
+        if (!page) {
+            console.error(`❌ Page not found: ${pageId}`);
+            continue;
+        }
+
+        console.log(`🔄 Processing page: ${page.slug} (${pageId})`);
+        console.log(`📝 Component updates for page:`, componentUpdates);
+
         const { handleUpdateComponents } = await import("@/services/page.service");
 
         const updatedComponents = page.components.map(component => {
             const update = componentUpdates[component.instanceId];
-            if (!update) return component;
-            return {
+            if (!update) {
+                console.log(`⏭️ No updates for component: ${component.instanceId}`);
+                return component;
+            }
+
+            console.log(`🔧 Updating component ${component.instanceId}:`, {
+                currentTranslations: component.formData?.translations,
+                newTranslations: update.translations,
+                mergedTranslations: {
+                    ...component.formData?.translations,
+                    ...update.translations
+                }
+            });
+
+            const updatedComponent = {
                 ...component,
                 formData: {
                     ...component.formData,
@@ -219,8 +263,23 @@ export async function persistTranslations(params: {
                     }
                 }
             };
+
+            console.log(`✅ Updated component data:`, updatedComponent);
+            return updatedComponent;
         });
 
-        await handleUpdateComponents(page.slug, updatedComponents);
+        console.log(`🚀 Calling handleUpdateComponents with:`, {
+            slug: page.slug,
+            componentsCount: updatedComponents.length,
+            updatedComponents
+        });
+
+        try {
+            const result = await handleUpdateComponents(page.slug, updatedComponents);
+            console.log(`✅ API call successful for page ${page.slug}:`, result);
+        } catch (error) {
+            console.error(`❌ API call failed for page ${page.slug}:`, error);
+            throw error;
+        }
     }
 }
