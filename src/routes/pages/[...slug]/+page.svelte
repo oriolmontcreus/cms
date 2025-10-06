@@ -10,18 +10,14 @@
     import { safeFetch } from "@/lib/utils/safeFetch";
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import { Button } from "$lib/components/ui/button";
-    import {
-        IconLanguage,
-        IconEdit,
-        IconDeviceFloppy,
-    } from "@tabler/icons-svelte";
+    import { IconDeviceFloppy } from "@tabler/icons-svelte";
     import Spinner from "$lib/components/Spinner.svelte";
 
     let pageData: Page | null = null;
     let config: PageConfig | null = null;
     let loading = true;
     let error: string | null = null;
-    let mode = RenderMode.CONTENT;
+    // Remove mode variable since we only use content mode now
     let formBuilderRef: any = null;
 
     onMount(async () => {
@@ -48,37 +44,11 @@
 
 <SiteHeader title={config?.title || "Page"}>
     <div class="flex items-center gap-2">
-        <div class="flex rounded-md border bg-background">
-            <Button
-                variant={mode === RenderMode.CONTENT ? "secondary" : "ghost"}
-                size="sm"
-                class={`h-8 px-2 sm:px-3 rounded-e-none ${mode === RenderMode.CONTENT ? "" : "bg-white dark:bg-transparent"}`}
-                onclick={() => (mode = RenderMode.CONTENT)}
-            >
-                <IconEdit class="h-4 w-4 sm:mr-2" />
-                <span class="hidden sm:inline">Content</span>
-            </Button>
-            <Button
-                variant={mode === RenderMode.TRANSLATION
-                    ? "secondary"
-                    : "ghost"}
-                size="sm"
-                class={`h-8 px-2 sm:px-3 rounded-s-none ${mode === RenderMode.TRANSLATION ? "" : "bg-white dark:bg-transparent"}`}
-                onclick={() => (mode = RenderMode.TRANSLATION)}
-            >
-                <IconLanguage class="h-4 w-4 sm:mr-2" />
-                <span class="hidden sm:inline">Translations</span>
-            </Button>
-        </div>
-
         {#if config && pageData}
             <Button
                 type="button"
                 size="sm"
-                onclick={() =>
-                    formBuilderRef?.handleSubmit(
-                        mode === RenderMode.TRANSLATION,
-                    )}
+                onclick={() => formBuilderRef?.handleSubmit(false)}
                 disabled={formBuilderRef?.isSubmitting}
             >
                 <IconDeviceFloppy class="size-4" />
@@ -107,7 +77,7 @@
                             {config}
                             slug={pageData.slug}
                             components={pageData.components}
-                            {mode}
+                            mode={RenderMode.CONTENT}
                         />
                     </div>
                 {:else}

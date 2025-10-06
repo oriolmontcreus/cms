@@ -52,7 +52,39 @@ export class PageService {
       pageIndex = existingPages.length - 1;
       log('INFO', `Created new page with slug: ${slug}`);
     } else {
-      existingPages[pageIndex].components = components;
+      // Preserve existing translations when updating components
+      const existingComponents = existingPages[pageIndex].components;
+      const updatedComponents = components.map(newComponent => {
+        // Find the corresponding existing component by instanceId
+        const existingComponent = existingComponents.find(existing => existing.instanceId === newComponent.instanceId);
+
+        if (existingComponent && existingComponent.formData?.translations) {
+          // Merge existing translations with new translations (new translations take precedence)
+          const existingTranslations = existingComponent.formData.translations || {};
+          const newTranslations = newComponent.formData?.translations || {};
+
+          // Deep merge translations by locale
+          const mergedTranslations = { ...existingTranslations };
+          Object.keys(newTranslations).forEach(locale => {
+            mergedTranslations[locale] = {
+              ...existingTranslations[locale],
+              ...newTranslations[locale]
+            };
+          });
+
+          return {
+            ...newComponent,
+            formData: {
+              ...newComponent.formData,
+              translations: mergedTranslations
+            }
+          };
+        }
+
+        return newComponent;
+      });
+
+      existingPages[pageIndex].components = updatedComponents;
       existingPages[pageIndex].updatedAt = new Date().toISOString();
     }
 
@@ -73,7 +105,24 @@ export class PageService {
       throw new NotFound("Component not found");
     }
 
-    existingPages[pageIndex].components[componentIndex].formData = formData;
+    const existingFormData = existingPages[pageIndex].components[componentIndex].formData || {};
+    const existingTranslations = existingFormData.translations || {};
+    const newTranslations = formData.translations || {};
+
+    // Deep merge translations by locale
+    const mergedTranslations = { ...existingTranslations };
+    Object.keys(newTranslations).forEach(locale => {
+      mergedTranslations[locale] = {
+        ...existingTranslations[locale],
+        ...newTranslations[locale]
+      };
+    });
+
+    existingPages[pageIndex].components[componentIndex].formData = {
+      ...existingFormData,
+      ...formData,
+      translations: mergedTranslations
+    };
     existingPages[pageIndex].updatedAt = new Date().toISOString();
 
     await savePageData(existingPages);
